@@ -20,6 +20,10 @@ public:
     Cord operator-(const Cord &subtrahend) const{
         return Cord(x - subtrahend.x, y - subtrahend.y);
     }
+
+    Cord operator*(const len_t &scalar) const{
+        return Cord(scalar*x, scalar*y);
+    }
 };
 
 #endif // __LFUNITS_H__
