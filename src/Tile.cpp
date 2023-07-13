@@ -1,48 +1,48 @@
 #include "Tile.h"
 
 Tile::Tile()
-    : lowerLeft(Cord(0,0)), width(0), height(0) {}
+    : mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0) {}
 
 Tile::Tile(Cord LL, len_t w, len_t h) 
-    : lowerLeft(LL), width(w), height(h) {}
+    : mLowerLeft(LL), mWidth(w), mHeight(h) {}
 
 Cord Tile::getLowerLeft() const {
-    return this->lowerLeft;
+    return this->mLowerLeft;
 };
 Cord Tile::getUpperLeft() const {
-    return this->lowerLeft + Cord(0, this->height);
+    return this->mLowerLeft + Cord(0, this->mHeight);
 };
 Cord Tile::getLowerRight() const {
-    return this->lowerLeft + Cord(this->width, 0);
+    return this->mLowerLeft + Cord(this->mWidth, 0);
 };
 Cord Tile::getUpperRight() const {
-    return this->lowerLeft + Cord(this->width, this->height);
+    return this->mLowerLeft + Cord(this->mWidth, this->mHeight);
 };
-void Tile::setLowerLeft(Cord new_LL){
-    this->lowerLeft = new_LL;
+void Tile::setLowerLeft(Cord lowerLeft){
+    this->mLowerLeft = lowerLeft;
 };
 
 
 len_t Tile::getWidth() const {
-    return this->width;
+    return this->mWidth;
 };
 
 len_t Tile::getHeight() const {
-    return this->height;
+    return this->mHeight;
 };
 
-void Tile::setWidth(len_t new_width){
-    this->width = new_width;
+void Tile::setWidth(len_t width){
+    this->mWidth = width;
 };
-void Tile::setHeight(len_t new_height){
-    this->height = new_height;
+void Tile::setHeight(len_t height){
+    this->mHeight = height;
 };
 
 float Tile::getAspectRatio() const {
-    return this->width / this->height;
+    return this->mWidth / this->mHeight;
 };
 
 area_t Tile::getArea() const {
-    return this->width * this->height;
+    return this->mWidth * this->mHeight;
 };
 
