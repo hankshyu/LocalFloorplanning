@@ -33,19 +33,16 @@ public:
     len_t getBBHeight ();
 
 
-
-
-
 };
 
-class hardTessera : public Tessera{
-public:
+// class hardTessera : public Tessera{
+// public:
 
-};
+// };
 
-class softTessera : public Tessera{
+// class softTessera : public Tessera{
 
-};
+// };
 
 
 
