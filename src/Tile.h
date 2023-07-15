@@ -10,6 +10,8 @@ private:
     len_t mWidth;
     len_t mHeight;
 
+    
+
 public:
     Tile();
     Tile(Cord lowerLeft, len_t width, len_t height);

@@ -9,6 +9,8 @@ class Cord{
 public:
     len_t x;
     len_t y;
+    Cord()
+        : x(0), y(0) {}
 
     Cord(len_t x_in, len_t y_in)
         : x(x_in), y(y_in) {}
