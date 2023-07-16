@@ -3,8 +3,13 @@
 
 #include "LFUnits.h"
 
+enum class tileType{
+    BLOCK, BLANK, OVERLAP
+};
+
 class Tile{
 private:
+    tileType type;
     class Cord mLowerLeft;
     
     len_t mWidth;
@@ -14,8 +19,10 @@ private:
 
 public:
     Tile();
-    Tile(Cord lowerLeft, len_t width, len_t height);
+    Tile(tileType t, Cord LL, len_t w, len_t h);
     
+    tileType getType() const;
+
     Cord getLowerLeft() const;
     Cord getUpperLeft() const;
     Cord getLowerRight() const;

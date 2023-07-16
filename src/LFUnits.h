@@ -15,20 +15,36 @@ public:
     Cord(len_t x_in, len_t y_in)
         : x(x_in), y(y_in) {}
 
-    Cord operator+(const Cord &addend) const{
+    Cord operator + (const Cord &addend) const{
         return Cord(x + addend.x, y + addend.y);
     }
 
-    Cord operator-(const Cord &subtrahend) const{
+    Cord operator - (const Cord &subtrahend) const{
         return Cord(x - subtrahend.x, y - subtrahend.y);
     }
 
-    Cord operator*(const len_t &scalar) const{
+    Cord operator * (const len_t &scalar) const{
         return Cord(scalar*x, scalar*y);
     }
 
-    bool operator==(const Cord &comp) const{
+    bool operator == (const Cord &comp) const{
         return ((x == comp.x) && (y == comp.y));
+    }
+
+    bool operator < (const Cord &comp) const{
+        return ((x < comp.x) && (y < comp.y));
+    }
+
+    bool operator <= (const Cord &comp) const{
+        return ((x <= comp.x) && (y <= comp.y));
+    }
+
+    bool operator > (const Cord &comp) const{
+        return ((x > comp.x) && (y > comp.y));
+    }
+
+    bool operator >= (const Cord &comp) const{
+        return ((x >= comp.x) && (y >= comp.y));
     }
 
 };

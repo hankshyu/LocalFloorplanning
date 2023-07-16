@@ -1,11 +1,14 @@
 #include "Tile.h"
 
 Tile::Tile()
-    : mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0) {}
+    : type(tileType::BLANK), mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0) {}
 
-Tile::Tile(Cord LL, len_t w, len_t h) 
-    : mLowerLeft(LL), mWidth(w), mHeight(h) {}
+Tile::Tile(tileType t, Cord LL, len_t w, len_t h) 
+    : type(t), mLowerLeft(LL), mWidth(w), mHeight(h) {}
 
+tileType Tile::getType() const {
+    return this->type;
+}
 Cord Tile::getLowerLeft() const {
     return this->mLowerLeft;
 };

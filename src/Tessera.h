@@ -8,7 +8,7 @@
 #include "Tile.h"
 
 enum class tesseraType{
-    EMPTY, SOFT, HARD
+    EMPTY ,SOFT, HARD
 };
 
 class Tessera{
@@ -21,36 +21,26 @@ private:
     Cord mInitLowerLeft;
     len_t mInitWidth;
     len_t mInitHeight;
-
-    len_t mWidth;
-    len_t mHeight;
-    
-    std::vector <Tile *> mTileArr;
-    std::vector <Tile *> mOverlapArr;
     
     Cord mBBLowerLeft;
-    len_t mBBWidth;
-    len_t mBBHeight;
+    Cord mBBUpperRight;
 
     void calBoundingBox();
 
 public:
+    std::vector <Tile *> mTileArr;
+    std::vector <Tile *> mOverlapArr;
+
     Tessera();
     Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
-    int getTileCount ();
-    void getTileArr (std::vector <Tile *> *TileArr);
-
-    int getOverlapCount ();
-    void getOverlapArr (std::vector <Tile *> *OverlapArr);
-
     Cord getBBLowerLeft ();
+    Cord getBBUpperRight();
     len_t getBBWidth ();
     len_t getBBHeight ();
 
+    int insertTiles(tileType type, Tile *tile);
 
 };
-
-
 
 #endif // __TESSERA_H__
