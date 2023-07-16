@@ -10,6 +10,14 @@ bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height
     return (x_valid && y_valid);
 }
 
+len_t LFLegaliser::getCanvasWidth () const{
+    return this->mCanvasWidth;
+}
+
+len_t LFLegaliser::getCanvasHeight () const{
+    return this->mCanvasHeight;
+}
+
 int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerLeft, len_t width, len_t height){
     
     assert(checkTesseraInCanvas(lowerLeft, width, height));
@@ -25,23 +33,24 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
         softTesserae.push_back(newTessera);
     }
 
-    std::vector <Tile *> TileArr;
-
-    
-
-    if(lowerLeft.y != 0){
-        Tile *tdown = new Tile(tileType::BLANK, Cord(0,0), this->mCanvasWidth, lowerLeft.y);
+    //todo: add links
+    if(newTile->getLowerLeft().y != 0){
+        Tile *tdown = new Tile(tileType::BLANK, Cord(0,0),
+                            this->mCanvasWidth, newTile->getLowerLeft().y);
     }
-    if((lowerLeft.y + height) != mCanvasHeight){
-        // Tile *tup = new Tile (Cord (0, ))
+
+    if(newTile->getUpperRight().y <= this->mCanvasHeight){
+        Tile *tup = new Tile(tileType::BLANK, Cord(0,newTile->getUpperRight().y), 
+                            this->mCanvasWidth, (this->mCanvasHeight - newTile->getUpperRight().y));
     }
 
     if(lowerLeft.x != 0){
-
+        Tile *tleft = new Tile(tileType::BLANK, Cord(0, newTile->getLowerLeft().y),
+                            newTile->getLowerLeft().x, height);
     }
     if((lowerLeft.x + width)!= mCanvasWidth){
-
+        Tile *tright = new Tile(tileType::BLANK, newTile->getLowerRight(), 
+                            (this->mCanvasWidth - newTile->getUpperRight().x), height);
     }
-
 
 }

@@ -19,10 +19,12 @@ private:
 
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height);
 
-
 public:
     LFLegaliser() = delete;
     LFLegaliser(len_t chipWidth, len_t chipHeight);
+
+    len_t getCanvasWidth() const;
+    len_t getCanvasHeight() const;
 
     int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 

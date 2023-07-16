@@ -12,7 +12,7 @@ void printTile(const Tile &t){
 int main(int argc, char const *argv[])
 {
     std::cout << "This is Local floorplanner!" << std::endl;
-    Tile tt(Cord(3,5), 11, 12);
+    Tile tt(tileType::BLANK, Cord(3,5), 11, 12);
     printTile(tt);
     std::cout << std::endl;
     printCord(tt.getLowerLeft());

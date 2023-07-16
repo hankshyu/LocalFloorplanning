@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "Tessera.h"
 
 Tessera::Tessera()
@@ -63,5 +64,6 @@ void Tessera::calBoundingBox(){
         if(t->getUpperRight() > UR) UR = t->getUpperRight();  
     }
 
-    this->
+    this->mBBLowerLeft = LL;
+    this->mBBUpperRight = UR;
 }
