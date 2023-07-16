@@ -44,9 +44,6 @@ public:
     int getOverlapCount ();
     void getOverlapArr (std::vector <Tile *> *OverlapArr);
 
-
-    
-    
     Cord getBBLowerLeft ();
     len_t getBBWidth ();
     len_t getBBHeight ();

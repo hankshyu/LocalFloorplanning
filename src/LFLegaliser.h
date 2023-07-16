@@ -3,6 +3,7 @@
 
 
 #include <vector>
+#include <assert.h>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
@@ -16,12 +17,14 @@ private:
     std::vector <Tessera*> fixedTesserae;
     std::vector <Tessera*> softTesserae;
 
+    bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height);
+
 
 public:
     LFLegaliser() = delete;
     LFLegaliser(len_t chipWidth, len_t chipHeight);
 
-    int addTile();
+    int addFirstTessera(tesseraType type, Cord lowerLeft, len_t width, len_t height);
     Tile *findPoint(const Cord &key) const;
 
 

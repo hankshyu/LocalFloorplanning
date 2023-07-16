@@ -26,6 +26,11 @@ public:
     Cord operator*(const len_t &scalar) const{
         return Cord(scalar*x, scalar*y);
     }
+
+    bool operator==(const Cord &comp) const{
+        return ((x == comp.x) && (y == comp.y));
+    }
+
 };
 
 #endif // __LFUNITS_H__
