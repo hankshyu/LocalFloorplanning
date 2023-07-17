@@ -18,7 +18,8 @@ private:
     std::vector <Tessera*> fixedTesserae;
     std::vector <Tessera*> softTesserae;
 
-    bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height);
+    bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
+    void traverseBlank(std::ofstream &ofs,const Tile &seed);
 
 public:
     LFLegaliser() = delete;
@@ -31,7 +32,7 @@ public:
 
     Tile *findPoint(const Cord &key) const;
 
-    void visualiseArtpiece(std::string outputFileName) const;
+    void visualiseArtpiece(const std::string outputFileName) const;
 
 };
 

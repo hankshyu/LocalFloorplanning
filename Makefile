@@ -11,16 +11,15 @@ debug: lfrun_debug
 # LINKFLAGS = -pedantic -Wall -fomit-frame-pointer -funroll-all-loops -O3
 LINKFLAGS = 
 
-lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h
+lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o
 	$(CXX) $(LINKFLAGS) $^ -o $@
 
 
-		
 main.o: $(SRCPATH)/main.cpp 
-	$(CXX) $(LINKFLAGS) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
+	$(CXX) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
 
 %.o: $(SRCPATH)/%.cpp $(SRCPATH)/%.h
-	$(CXX) $(LINKFLAGS) $(CFLAGS) $< -o $@
+	$(CXX) $(CFLAGS) $< -o $@
 
 
 

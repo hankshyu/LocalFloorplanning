@@ -1,9 +1,11 @@
+#include <iostream>
 #include "LFLegaliser.h"
+
 
 LFLegaliser::LFLegaliser(len_t chipWidth, len_t chipHeight)
     : mCanvasWidth(chipWidth), mCanvasHeight(chipHeight) {}
 
-bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height){
+bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const {
     bool x_valid, y_valid;
     x_valid = (lowerLeft.x >= 0) && (lowerLeft.x + width <= this->mCanvasWidth);
     y_valid = (lowerLeft.y >= 0) && (lowerLeft.y + height <= this->mCanvasHeight);
@@ -25,12 +27,12 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
 
     Tessera *newTessera = new Tessera(type, name, area, lowerLeft, width, height);
     Tile *newTile = new Tile(tileType::BLOCK, lowerLeft, width, height);
-    
+    newTessera->insertTiles(tileType::BLOCK, newTile);
     
     if(type == tesseraType::HARD){
-        fixedTesserae.push_back(newTessera);
+        this->fixedTesserae.push_back(newTessera);
     }else if(type == tesseraType::SOFT){
-        softTesserae.push_back(newTessera);
+        this->softTesserae.push_back(newTessera);
     }
 
     //todo: add links
@@ -60,12 +62,14 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
         newTile->right = tright;
         tright->left = newTile;
     }
-
+    
+    return 0;
 }
 
 
-void LFLegaliser::visualiseArtpiece(std::string outputFileName) const{
+void LFLegaliser::visualiseArtpiece(const std::string outputFileName) const{
     
+    std::cout << "print to file..."<< outputFileName <<std::endl;
 
     std::ofstream ofs(outputFileName);
     ofs << "OUTLINE -1 0 0 " << this->mCanvasWidth << " " << this->mCanvasHeight << " " << "DIE_BLOCK" << std::endl;
@@ -75,19 +79,50 @@ void LFLegaliser::visualiseArtpiece(std::string outputFileName) const{
         ofs.close();
         return;
     }
-    
+    std::cout << fixedTesserae.size() << " " << softTesserae.size() << std::endl;
+    for(Tessera *tess : softTesserae){
+        ofs << tess->getName() << " " << tess->getLegalArea() << " ";
+        ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
+        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " ";
+        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
+        for(Tile *t : tess->TileArr){
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
+        }
+        for(Tile *t : tess->OverlapArr){
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
+        }
+    }
+
     for(Tessera *tess : fixedTesserae){
         ofs << tess->getName() << " " << tess->getLegalArea() << " ";
         ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
         ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " ";
         ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
         for(Tile *t : tess->TileArr){
-            
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
         }
-        for(Tile *ov : tess->OverlapArr){
-
+        for(Tile *t : tess->OverlapArr){
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
         }
     }
 
+    // Treaverse through all balnk tiles
+    if(fixedTesserae.size() !=0 ){
+        Tile *blank = nullptr;
+        if(this->fixedTesserae[0]->TileArr.size() != 0){
+            traverseBlank(ofs, *(this->fixedTesserae[0]->TileArr[0]));
+
+        }else{
+
+        }
+    }else{
+
+    }
+
+
     ofs.close();
+}
+
+void LFLegaliser::traverseBlank(std::ofstream & ofs, const Tile &seed){
+
 }
