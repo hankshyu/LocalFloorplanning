@@ -37,20 +37,33 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
     if(newTile->getLowerLeft().y != 0){
         Tile *tdown = new Tile(tileType::BLANK, Cord(0,0),
                             this->mCanvasWidth, newTile->getLowerLeft().y);
+        newTile->down = tdown;
+        tdown->up = newTile;
     }
 
     if(newTile->getUpperRight().y <= this->mCanvasHeight){
         Tile *tup = new Tile(tileType::BLANK, Cord(0,newTile->getUpperRight().y), 
                             this->mCanvasWidth, (this->mCanvasHeight - newTile->getUpperRight().y));
+        newTile->up = tup;
+        tup->down = newTile;
     }
 
     if(lowerLeft.x != 0){
         Tile *tleft = new Tile(tileType::BLANK, Cord(0, newTile->getLowerLeft().y),
                             newTile->getLowerLeft().x, height);
+        newTile->left = tleft;
+        tleft->right = newTile;    
     }
     if((lowerLeft.x + width)!= mCanvasWidth){
         Tile *tright = new Tile(tileType::BLANK, newTile->getLowerRight(), 
                             (this->mCanvasWidth - newTile->getUpperRight().x), height);
+        newTile->right = tright;
+        tright->left = newTile;
     }
+
+}
+
+
+void LFLegaliser::visualiseArtpiece(std::string outputFileName) const{
 
 }

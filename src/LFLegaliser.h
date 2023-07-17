@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <assert.h>
+#include <fstream>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
@@ -29,6 +30,8 @@ public:
     int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
     Tile *findPoint(const Cord &key) const;
+
+    void visualiseArtpiece(std::string outputFileName) const;
 
 };
 

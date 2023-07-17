@@ -18,6 +18,9 @@ private:
     
 
 public:
+
+    Tile *up, *down, *left, *right;
+
     Tile();
     Tile(tileType t, Cord LL, len_t w, len_t h);
     

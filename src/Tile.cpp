@@ -1,10 +1,12 @@
 #include "Tile.h"
 
 Tile::Tile()
-    : type(tileType::BLANK), mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0) {}
+    : type(tileType::BLANK), mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0),
+        up(nullptr), down(nullptr), left(nullptr), right(nullptr) {}
 
 Tile::Tile(tileType t, Cord LL, len_t w, len_t h) 
-    : type(t), mLowerLeft(LL), mWidth(w), mHeight(h) {}
+    : type(t), mLowerLeft(LL), mWidth(w), mHeight(h),
+        up(nullptr), down(nullptr), left(nullptr), right(nullptr) {}
 
 tileType Tile::getType() const {
     return this->type;
