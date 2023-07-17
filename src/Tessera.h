@@ -28,12 +28,14 @@ private:
     void calBoundingBox();
 
 public:
-    std::vector <Tile *> mTileArr;
-    std::vector <Tile *> mOverlapArr;
+    std::vector <Tile *> TileArr;
+    std::vector <Tile *> OverlapArr;
 
     Tessera();
     Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
+    std::string getName () const;
+    area_t getLegalArea () const;
     Cord getBBLowerLeft ();
     Cord getBBUpperRight();
     len_t getBBWidth ();

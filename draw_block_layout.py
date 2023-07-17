@@ -32,7 +32,7 @@ def draw_block(ax, x, y, width, height, type, id,):
     )
 
 
-png_size = (16, 12)
+png_size = (80, 60)
 txt_name = sys.argv[1]
 png_name = sys.argv[2]
 fread = open(txt_name, 'r')

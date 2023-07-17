@@ -8,6 +8,13 @@ Tessera::Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft
     : mType(type), mName(name), mLegalArea(area), 
     mInitLowerLeft(lowerleft), mInitWidth(width), mInitHeight(height) {}
 
+std::string Tessera::getName () const{
+    return this->mName;
+}
+
+area_t Tessera::getLegalArea () const{
+    return this->mLegalArea;
+}
 
 Cord Tessera::getBBLowerLeft (){
     return this->mBBLowerLeft;
@@ -27,11 +34,11 @@ int Tessera::insertTiles(tileType type, Tile *tile){
     switch (type){
         case tileType::BLOCK:
             /* code */
-            mTileArr.push_back(tile);
+            TileArr.push_back(tile);
             break;
         case tileType::OVERLAP:
             /* code */
-            mOverlapArr.push_back(tile);
+            OverlapArr.push_back(tile);
             break;
         default:
             break;
@@ -42,24 +49,24 @@ int Tessera::insertTiles(tileType type, Tile *tile){
 }
 
 void Tessera::calBoundingBox(){
-    if(mTileArr.empty() && mOverlapArr.empty()) return;
+    if(TileArr.empty() && OverlapArr.empty()) return;
 
     //The lowerleft and upper right tiles
     Cord LL, UR;
 
-    if(!mTileArr.empty()){
-        LL = mTileArr[0]->getLowerLeft();
-        UR = mTileArr[0]->getUpperRight();
+    if(!TileArr.empty()){
+        LL = TileArr[0]->getLowerLeft();
+        UR = TileArr[0]->getUpperRight();
     }else{
-        LL = mOverlapArr[0]->getLowerLeft();
-        UR = mOverlapArr[0]->getUpperRight();
+        LL = OverlapArr[0]->getLowerLeft();
+        UR = OverlapArr[0]->getUpperRight();
     }
 
-    for(Tile *t : mTileArr){
+    for(Tile *t : TileArr){
         if(t->getLowerLeft() < LL) LL = t->getLowerLeft();
         if(t->getUpperRight() > UR) UR = t->getUpperRight();
     }
-    for(Tile *t : mOverlapArr){
+    for(Tile *t : OverlapArr){
         if(t->getLowerLeft() < LL) LL = t->getLowerLeft();
         if(t->getUpperRight() > UR) UR = t->getUpperRight();  
     }

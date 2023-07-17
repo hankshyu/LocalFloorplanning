@@ -65,5 +65,29 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
 
 
 void LFLegaliser::visualiseArtpiece(std::string outputFileName) const{
+    
 
+    std::ofstream ofs(outputFileName);
+    ofs << "OUTLINE -1 0 0 " << this->mCanvasWidth << " " << this->mCanvasHeight << " " << "DIE_BLOCK" << std::endl;
+
+    if(fixedTesserae.size() == 0 && softTesserae.size() == 0){
+        //there is no blocks
+        ofs.close();
+        return;
+    }
+    
+    for(Tessera *tess : fixedTesserae){
+        ofs << tess->getName() << " " << tess->getLegalArea() << " ";
+        ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
+        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " ";
+        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
+        for(Tile *t : tess->TileArr){
+            
+        }
+        for(Tile *ov : tess->OverlapArr){
+
+        }
+    }
+
+    ofs.close();
 }
