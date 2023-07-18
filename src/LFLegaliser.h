@@ -28,6 +28,13 @@ public:
     len_t getCanvasWidth() const;
     len_t getCanvasHeight() const;
 
+    void translateGlobalFloorplanning();
+    void detectfloorplanningOverlaps();
+    void splitFloorplanningOverlaps();
+
+
+
+
     int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
     /* 5 functions proposed in the paper */

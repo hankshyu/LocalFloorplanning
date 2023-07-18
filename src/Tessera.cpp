@@ -74,3 +74,37 @@ void Tessera::calBoundingBox(){
     this->mBBLowerLeft = LL;
     this->mBBUpperRight = UR;
 }
+
+/*
+    // TODO
+    Notes for Ryan Lin...
+    We would call translateGlobalFloorplanning() from LFLegaliser.h to translate cirlces from 
+    global floorplanning to Rectangles (Tessera.h), and it would include a default Tile (Tile.h)
+    We would then call detectfloorplanningOverlaps() to detect overlaps. Overlaps would be record as
+    another Tile(label with tileType::OVERLAP)
+    Then call splitFloorplanningOverlaps() from LFLegaliser.h
+    it would :
+    for(Tessera t : all Tesserae vector){
+        t.splitRectliearDueToOverlap()
+    }
+
+
+*/
+void Tessera::splitRectliearDueToOverlap(){
+    
+    /*
+    The translated info is stored in:
+    - Cord mInitLowerLeft;
+    - len_t mInitWidth;
+    - len_t mInitHeight;
+
+    There should be "ONE" default Tile in TileArr, which is the default tile(= InitXXX...)
+    Overlap tiles are calculated as pushed into overlapArr
+    You should read the entire overlap Arr and mark off the area indicated, this would lead you to 
+    a rectlinear shape.
+    Then you should further split the acquired rectilinear, and split them into smaller tiles. you "MUST"
+    remove the default tile if new smaller splits are pushed in. GOOD LUCK!!
+
+
+    */
+}

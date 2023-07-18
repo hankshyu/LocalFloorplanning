@@ -26,6 +26,7 @@ private:
     Cord mBBUpperRight;
 
     void calBoundingBox();
+    void splitRectliearDueToOverlap();
 
 public:
     std::vector <Tile *> TileArr;
