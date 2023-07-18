@@ -31,7 +31,6 @@ public:
     int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
     /* 5 functions proposed in the paper */
-
     Tile *findPoint(const Cord &key) const;
     void findNeighbor(std::vector <Tile *> neighbor);
     
@@ -40,7 +39,6 @@ public:
     // createTile
 
     // deleteTile (Don't need)
-
     void visualiseArtpiece(const std::string outputFileName);
 
 };

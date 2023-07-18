@@ -70,7 +70,6 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
     return 0;
 }
 
-
 void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
     
     std::cout << "print to file..."<< outputFileName <<std::endl;
