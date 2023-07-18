@@ -87,8 +87,8 @@ void Tessera::calBoundingBox(){
     for(Tessera t : all Tesserae vector){
         t.splitRectliearDueToOverlap()
     }
-
-
+    
+    to acquire the correct tile distribution with overlap tiles correctly split.
 */
 void Tessera::splitRectliearDueToOverlap(){
     
@@ -104,6 +104,11 @@ void Tessera::splitRectliearDueToOverlap(){
     a rectlinear shape.
     Then you should further split the acquired rectilinear, and split them into smaller tiles. you "MUST"
     remove the default tile if new smaller splits are pushed in. GOOD LUCK!!
+
+    p.s. Just insert the smaller tiles like so:
+    Tile *newsmallersplit = new Tile(tileType::BLOCK, Cord(x, y), width, height);
+    
+    You don't have to maintain *up *donw *left right pointers, they will be taken care of when insertion happen
 
 
     */
