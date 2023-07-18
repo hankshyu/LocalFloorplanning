@@ -14,9 +14,24 @@ void printTile(const Tile &t){
 int main(int argc, char const *argv[])
 {
     std::cout << "This is Local floorplanner!" << std::endl;
-    LFLegaliser lfLegaliser(8, 7);
-    lfLegaliser.addFirstTessera(tesseraType::SOFT, "FPU", 6, Cord(5, 0) , 3, 2);
-    lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
     
+    LFLegaliser lfLegaliser(8, 7);
+    lfLegaliser.addFirstTessera(tesseraType::SOFT, "FPU", 6, Cord(2, 2) , 2, 3);
+    
+    if(lfLegaliser.softTesserae[0]->TileArr[0]->up == nullptr){
+        std::cout << "Direction: up is nullptr" << std::endl;
+    }
+    if(lfLegaliser.softTesserae[0]->TileArr[0]->down == nullptr){
+        std::cout << "Direction: down is nullptr" << std::endl;
+    }
+    if(lfLegaliser.softTesserae[0]->TileArr[0]->left == nullptr){
+        std::cout << "Direction: left is nullptr" << std::endl;
+    }
+    if(lfLegaliser.softTesserae[0]->TileArr[0]->right == nullptr){
+        std::cout << "Direction: right is nullptr" << std::endl;
+    }
+
+    lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
+
     return 0;
 }
