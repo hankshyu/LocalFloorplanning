@@ -168,6 +168,22 @@ Tile *LFLegaliser::findPoint(const Cord &key) const{
 }
 
 void LFLegaliser::findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
+
+}
+
+void LFLegaliser::findDownNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
+    
+}
+
+void LFLegaliser::findLeftNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
+    Tile *n = centre->bl;
+    neighbors.push_back(n);
+    n = n->rt;
+    //TODO
+    while(n->getUpperRight().y)
+}
+
+void LFLegaliser::findRightNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
     Tile *n = centre->tr;
     neighbors.push_back(n);
     n = n->lb;
@@ -177,20 +193,11 @@ void LFLegaliser::findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors)
     }
 }
 
-void LFLegaliser::findDownNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
-
-}
-
-void LFLegaliser::findLeftNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
-
-}
-
-void LFLegaliser::findRightNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
-
-}
-
-void LFLegaliser::findAllNeighbors(const Tile *centre, std::vector<Tile *> &neighbors) const{
+void LFLegaliser::findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
     findTopNeighbors(centre, neighbors);
+    findDownNeighbors(centre, neighbors);
+    findLeftNeighbors(centre, neighbors);
+    findRightNeighbors(centre, neighbors);
 }
 
 
