@@ -19,7 +19,7 @@ private:
 
 public:
 
-    Tile *up, *down, *left, *right;
+    Tile *rt, *tr, *bl, *lb;
     bool printLabel;
 
     Tile();
@@ -41,8 +41,17 @@ public:
     
     float getAspectRatio() const;
     area_t getArea() const;
+
+    inline bool checkXCordInTile(const Cord &point) const{
+        return (point.x >= this->mLowerLeft.x) && (point.x < this->mLowerLeft.x + this->mWidth);
+    }
+    inline bool checkYCordInTile(const Cord &point) const{
+        return (point.y >= this->mLowerLeft.y) && (point.y < this->mLowerLeft.y + this->mHeight);
+    }
+    inline bool checkCordInTile(const Cord &point) const{
+        return (checkXCordInTile(point) && checkYCordInTile(point));
+    }
     
 };
-
 
 #endif // __TILE_H__

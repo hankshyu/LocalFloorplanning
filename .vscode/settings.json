@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.objdump": "riscv",
         "__bit_reference": "cpp",
         "__bits": "cpp",
         "__config": "cpp",
@@ -59,6 +60,16 @@
         "unordered_map": "cpp",
         "variant": "cpp",
         "vector": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "bit": "cpp",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "utility": "cpp",
+        "fstream": "cpp"
     }
 }

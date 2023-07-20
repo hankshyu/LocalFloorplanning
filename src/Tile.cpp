@@ -2,11 +2,11 @@
 
 Tile::Tile()
     : type(tileType::BLANK), mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0), printLabel(false),
-        up(nullptr), down(nullptr), left(nullptr), right(nullptr) {}
+        rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
 
 Tile::Tile(tileType t, Cord LL, len_t w, len_t h) 
     : type(t), mLowerLeft(LL), mWidth(w), mHeight(h), printLabel(false),
-        up(nullptr), down(nullptr), left(nullptr), right(nullptr) {}
+        rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
 
 tileType Tile::getType() const {
     return this->type;
@@ -50,4 +50,6 @@ float Tile::getAspectRatio() const {
 area_t Tile::getArea() const {
     return this->mWidth * this->mHeight;
 };
+
+
 

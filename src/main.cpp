@@ -9,6 +9,16 @@ void printCord(const Cord &c){
 }
 void printTile(const Tile &t){
     printCord(t.getLowerLeft());
+    if(t.getType() == tileType::BLOCK){
+        std::cout << "Type: Block "; 
+    }else if(t.getType() == tileType::OVERLAP){
+        std::cout << "Type: OVlap "; 
+
+    }else if(t.getType() == tileType::BLANK){
+        std::cout << "Type: Blank "; 
+    } else{
+        std::cout << "ERRRROR! Type blank!! ";
+    }
     std::cout << ", W=" << t.getWidth() << ", H=" << t.getHeight() << std::endl;
 }
 int main(int argc, char const *argv[])
@@ -18,20 +28,10 @@ int main(int argc, char const *argv[])
     LFLegaliser lfLegaliser(8, 7);
     lfLegaliser.addFirstTessera(tesseraType::SOFT, "FPU", 6, Cord(2, 2) , 2, 3);
     
-    if(lfLegaliser.softTesserae[0]->TileArr[0]->up == nullptr){
-        std::cout << "Direction: up is nullptr" << std::endl;
-    }
-    if(lfLegaliser.softTesserae[0]->TileArr[0]->down == nullptr){
-        std::cout << "Direction: down is nullptr" << std::endl;
-    }
-    if(lfLegaliser.softTesserae[0]->TileArr[0]->left == nullptr){
-        std::cout << "Direction: left is nullptr" << std::endl;
-    }
-    if(lfLegaliser.softTesserae[0]->TileArr[0]->right == nullptr){
-        std::cout << "Direction: right is nullptr" << std::endl;
-    }
-
     lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
+
+    Tile *find = lfLegaliser.findPoint(Cord (4,4));
+    printTile(*find);
 
     return 0;
 }

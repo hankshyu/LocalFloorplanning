@@ -16,16 +16,16 @@ area_t Tessera::getLegalArea () const{
     return this->mLegalArea;
 }
 
-Cord Tessera::getBBLowerLeft (){
+Cord Tessera::getBBLowerLeft() const{
     return this->mBBLowerLeft;
 }
-Cord Tessera::getBBUpperRight(){
+Cord Tessera::getBBUpperRight() const{
     return this->mBBUpperRight;
 }
-len_t Tessera::getBBWidth (){
+len_t Tessera::getBBWidth() const{
     return this->mBBUpperRight.x - this->mBBLowerLeft.x;
 }
-len_t Tessera::getBBHeight (){
+len_t Tessera::getBBHeight() const{
     return this->mBBUpperRight.y - this->mBBLowerLeft.y;
 }
 

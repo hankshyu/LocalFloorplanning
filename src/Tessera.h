@@ -37,10 +37,10 @@ public:
 
     std::string getName () const;
     area_t getLegalArea () const;
-    Cord getBBLowerLeft ();
-    Cord getBBUpperRight();
-    len_t getBBWidth ();
-    len_t getBBHeight ();
+    Cord getBBLowerLeft () const;
+    Cord getBBUpperRight() const;
+    len_t getBBWidth () const;
+    len_t getBBHeight () const;
 
     int insertTiles(tileType type, Tile *tile);
 
