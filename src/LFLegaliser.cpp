@@ -183,10 +183,21 @@ void LFLegaliser::findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors)
 bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height, Tile *target) const{
 
     // Use point-finding algo to locate the tile containin the upperleft corner of AOI
-    Tile *tupperleft = findPoint(Cord(lowerleft.x, lowerleft.y + height - 1));
+    Tile *currentFind = findPoint(Cord(lowerleft.x, lowerleft.y + height - 1));
     
-    if(tupperleft->getType() == tileType::BLANK){
+    // See if the tile is solid
+    if(currentFind->getType() != tileType::BLANK){
+        // This is an edge of a solid tile
+        target = currentFind;
+        return true;
+    }else{
+        // See if the right edge within AOI, right must be a tile
+        if(currentFind->getUpperRight().x < lowerleft.x + width){
+            target = currentFind->tr;
+            return true;
+        }else{
 
+        }
     }
 
 }

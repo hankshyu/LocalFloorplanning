@@ -30,17 +30,20 @@ int main(int argc, char const *argv[])
     
     lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
 
-    Tile *find = lfLegaliser.findPoint(Cord (4,4));
+    Tile *find = lfLegaliser.findPoint(Cord (8,3));
     printTile(*find);
 
-    Tile *c = lfLegaliser.softTesserae[0]->TileArr[0];
-    printTile(*c);
+    find = lfLegaliser.findPoint(Cord (0, 5));
+    printTile(*find);
 
-    std::vector<Tile *> top;
-    lfLegaliser.findAllNeighbors(c, top);
-    std::cout << "top has: " << top.size() << " elements" << std::endl;
-    for(Tile *t : top){
-        printTile(*t);
-    }
-    return 0;
+    // Tile *c = lfLegaliser.softTesserae[0]->TileArr[0];
+    // printTile(*c);
+
+    // std::vector<Tile *> top;
+    // lfLegaliser.findAllNeighbors(c, top);
+    // std::cout << "top has: " << top.size() << " elements" << std::endl;
+    // for(Tile *t : top){
+    //     printTile(*t);
+    // }
+    // return 0;
 }
