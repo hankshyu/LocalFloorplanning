@@ -12,43 +12,7 @@ bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height
     return (x_valid && y_valid);
 }
 
-void LFLegaliser::traverseBlank(std::ofstream &ofs,  Tile &t) {
-    
-    t.printLabel = (!t.printLabel);
-    
-    if(t.getType() == tileType::BLANK){
 
-        ofs << "B " << t.getLowerLeft().x << " " << t.getLowerLeft().y << " ";
-        ofs << t.getWidth() << " " << t.getHeight() << " ";
-        ofs << "BLANK_TILE" << std::endl;
-    }
-
-    if(t.rt != nullptr){
-        if(t.rt->printLabel != t.printLabel){
-            traverseBlank(ofs, *(t.rt));
-        }
-    }
-
-    if(t.lb != nullptr){
-        if(t.lb->printLabel != t.printLabel){
-            traverseBlank(ofs, *(t.lb));
-        }
-    }
-
-    if(t.bl != nullptr){
-        if(t.bl->printLabel != t.printLabel){
-            traverseBlank(ofs, *(t.bl));
-        }
-    }
-
-    if(t.tr != nullptr){
-        if(t.tr->printLabel != t.printLabel){
-            traverseBlank(ofs, *(t.tr));
-        }
-    }
-    
-    return;
-}
 
 Tile *LFLegaliser::getRandomTile() const{
     assert(!(fixedTesserae.empty() && softTesserae.empty()));
@@ -143,7 +107,7 @@ Tile *LFLegaliser::findPoint(const Cord &key) const{
     assert(key >= Cord(0,0));
     assert(key.x < getCanvasWidth());
     assert(key.y < getCanvasHeight());
-    
+
     Tile *index = getRandomTile();
     
     while(!(index->checkCordInTile(key))){
@@ -218,8 +182,12 @@ void LFLegaliser::findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors)
 
 bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height, Tile *target) const{
 
-    // Use point-findign algo to locate the tile containin the upperleft corner of AOI
-    Tile *tupperleft = findPoint(Cord(lowerleft.x, lowerleft.y + height));
+    // Use point-finding algo to locate the tile containin the upperleft corner of AOI
+    Tile *tupperleft = findPoint(Cord(lowerleft.x, lowerleft.y + height - 1));
+    
+    if(tupperleft->getType() == tileType::BLANK){
+
+    }
 
 }
 
@@ -233,7 +201,8 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
     std::cout << "print to file..."<< outputFileName <<std::endl;
 
     std::ofstream ofs(outputFileName);
-    ofs << "OUTLINE -1 0 0 " << this->mCanvasWidth << " " << this->mCanvasHeight << " " << "DIE_BLOCK" << std::endl;
+    ofs << "BLOCK " << fixedTesserae.size() + softTesserae.size() << std::endl;
+    ofs << this->mCanvasWidth << " " << this->mCanvasHeight << std::endl;
 
     if(fixedTesserae.size() == 0 && softTesserae.size() == 0){
         //there is no blocks
@@ -244,26 +213,26 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
     for(Tessera *tess : softTesserae){
         ofs << tess->getName() << " " << tess->getLegalArea() << " ";
         ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
-        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " ";
+        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " " << "SOFT_BLOCK" << std::endl;
         ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
         for(Tile *t : tess->TileArr){
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
         }
         for(Tile *t : tess->OverlapArr){
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" <<std::endl;
         }
     }
 
     for(Tessera *tess : fixedTesserae){
         ofs << tess->getName() << " " << tess->getLegalArea() << " ";
         ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
-        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " ";
+        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " " << "HARD_BLOCK" << std::endl;
         ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
         for(Tile *t : tess->TileArr){
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
         }
         for(Tile *t : tess->OverlapArr){
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << std::endl;
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" <<std::endl;
         }
     }
 
@@ -281,6 +250,45 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
             traverseBlank(ofs, *(this->softTesserae[0]->OverlapArr[0]));
         }
     }
+    ofs << "CONNECTION 0" << std::endl;
 
     ofs.close();
+}
+
+void LFLegaliser::traverseBlank(std::ofstream &ofs,  Tile &t) {
+    
+    t.printLabel = (!t.printLabel);
+    
+    if(t.getType() == tileType::BLANK){
+
+        ofs << t.getLowerLeft().x << " " << t.getLowerLeft().y << " ";
+        ofs << t.getWidth() << " " << t.getHeight() << " ";
+        ofs << "BLANK_TILE" << std::endl;
+    }
+
+    if(t.rt != nullptr){
+        if(t.rt->printLabel != t.printLabel){
+            traverseBlank(ofs, *(t.rt));
+        }
+    }
+
+    if(t.lb != nullptr){
+        if(t.lb->printLabel != t.printLabel){
+            traverseBlank(ofs, *(t.lb));
+        }
+    }
+
+    if(t.bl != nullptr){
+        if(t.bl->printLabel != t.printLabel){
+            traverseBlank(ofs, *(t.bl));
+        }
+    }
+
+    if(t.tr != nullptr){
+        if(t.tr->printLabel != t.printLabel){
+            traverseBlank(ofs, *(t.tr));
+        }
+    }
+    
+    return;
 }
