@@ -33,5 +33,14 @@ int main(int argc, char const *argv[])
     Tile *find = lfLegaliser.findPoint(Cord (4,4));
     printTile(*find);
 
+    Tile *c = lfLegaliser.softTesserae[0]->TileArr[0];
+    printTile(*c);
+
+    std::vector<Tile *> top;
+    lfLegaliser.findAllNeighbors(c, top);
+    std::cout << "top has: " << top.size() << " elements" << std::endl;
+    for(Tile *t : top){
+        printTile(*t);
+    }
     return 0;
 }

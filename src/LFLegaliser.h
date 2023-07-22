@@ -38,15 +38,22 @@ public:
     int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
     /* 5 functions proposed in the paper */
+
+    // Returns the Tile that includes the Cord "key"
     Tile *findPoint(const Cord &key) const;
     
+    // Pushes all neighbors of Tile "centre" to vector "neighbors"
     void findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
     void findDownNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
     void findLeftNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
     void findRightNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
     void findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
 
-    // searchArea
+    // Determine if there is any solid tiles insice the area (lowerleft, width, height), tile return through "target"
+    bool searchArea(Cord lowerleft, len_t width, len_t height, Tile *target) const;
+    // Clone of searchArea, no "target" is returned
+    bool searchArea(Cord lowerleft, len_t width, len_t height) const;
+    
     // enumerateDirectArea
     // createTile
 

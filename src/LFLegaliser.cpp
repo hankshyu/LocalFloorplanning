@@ -140,6 +140,10 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
 
 
 Tile *LFLegaliser::findPoint(const Cord &key) const{
+    assert(key >= Cord(0,0));
+    assert(key.x < getCanvasWidth());
+    assert(key.y < getCanvasHeight());
+    
     Tile *index = getRandomTile();
     
     while(!(index->checkCordInTile(key))){
@@ -168,29 +172,41 @@ Tile *LFLegaliser::findPoint(const Cord &key) const{
 }
 
 void LFLegaliser::findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
-
+    Tile *n = centre->rt;
+    while(n->getLowerLeft().x > centre->getLowerLeft().x){
+        neighbors.push_back(n);
+        n = n->bl;
+    }
+    neighbors.push_back(n);
 }
 
 void LFLegaliser::findDownNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
-    
+    Tile *n = centre->lb;
+    while(n->getUpperRight().x < centre->getUpperRight().x){
+        neighbors.push_back(n);
+        n = n->tr;
+    }
+    neighbors.push_back(n);
 }
 
 void LFLegaliser::findLeftNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
     Tile *n = centre->bl;
+    while(n->getUpperRight().y < centre->getUpperRight().y){
+        neighbors.push_back(n);
+        n = n->rt;
+    }
     neighbors.push_back(n);
-    n = n->rt;
-    //TODO
-    while(n->getUpperRight().y)
 }
 
 void LFLegaliser::findRightNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
     Tile *n = centre->tr;
-    neighbors.push_back(n);
-    n = n->lb;
+    // the last neighbor is the first tile encountered whose lower y cord <= lower y cord of starting tile
     while(n->getLowerLeft().y > centre->getLowerLeft().y){
         neighbors.push_back(n);
         n = n->lb;
     }
+    neighbors.push_back(n);
+    
 }
 
 void LFLegaliser::findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
@@ -200,6 +216,16 @@ void LFLegaliser::findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors)
     findRightNeighbors(centre, neighbors);
 }
 
+bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height, Tile *target) const{
+
+    // Use point-findign algo to locate the tile containin the upperleft corner of AOI
+    Tile *tupperleft = findPoint(Cord(lowerleft.x, lowerleft.y + height));
+
+}
+
+bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height) const{
+
+}
 
 
 void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
