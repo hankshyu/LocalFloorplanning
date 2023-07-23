@@ -19,6 +19,11 @@ private:
     void traverseBlank(std::ofstream &ofs, Tile &t) ;
     Tile *getRandomTile() const;
 
+    // subRoutine used in enumerateDirectArea
+    void enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles, Tile *targetTile) const;
+
+    
+
 public:
     std::vector <Tessera*> fixedTesserae;
     std::vector <Tessera*> softTesserae;
@@ -41,6 +46,7 @@ public:
 
     // Returns the Tile that includes the Cord "key"
     Tile *findPoint(const Cord &key) const;
+    Tile *findPoint(const Cord &key, Tile *initTile) const;
     
     // Pushes all neighbors of Tile "centre" to vector "neighbors"
     void findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
@@ -50,11 +56,14 @@ public:
     void findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
 
     // Determine if there is any solid tiles insice the area (lowerleft, width, height), tile return through "target"
-    bool searchArea(Cord lowerleft, len_t width, len_t height, Tile *target) const;
+    bool searchArea(Cord lowerleft, len_t width, len_t height, Tile &target) const;
     // Clone of searchArea, no "target" is returned
     bool searchArea(Cord lowerleft, len_t width, len_t height) const;
     
-    // enumerateDirectArea
+    // Enumerates all tiles in a given area, each tile is visited(pushed into vector) only after all the tiles avove & to
+    // its left is visited
+    void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
+    
     // createTile
 
     // deleteTile (Don't need)

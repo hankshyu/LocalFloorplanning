@@ -51,6 +51,12 @@ public:
     inline bool checkCordInTile(const Cord &point) const{
         return (checkXCordInTile(point) && checkYCordInTile(point));
     }
+
+    // if input Tile's lower-left touches the right edge of current tile (used in Directed Area Enumeration)
+    bool checkTRLLTouch(Tile *right) const;
+    bool cutHeight (len_t cut) const;
+
+    void show() const;
     
 };
 

@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Tile.h"
 
 Tile::Tile()
@@ -51,5 +52,25 @@ area_t Tile::getArea() const {
     return this->mWidth * this->mHeight;
 };
 
+bool Tile::checkTRLLTouch(Tile *right) const{
+    Cord rightLL = right->getLowerLeft();
+    
+    bool xAligned = ((getUpperRight().x) == (rightLL.x));
+    bool yInRange = ((rightLL.y >= getLowerRight().y) && (rightLL.y < getUpperRight().y));
 
+    return (xAligned && yInRange);
+}
+
+bool Tile::cutHeight(len_t cut) const{
+    return ((cut > mLowerLeft.y) && (cut < (mLowerLeft.y + mHeight)));
+}
+
+void Tile::show() const {
+    if(this->type == tileType::BLOCK) std::cout <<"Type: BLOCK ";
+    else if(this->type == tileType::BLANK) std::cout <<"Type: BLANK ";
+    else if(this->type == tileType::OVERLAP) std::cout <<"Type: OVERLAP ";
+    
+    std::cout << "(" <<mLowerLeft.x << ", " << mLowerLeft.y << ") ";
+    std::cout << "W=" << mWidth <<" H=" << mHeight << std::endl;
+}
 

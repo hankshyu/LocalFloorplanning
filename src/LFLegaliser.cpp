@@ -135,6 +135,38 @@ Tile *LFLegaliser::findPoint(const Cord &key) const{
     return index;
 }
 
+Tile *LFLegaliser::findPoint(const Cord &key, Tile *initTile) const{
+    assert(key >= Cord(0,0));
+    assert(key.x < getCanvasWidth());
+    assert(key.y < getCanvasHeight());
+
+    Tile *index = initTile;
+    
+    while(!(index->checkCordInTile(key))){
+        if(!index->checkYCordInTile(key)){
+            // Adjust vertical range
+            if(key.y >= index->getLowerLeft().y){
+                assert(index->rt != nullptr);
+                index = index->rt;
+            }else{
+                assert(index->lb != nullptr);
+                index = index->lb;
+            }
+        }else{
+            // Vertical range correct! adjust horizontal range
+            if(key.x >= index->getLowerLeft().x){
+                assert(index->tr != nullptr);
+                index = index->tr;
+            }else{
+                assert(index->bl != nullptr);
+                index = index->bl;
+            }
+        }
+    }
+    
+    return index;
+}
+
 void LFLegaliser::findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
     Tile *n = centre->rt;
     while(n->getLowerLeft().x > centre->getLowerLeft().x){
@@ -180,31 +212,104 @@ void LFLegaliser::findAllNeighbors(Tile *centre, std::vector<Tile *> &neighbors)
     findRightNeighbors(centre, neighbors);
 }
 
-bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height, Tile *target) const{
+bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height, Tile &target) const{
+
+    assert(checkTesseraInCanvas(lowerleft, width, height));
 
     // Use point-finding algo to locate the tile containin the upperleft corner of AOI
-    Tile *currentFind = findPoint(Cord(lowerleft.x, lowerleft.y + height - 1));
-    
-    // See if the tile is solid
-    if(currentFind->getType() != tileType::BLANK){
-        // This is an edge of a solid tile
-        target = currentFind;
-        return true;
-    }else{
-        // See if the right edge within AOI, right must be a tile
-        if(currentFind->getUpperRight().x < lowerleft.x + width){
-            target = currentFind->tr;
+    len_t searchRBorderHeight = lowerleft.y + height - 1;
+    Tile *currentFind = findPoint(Cord(lowerleft.x, searchRBorderHeight));
+    std::cout << "Init found:" <<std::endl;
+
+    while(currentFind->getUpperLeft().y > lowerleft.y){
+        // See if the tile is solid
+        if(currentFind->getType() != tileType::BLANK){
+            // This is an edge of a solid tile
+            target = *currentFind;
+            return true;
+        }else if(currentFind->getUpperRight().x < lowerleft.x + width){
+            // See if the right edge within AOI, right must be a tile
+            target = *(currentFind->tr);
             return true;
         }else{
+            // Move down to the next tile touching the left edge of AOI
+            if(currentFind->getLowerLeft().y <= 1){
+                break;
+            }
+            currentFind = findPoint(Cord(lowerleft.x, currentFind->getLowerLeft().y -1));
+        }
+    }
 
+    return false;
+
+}
+
+bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height) const{
+    len_t searchRBorderHeight = lowerleft.y + height - 1;
+    Tile *currentFind = findPoint(Cord(lowerleft.x, searchRBorderHeight));
+    
+    while(currentFind->getUpperLeft().y > lowerleft.y){
+        // See if the tile is solid
+        if(currentFind->getType() != tileType::BLANK){
+            // This is an edge of a solid tile
+            return true;
+        }else if(currentFind->getUpperRight().x < lowerleft.x + width){
+            // See if the right edge within AOI, right must be a tile
+            return true;
+        }else{
+            if(currentFind->getLowerLeft().y <= 1){
+                break;
+            }
+            currentFind = findPoint(Cord(lowerleft.x, currentFind->getLowerLeft().y -1));
+        }
+    }
+
+    return false;
+}
+
+void LFLegaliser::enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const{
+    len_t searchRBorderHeight = lowerleft.y + height - 1;
+    Tile *leftTouchTile = findPoint(Cord(lowerleft.x, searchRBorderHeight));
+
+    
+    while(leftTouchTile->getUpperLeft().y > lowerleft.y){
+        enumerateDirectAreaRProcess(lowerleft, width, height, allTiles, leftTouchTile);
+        if(leftTouchTile->getLowerLeft().y <= 1) break;
+        leftTouchTile = findPoint(Cord(lowerleft.x, leftTouchTile->getLowerLeft().y -1));
+    }
+}
+
+void LFLegaliser::enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles, Tile *targetTile) const{
+    
+    // R1) Enumerate the tile
+    if(targetTile->getType() == tileType::BLOCK || targetTile->getType() == tileType::OVERLAP){
+        allTiles.push_back(targetTile);
+
+    }
+
+    // R2) If the right edge of the tile is outside of the seearch area, return
+    if(targetTile->getLowerRight().x >= (lowerleft.x + width)){
+        return;
+    }
+
+    // R3) Use neighbor-finding algo to locate all the tiles that touch the right side of the current tile and also intersect the search area
+    std::vector<Tile *> rightNeighbors;
+    findRightNeighbors(targetTile, rightNeighbors);
+    for(Tile *t : rightNeighbors){
+
+        // R4) If bottom left corner of the neighbor touches the current tile
+        bool R4 = targetTile->checkTRLLTouch(t);
+        // R5) If the bottom edge ofthe search area cuts both the urrent tile and the neighbor
+        bool R5 = (targetTile->cutHeight(lowerleft.y)) && (t->cutHeight(lowerleft.y));
+
+        if(R4 || R5){
+            enumerateDirectAreaRProcess(lowerleft, width, height, allTiles, t);
         }
     }
 
 }
 
-bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height) const{
 
-}
 
 
 void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
