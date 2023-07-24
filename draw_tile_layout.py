@@ -20,7 +20,7 @@ def draw_block(ax, x, y, width, height, color = "#FFF", aplha = 1.0):
         )
     )
 
-used_color = ["#FFE", "#FFF"]
+used_color = ["#FFE", "#FFF", "#F00"]
 
 
 def set_rand_color():
@@ -170,11 +170,13 @@ for connection in range(total_connection_number):
     i += 1
 
 
-# while i < len(f):
-#     ss = f[i].split(" ")
-#     (bx, by, bw, bh) = (float(ss[0]), float(ss[1]), float(ss[2]), float(ss[3]))
-#     draw_block(ax, bx, by, bw, bh, color="#F00")
-#     i += 1
+while i < len(f):
+    if f[i] == "":
+        break
+    ss = f[i].split(" ")
+    (bx, by, bw, bh) = (float(ss[0]), float(ss[1]), float(ss[2]), float(ss[3]))
+    draw_block(ax, bx, by, bw, bh, color="#F00")
+    i += 1
 
 
 plt.savefig(png_name)

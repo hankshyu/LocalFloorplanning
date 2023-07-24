@@ -42,7 +42,7 @@ public:
 
     int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
-    /* 5 functions proposed in the paper */
+    /* Functions proposed in the paper */
 
     // Returns the Tile that includes the Cord "key"
     Tile *findPoint(const Cord &key) const;
@@ -60,11 +60,12 @@ public:
     // Clone of searchArea, no "target" is returned
     bool searchArea(Cord lowerleft, len_t width, len_t height) const;
     
-    // Enumerates all tiles in a given area, each tile is visited(pushed into vector) only after all the tiles avove & to
+    // Enumerates all tiles in a given area, each tile is visited(pushed into vector) only after all the tiles above and to
     // its left is visited
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
     
-    // createTile
+    // pushes 
+    bool insertTile(Tile &tile);
 
     // deleteTile (Don't need)
     void visualiseArtpiece(const std::string outputFileName);

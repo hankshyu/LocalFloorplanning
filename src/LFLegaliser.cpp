@@ -309,8 +309,114 @@ void LFLegaliser::enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t
 
 }
 
+bool LFLegaliser::insertTile(Tile &tile){
+    assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
+
+    /* STEP 1) Find the space Tile containing the top edge of the aera to be occupied, process */
+    bool tileTouchesSky = (tile.getUpperRight().y == getCanvasHeight());
+    bool cleanTopCut = true;
+    Tile *origTop;
+    
+    if(!tileTouchesSky){
+        origTop = findPoint(tile.getUpperLeft());
+        cleanTopCut = (origTop->getLowerLeft().y == tile.getupperright().y);
+    } 
+    
+    if((!tileTouchesSky)&&(!cleanTopCut)){
+    
+        Tile *newDown = new Tile(tileType::BLANK, origTop->getLowerLeft(),origTop->getWidth(), (tile.getUpperLeft().y - origTop->getLowerLeft().y));
+        newDown->rt = origTop;
+        newDown->lb = origTop->lb;
+        newDown->bl = origTop->bl;
+
+        // manipulate neighbors around the split tiles
+
+        // change lower-neighbors' rt pointer to newly created tile
+        std::vector <Tile *> origDownNeighbors;
+        findDownNeighbors(origTop, origDownNeighbors);
+        for(Tile *t : origDownNeighbors){
+            if(t->rt == origTop){
+                t->rt = newDown;
+            }
+        }
+        
+        // change right neighbors to pointer their bl to the correct tile (one of the split)
+        std::vector <Tile *> origRightNeighbors;
+        findRightNeighbors(origTop, origRightNeighbors);
+        
+        bool rightModified = false;
+        for(int i = 0; i < origRightNeighbors.size(); ++i){
+            if(origRightNeighbors[i]->getLowerLeft().y < newDown->getUpperRight().y){
+                if(!rightModified){
+                    rightModified = true;
+                    newDown->tr = origRightNeighbors[i];
+                }
+                origRightNeighbors[i]->bl = newDown;
+                
+            }
+        }
+        assert(rightModified);
+
+        // change Left neighbors to point their tr to the correct tiles
+        std::vector <Tile *> origLeftNeighbors;
+        findLeftNeighbors(origTop, origLeftNeighbors);
+
+        bool leftModified = false;
+        for(int i = 0; i < origLeftNeighbors.size(); ++i){
+            if(origLeftNeighbors[i]->getUpperLeft().y > tile.getUpperLeft().y){
+                if(!leftModified){
+                    leftModified = true;
+                    origTop->bl = origLeftNeighbors[i];
+                }
+            }else{
+                origLeftNeighbors[i]->tr = newDown;
+            }
+        }
+        assert(leftModified);
+
+        origTop->setCord((origTop->getLowerLeft().x, tile.getUpperLeft().y));
+        origTop->setHeight = (origTop->getUpperLeft().y - tile.getUpperLeft().y)
+    }
+
+    /* STEP 2) Find the space Tile containing the bottom edge of the aera to be occupied, process */
+
+    bool tileTouchesGround = (tile.getLowerLeft().y == 0);
+    bool cleanBottomCut = true;
+    Tile *origBottom;
+    if(!tileTouchesGround){
+        origBottom = findPoint(tile.getLowerLeft() - Cord(0,1));
+        cleanBottomcut = (origBottom->getUpperRight().y == tile.getLowerLeft().y)
+    }
+
+    if((!tileTouchesGround) && (!cleanBottomCut)){
+        
+        tile *newUp = new Tile(tileType::BLANK, Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y)
+                                , origBottom->getWidth(), (origBottom->getUpperLeft().y - tile.getLowerLeft().y));         
+        
+        newUp->rt = origBottom->rt;
+        newUp->lb = origBottom;
+        newUp->tr = origBottom->tr;
+
+        // manipulate neighbors around the split tiles
+
+        // change the upper-neighbors' lb pointer to newly created tile
+        std::vector <Tile *> origUpNeighbors;
+        findTopNeighbors(origBottom, origUpNeighbors);
+        for(Tile *t : origUpNeighbors){
+            if(t->lb == origBottom){
+                t->lb = newUp;
+            }
+        }
+
+        // change 
+        //TODO: adjust right & left neighbors's pointer
 
 
+
+    }
+
+
+}
 
 void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
     
