@@ -310,6 +310,7 @@ void LFLegaliser::enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t
 }
 
 bool LFLegaliser::insertTile(Tile &tile){
+    assert(checkTesseraInCanvas((tile.getLowerLeft(), tile.getWidth(), tile.getHeight())));
     assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
 
     /* STEP 1) Find the space Tile containing the top edge of the aera to be occupied, process */
@@ -340,7 +341,7 @@ bool LFLegaliser::insertTile(Tile &tile){
             }
         }
         
-        // change right neighbors to pointer their bl to the correct tile (one of the split)
+        // change right neighbors to point their bl to the correct tile (one of the split)
         std::vector <Tile *> origRightNeighbors;
         findRightNeighbors(origTop, origRightNeighbors);
         
@@ -355,7 +356,6 @@ bool LFLegaliser::insertTile(Tile &tile){
                 
             }
         }
-        assert(rightModified);
 
         // change Left neighbors to point their tr to the correct tiles
         std::vector <Tile *> origLeftNeighbors;
@@ -372,10 +372,10 @@ bool LFLegaliser::insertTile(Tile &tile){
                 origLeftNeighbors[i]->tr = newDown;
             }
         }
-        assert(leftModified);
 
-        origTop->setCord((origTop->getLowerLeft().x, tile.getUpperLeft().y));
-        origTop->setHeight = (origTop->getUpperLeft().y - tile.getUpperLeft().y)
+        origTop->setCord(Cord(origTop->getLowerLeft().x, tile.getUpperLeft().y));
+        origTop->setHeight = (origTop->getUpperLeft().y - tile.getUpperLeft().y);
+        origTop->lb = newDown;
     }
 
     /* STEP 2) Find the space Tile containing the bottom edge of the aera to be occupied, process */
@@ -408,12 +408,45 @@ bool LFLegaliser::insertTile(Tile &tile){
             }
         }
 
-        // change 
-        //TODO: adjust right & left neighbors's pointer
+        // change right neighbors to point their bl to the correct tle (one of the split)
+        std::vector <Tile *> origRightNeighbors;
+        findRightNeighbors(origBottom, origRightNeighbors);
 
+        bool rightModified = false;
+        for(int i = 0; i < origRightNeighbors.size(); ++i){
+            if(origRightNeighbors[i]->getLowerLeft().y < tile.getLowerLeft().y){
+                if(rightModified){
+                    rightModified = true;
+                    origBottom->tr = origRightNeighbors[i];
+                }
+            }else{
+                origRightNeighbors[i]->bl = newUp;
+            }
+        }
+        
+        // change left neighbors to point their tr to the correct tiles
+        std::vector <Tile *> origLeftNeighbors;
+        findLeftNeighbors(origBottom, origLeftNeighbors);
 
+        bool leftModified = false;
+        for(int i = 0; i < origLeftNeighbors.size(); ++i){
+            if(origLeftNeighbors[i]->getUpperLeft().y > tile.getLowerLeft().y){
+                if(!leftModified){
+                    leftModified = true;
+                    newUp->bl = origLeftNeighbors[i];
+                }
+                origLeftNeighbors[i]->tr = newUp;
+            }
+        }
+
+        origBottom->setCord(Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y));
+        origBottom->setHeight = (origBottom->getUpperLeft().y - tile.getLowerLeft().y);
+        origBottom->rt = newUp;
 
     }
+
+    // STEP3 ) .... TODO
+
 
 
 }
