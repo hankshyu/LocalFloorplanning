@@ -41,17 +41,31 @@ len_t LFLegaliser::getCanvasHeight () const{
     return this->mCanvasHeight;
 }
 
-//TODO
+//TODO: For cyuyang
 void LFLegaliser::translateGlobalFloorplanning(){
-
+    // You could define the I/O of this function
+    // To create a soft Tessera:
+    // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
+    // softTesserae.push_back(newTess);
+    // The constructor would automatically create a new tile for you.
+    
 }
-//TODO
+//TODO: For cyuyang
 void LFLegaliser::detectfloorplanningOverlaps(){
 
 }
-//TODO
-void LFLegaliser::splitFloorplanningOverlaps(){
 
+void LFLegaliser::splitFloorplanningOverlaps(){
+    // Soft&Hard block overlap are located and split if necessary in OverlapArr of each Tessera
+    // now cut rectlinear blank space of each Tessera into multiple blank tiles.
+
+    for(Tessera *fixedTess : this->fixedTesserae){
+        fixedTess->splitRectliearDueToOverlap();
+    }
+
+    for(Tessera *softTess : this->softTesserae){
+        softTess->splitRectliearDueToOverlap();
+    }
 }
 
 
@@ -313,6 +327,7 @@ void LFLegaliser::enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t
 
 }
 
+// Not yet complete.... 
 void LFLegaliser::insertTile(Tile &tile){
     assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
     assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));

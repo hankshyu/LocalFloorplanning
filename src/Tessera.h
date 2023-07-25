@@ -26,7 +26,6 @@ private:
     Cord mBBUpperRight;
 
     void calBoundingBox();
-    void splitRectliearDueToOverlap();
 
 public:
     std::vector <Tile *> TileArr;
@@ -43,6 +42,7 @@ public:
     len_t getBBHeight () const;
 
     int insertTiles(tileType type, Tile *tile);
+    void splitRectliearDueToOverlap();
 
 };
 
