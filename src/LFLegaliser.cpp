@@ -168,6 +168,7 @@ Tile *LFLegaliser::findPoint(const Cord &key, Tile *initTile) const{
 }
 
 void LFLegaliser::findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
+    if(centre->rt == nullptr) return;
     Tile *n = centre->rt;
     while(n->getLowerLeft().x > centre->getLowerLeft().x){
         neighbors.push_back(n);
@@ -177,6 +178,7 @@ void LFLegaliser::findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors)
 }
 
 void LFLegaliser::findDownNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
+    if(centre->lb == nullptr) return;
     Tile *n = centre->lb;
     while(n->getUpperRight().x < centre->getUpperRight().x){
         neighbors.push_back(n);
@@ -186,6 +188,7 @@ void LFLegaliser::findDownNeighbors(Tile *centre, std::vector<Tile *> &neighbors
 }
 
 void LFLegaliser::findLeftNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
+    if(centre->bl == nullptr) return;
     Tile *n = centre->bl;
     while(n->getUpperRight().y < centre->getUpperRight().y){
         neighbors.push_back(n);
@@ -195,6 +198,7 @@ void LFLegaliser::findLeftNeighbors(Tile *centre, std::vector<Tile *> &neighbors
 }
 
 void LFLegaliser::findRightNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const{
+    if(centre->tr == nullptr) return;
     Tile *n = centre->tr;
     // the last neighbor is the first tile encountered whose lower y cord <= lower y cord of starting tile
     while(n->getLowerLeft().y > centre->getLowerLeft().y){
@@ -309,8 +313,8 @@ void LFLegaliser::enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t
 
 }
 
-bool LFLegaliser::insertTile(Tile &tile){
-    assert(checkTesseraInCanvas((tile.getLowerLeft(), tile.getWidth(), tile.getHeight())));
+void LFLegaliser::insertTile(Tile &tile){
+    assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
     assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
 
     /* STEP 1) Find the space Tile containing the top edge of the aera to be occupied, process */
@@ -320,11 +324,12 @@ bool LFLegaliser::insertTile(Tile &tile){
     
     if(!tileTouchesSky){
         origTop = findPoint(tile.getUpperLeft());
-        cleanTopCut = (origTop->getLowerLeft().y == tile.getupperright().y);
-    } 
+        cleanTopCut = (origTop->getLowerLeft().y == tile.getUpperRight().y);
+    }
     
     if((!tileTouchesSky)&&(!cleanTopCut)){
-    
+
+        
         Tile *newDown = new Tile(tileType::BLANK, origTop->getLowerLeft(),origTop->getWidth(), (tile.getUpperLeft().y - origTop->getLowerLeft().y));
         newDown->rt = origTop;
         newDown->lb = origTop->lb;
@@ -372,25 +377,27 @@ bool LFLegaliser::insertTile(Tile &tile){
                 origLeftNeighbors[i]->tr = newDown;
             }
         }
-
+        len_t oUpperLeft = origTop->getUpperLeft().y;
         origTop->setCord(Cord(origTop->getLowerLeft().x, tile.getUpperLeft().y));
-        origTop->setHeight = (origTop->getUpperLeft().y - tile.getUpperLeft().y);
+        origTop->setHeight(oUpperLeft - tile.getUpperLeft().y);
         origTop->lb = newDown;
+
     }
 
     /* STEP 2) Find the space Tile containing the bottom edge of the aera to be occupied, process */
-
+    
     bool tileTouchesGround = (tile.getLowerLeft().y == 0);
     bool cleanBottomCut = true;
     Tile *origBottom;
     if(!tileTouchesGround){
-        origBottom = findPoint(tile.getLowerLeft() - Cord(0,1));
-        cleanBottomcut = (origBottom->getUpperRight().y == tile.getLowerLeft().y)
+        origBottom = findPoint(tile.getLowerLeft() - Cord(0, 1));
+        cleanBottomCut = (origBottom->getUpperRight().y == tile.getLowerLeft().y);
     }
 
+    
     if((!tileTouchesGround) && (!cleanBottomCut)){
         
-        tile *newUp = new Tile(tileType::BLANK, Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y)
+        Tile *newUp = new Tile(tileType::BLANK, Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y)
                                 , origBottom->getWidth(), (origBottom->getUpperLeft().y - tile.getLowerLeft().y));         
         
         newUp->rt = origBottom->rt;
@@ -439,11 +446,13 @@ bool LFLegaliser::insertTile(Tile &tile){
             }
         }
 
-        origBottom->setCord(Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y));
-        origBottom->setHeight = (origBottom->getUpperLeft().y - tile.getLowerLeft().y);
+        // origBottom->setCord(Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y));
+        origBottom->setHeight(tile.getLowerLeft().y - origBottom->getLowerLeft().y);
         origBottom->rt = newUp;
-
+        
+        // visualiseAddMark(origBottom);
     }
+    
 
     // STEP3 ) .... TODO
 
@@ -506,6 +515,11 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
         }
     }
     ofs << "CONNECTION 0" << std::endl;
+    
+    // print all the marked tiles
+    for(Tile *t : this->mMarkedTiles){
+        ofs << t->getLowerLeft().x <<" "<< t->getLowerLeft().y <<" "<< t->getWidth() <<" "<< t->getHeight() << " MARKED" << std::endl;
+    }
 
     ofs.close();
 }
@@ -546,4 +560,8 @@ void LFLegaliser::traverseBlank(std::ofstream &ofs,  Tile &t) {
     }
     
     return;
+}
+
+void LFLegaliser::visualiseAddMark(Tile * markTile){
+    this->mMarkedTiles.push_back(markTile);
 }

@@ -22,6 +22,7 @@ private:
     // subRoutine used in enumerateDirectArea
     void enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles, Tile *targetTile) const;
 
+    std::vector <Tile *> mMarkedTiles;
     
 
 public:
@@ -65,10 +66,11 @@ public:
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
     
     // pushes 
-    bool insertTile(Tile &tile);
+    void insertTile(Tile &tile);
 
     // deleteTile (Don't need)
     void visualiseArtpiece(const std::string outputFileName);
+    void visualiseAddMark(Tile * markTile);
 
 };
 
