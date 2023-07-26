@@ -84,55 +84,6 @@ void LFLegaliser::splitFloorplanningOverlaps(){
     }
 }
 
-/*
-int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerLeft, len_t width, len_t height){
-    
-    assert(checkTesseraInCanvas(lowerLeft, width, height));
-    assert(type != tesseraType::EMPTY);
-
-    Tessera *newTessera = new Tessera(type, name, area, lowerLeft, width, height);
-    Tile *newTile = new Tile(tileType::BLOCK, lowerLeft, width, height);
-    newTessera->insertTiles(tileType::BLOCK, newTile);
-    
-    if(type == tesseraType::HARD){
-        this->fixedTesserae.push_back(newTessera);
-    }else if(type == tesseraType::SOFT){
-        this->softTesserae.push_back(newTessera);
-    }
-
-    //todo: add links
-    if(newTile->getLowerLeft().y != 0){
-        Tile *tdown = new Tile(tileType::BLANK, Cord(0,0),
-                            this->mCanvasWidth, newTile->getLowerLeft().y);
-        newTile->lb = tdown;
-        tdown->rt = newTile;
-    }
-
-    if(newTile->getUpperRight().y <= this->mCanvasHeight){
-        Tile *tup = new Tile(tileType::BLANK, Cord(0,newTile->getUpperRight().y), 
-                            this->mCanvasWidth, (this->mCanvasHeight - newTile->getUpperRight().y));
-        newTile->rt = tup;
-        tup->lb = newTile;
-    }
-
-    if(lowerLeft.x != 0){
-        Tile *tleft = new Tile(tileType::BLANK, Cord(0, newTile->getLowerLeft().y),
-                            newTile->getLowerLeft().x, height);
-        newTile->bl = tleft;
-        tleft->tr = newTile;    
-    }
-
-    if((lowerLeft.x + width)!= mCanvasWidth){
-        Tile *tright = new Tile(tileType::BLANK, newTile->getLowerRight(), 
-                            (this->mCanvasWidth - newTile->getUpperRight().x), height);
-        newTile->tr = tright;
-        tright->bl = newTile;
-    }
-
-    return 0;
-}
-*/
-
 Tile *LFLegaliser::findPoint(const Cord &key) const{
     assert(key >= Cord(0,0));
     assert(key.x < getCanvasWidth());
@@ -513,10 +464,44 @@ void LFLegaliser::insertTile(Tile &tile){
         origBottom->setHeight(tile.getLowerLeft().y - origBottom->getLowerLeft().y);
         origBottom->rt = newUp;
         
-        // visualiseAddMark(origBottom);
     }
     
-    // STEP3 ) .... TODO
+    // STEP3) The area of the new tile is traversed from top to bottom, splitting and joining space tiles on either side
+    //        and pointing their stiches at the new tile
+
+    // locate the topmost blank-tile, split in 3 pieces, left, mid and right
+
+    Tile *topBlank = findPoint(Cord(tile.getUpperLeft() - Cord(0, 1)));
+    
+    // Merge helping indexes
+    len_t leftMergeWidth = 0, rightMergeWidth = 0;
+    Tile *mergeLeft = nullptr, *mergeMid = nullptr, *mergeRight = nullptr;
+    
+    // split into three pieces
+    len_t blankLeftBorder = topBlank->getLowerLeft().x;
+    len_t tileLeftBorder = tile.getLowerLeft().x;
+    len_t tileRightBorder = tile.getLowerRight().x;
+    len_t blankRightBorder = topBlank->getLowerRight().x;
+
+    // The middle piece (must have)
+    Tile *newMid = new Tile(tile.getType(), Cord(tileLeftBorder, topBlank->getLowerLeft().y), tile.getWidth(), topBlank->getHeight());
+    newMid
+
+    // split the left piece
+
+    if(blankLeftBorder != tileLeftBorder){
+        Tile *newLeft = new Tile(tileType::BLANK, topBlank->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,topBlank->getHeight());
+        visualiseAddMark(newLeft);
+        newLeft->tr = topBlank;
+        new
+        
+    }
+
+
+    // if(topBlank->getLowerRight().x != tile.getLowerRight().x){
+
+    // }
+
 
 
 
