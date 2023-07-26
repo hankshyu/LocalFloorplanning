@@ -28,7 +28,9 @@ int main(int argc, char const *argv[])
     std::cout << "This is Local floorplanner!" << std::endl;
     
     LFLegaliser lfLegaliser(8, 7);
-    lfLegaliser.addFirstTessera(tesseraType::SOFT, "FPU", 6, Cord(2, 2) , 2, 3);
+    Tessera *firstT = new Tessera(tesseraType::SOFT, "FPU", 6, Cord(2, 2) , 2, 3);
+    lfLegaliser.softTesserae.push_back(firstT);
+    lfLegaliser.insertFirstTile(*(firstT->TileArr[0]));
     
 
     // Tile *find = lfLegaliser.findPoint(Cord (7,3));
@@ -52,8 +54,7 @@ int main(int argc, char const *argv[])
 
     // Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 2);
     Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 3);
-    // lfLegaliser.insertTile(*newTile);
-
+    lfLegaliser.insertTile(*newTile);
 
     lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
 }

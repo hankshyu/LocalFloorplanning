@@ -16,6 +16,7 @@ private:
     len_t mCanvasHeight;
     
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
+    bool checkTileInCanvas(Tile &tile) const;
     void traverseBlank(std::ofstream &ofs, Tile &t) ;
     Tile *getRandomTile() const;
 
@@ -41,7 +42,7 @@ public:
 
 
 
-    int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
+    // int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
     /* Functions proposed in the paper */
 
@@ -66,6 +67,7 @@ public:
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
     
     // pushes 
+    void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
 
     // deleteTile (Don't need)

@@ -1,8 +1,8 @@
 #ifndef __TILE_H__
 #define __TILE_H__
 
+#include <vector>
 #include "LFUnits.h"
-
 enum class tileType{
     BLOCK, BLANK, OVERLAP
 };
@@ -18,6 +18,8 @@ private:
     
 
 public:
+    std::vector <int> OverlapFixedTesseraeIdx;
+    std::vector <int> OverlapSoftTesseraeIdx;
 
     Tile *rt, *tr, *bl, *lb;
     bool printLabel;

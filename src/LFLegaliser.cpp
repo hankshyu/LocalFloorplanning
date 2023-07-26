@@ -12,7 +12,12 @@ bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height
     return (x_valid && y_valid);
 }
 
-
+bool LFLegaliser::checkTileInCanvas(Tile &tile) const{
+    bool x_valid, y_valid;
+    x_valid = (tile.getLowerLeft().x >= 0) && (tile.getUpperLeft().x <= this->mCanvasWidth);
+    y_valid = (tile.getLowerLeft().y >= 0) && (tile.getLowerRight().y <= this->mCanvasHeight);
+    return (x_valid && y_valid);
+}
 
 Tile *LFLegaliser::getRandomTile() const{
     assert(!(fixedTesserae.empty() && softTesserae.empty()));
@@ -42,16 +47,27 @@ len_t LFLegaliser::getCanvasHeight () const{
 }
 
 //TODO: For cyuyang
+
 void LFLegaliser::translateGlobalFloorplanning(){
     // You could define the I/O of this function
     // To create a soft Tessera:
     // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
     // softTesserae.push_back(newTess);
-    // The constructor would automatically create a new tile for you.
-    
+    // The constructor would automatically create a default tile for you.
+
+
 }
 //TODO: For cyuyang
 void LFLegaliser::detectfloorplanningOverlaps(){
+    // If an overlap is detected, You should:
+    // 1. Locate the overlap and crate a new Tile marking the overlap, the tile should include the spacing info and the voerlap Tessera idx
+    // Tile *overlapTile = new Tile(tileType::OVERLAP, Cord(1,3), 4, 5);
+    // overlapTile->OverlapFixedTesseraeIdx.pushback()....
+    // overlapTile->OverlapSoftTesseraeIdx.pushback()....
+
+    // 2. Split (both) the Tesserae into smaller tiles if it become rectlinear.
+    // 3. Update (both) the Tesserae's tile list.
+
 
 }
 
@@ -68,7 +84,7 @@ void LFLegaliser::splitFloorplanningOverlaps(){
     }
 }
 
-
+/*
 int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerLeft, len_t width, len_t height){
     
     assert(checkTesseraInCanvas(lowerLeft, width, height));
@@ -115,7 +131,7 @@ int LFLegaliser::addFirstTessera(tesseraType type, std::string name, area_t area
 
     return 0;
 }
-
+*/
 
 Tile *LFLegaliser::findPoint(const Cord &key) const{
     assert(key >= Cord(0,0));
@@ -327,6 +343,39 @@ void LFLegaliser::enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t
 
 }
 
+void LFLegaliser::insertFirstTile(Tile &newTile){
+    assert(this->checkTileInCanvas(newTile));
+    // cut the canvas into four parts: above, below, left, rifht
+    
+    if(newTile.getLowerLeft().y != 0){
+        Tile *tdown = new Tile(tileType::BLANK, Cord(0,0),
+                            this->mCanvasWidth, newTile.getLowerLeft().y);
+        newTile.lb = tdown;
+        tdown->rt = &newTile;
+    }
+
+    if(newTile.getUpperRight().y <= this->mCanvasHeight){
+        Tile *tup = new Tile(tileType::BLANK, Cord(0,newTile.getUpperRight().y), 
+                            this->mCanvasWidth, (this->mCanvasHeight - newTile.getUpperRight().y));
+        newTile.rt = tup;
+        tup->lb = &newTile;
+    }
+
+    if(newTile.getLowerLeft().x != 0){
+        Tile *tleft = new Tile(tileType::BLANK, Cord(0, newTile.getLowerLeft().y),
+                            newTile.getLowerLeft().x, (newTile.getUpperLeft().y - newTile.getLowerLeft().y));
+        newTile.bl = tleft;
+        tleft->tr = &newTile;    
+    }
+
+    if(newTile.getLowerRight().x != this->mCanvasWidth){
+        Tile *tright = new Tile(tileType::BLANK, newTile.getLowerRight(), 
+                            (this->mCanvasWidth - newTile.getUpperRight().x), (newTile.getUpperLeft().y - newTile.getLowerLeft().y));
+        newTile.tr = tright;
+        tright->bl = &newTile;
+    }
+}
+
 // Not yet complete.... 
 void LFLegaliser::insertTile(Tile &tile){
     assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
@@ -409,7 +458,6 @@ void LFLegaliser::insertTile(Tile &tile){
         cleanBottomCut = (origBottom->getUpperRight().y == tile.getLowerLeft().y);
     }
 
-    
     if((!tileTouchesGround) && (!cleanBottomCut)){
         
         Tile *newUp = new Tile(tileType::BLANK, Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y)
@@ -468,7 +516,6 @@ void LFLegaliser::insertTile(Tile &tile){
         // visualiseAddMark(origBottom);
     }
     
-
     // STEP3 ) .... TODO
 
 
