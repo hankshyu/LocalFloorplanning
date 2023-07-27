@@ -1,0 +1,32 @@
+FPU 6 0 0 0 0 SOFT_BLOCK
+1 0
+Type: BLOCK (2, 2) W=2 H=3
+rt: Type: BLANK (0, 5) W=8 H=2
+tr: Type: BLANK (4, 2) W=4 H=3
+bl: Type: BLANK (0, 2) W=2 H=3
+lb: Type: BLANK (0, 0) W=8 H=2
+
+Type: BLANK (0, 5) W=8 H=2
+rt: nullptr
+tr: nullptr
+bl: nullptr
+lb: Type: BLOCK (2, 2) W=2 H=3
+
+Type: BLANK (0, 0) W=8 H=2
+rt: Type: BLOCK (2, 2) W=2 H=3
+tr: nullptr
+bl: nullptr
+lb: nullptr
+
+Type: BLANK (0, 2) W=2 H=3
+rt: nullptr
+tr: Type: BLOCK (2, 2) W=2 H=3
+bl: nullptr
+lb: nullptr
+
+Type: BLANK (4, 2) W=4 H=3
+rt: nullptr
+tr: nullptr
+bl: Type: BLOCK (2, 2) W=2 H=3
+lb: nullptr
+

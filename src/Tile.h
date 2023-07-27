@@ -59,7 +59,8 @@ public:
     bool checkTRLLTouch(Tile *right) const;
     bool cutHeight (len_t cut) const;
 
-    void show() const;
+    void show(std::ostream &os) const;
+    void showLink(std::ostream &os) const;
     
 };
 

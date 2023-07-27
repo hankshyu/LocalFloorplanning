@@ -69,12 +69,31 @@ bool Tile::cutHeight(len_t cut) const{
     return ((cut > mLowerLeft.y) && (cut < (mLowerLeft.y + mHeight)));
 }
 
-void Tile::show() const {
-    if(this->type == tileType::BLOCK) std::cout <<"Type: BLOCK ";
-    else if(this->type == tileType::BLANK) std::cout <<"Type: BLANK ";
-    else if(this->type == tileType::OVERLAP) std::cout <<"Type: OVERLAP ";
+void Tile::show(std::ostream &os) const {
+    if(this->type == tileType::BLOCK) os <<"Type: BLOCK ";
+    else if(this->type == tileType::BLANK) os <<"Type: BLANK ";
+    else if(this->type == tileType::OVERLAP) os <<"Type: OVERLAP ";
     
-    std::cout << "(" <<mLowerLeft.x << ", " << mLowerLeft.y << ") ";
-    std::cout << "W=" << mWidth <<" H=" << mHeight << std::endl;
+    os << "(" <<mLowerLeft.x << ", " << mLowerLeft.y << ") ";
+    os << "W=" << mWidth <<" H=" << mHeight << std::endl;
+}
+
+void Tile::showLink(std::ostream &os) const{
+    os << "rt: ";
+    if(this->rt == nullptr) os << "nullptr" << std::endl;
+    else this->rt->show(os);
+
+    os << "tr: ";
+    if(this->tr == nullptr) os << "nullptr" << std::endl;
+    else this->tr->show(os);
+
+    os << "bl: ";
+    if(this->bl == nullptr) os << "nullptr" << std::endl;
+    else this->bl->show(os);
+
+    os << "lb: ";
+    if(this->lb == nullptr) os << "nullptr" << std::endl;
+    else this->lb->show(os);
+    os << std::endl;
 }
 

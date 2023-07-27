@@ -18,6 +18,7 @@ private:
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
     bool checkTileInCanvas(Tile &tile) const;
     void traverseBlank(std::ofstream &ofs, Tile &t) ;
+    void traverseBlankLink(std::ofstream &ofs, Tile &t) ;
     Tile *getRandomTile() const;
 
     // subRoutine used in enumerateDirectArea
@@ -73,6 +74,8 @@ public:
     // deleteTile (Don't need)
     void visualiseArtpiece(const std::string outputFileName);
     void visualiseAddMark(Tile * markTile);
+
+    void viewLinks(const std::string outputFileName);
 
 };
 
