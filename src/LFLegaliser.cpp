@@ -496,145 +496,185 @@ void LFLegaliser::insertTile(Tile &tile){
 
     // locate the topmost blank-tile, split in 3 pieces, left, mid and right
 
-    Tile *topBlank = findPoint(Cord(tile.getUpperLeft() - Cord(0, 1)));
-    // visualiseAddMark(topBlank);
+    Tile *splitTile = findPoint(Cord(tile.getUpperLeft() - Cord(0, 1)));
+    len_t findTileY = splitTile->getLowerLeft().y;
+    Tile *oldsplitTile;
+    // Cord splitTileLL = splitTile->getLowerLeft();
 
-    // Merge helping indexes
-    len_t leftMergeWidth = 0, rightMergeWidth = 0;
-    Tile *mergeLeft = nullptr, *mergeMid = nullptr, *mergeRight = nullptr;
-    
-    // split into three pieces
-    len_t blankLeftBorder = topBlank->getLowerLeft().x;
-    len_t tileLeftBorder = tile.getLowerLeft().x;
-    len_t tileRightBorder = tile.getLowerRight().x;
-    len_t blankRightBorder = topBlank->getLowerRight().x;
+    while(true){
+        splitTile->show(std::cout);
+        // Merge helping indexes
+        len_t leftMergeWidth = 0, rightMergeWidth = 0;
+        Tile *mergeLeft = nullptr, *mergeMid = nullptr, *mergeRight = nullptr;
+        
+        // split into three pieces
+        len_t blankLeftBorder = splitTile->getLowerLeft().x;
+        len_t tileLeftBorder = tile.getLowerLeft().x;
+        len_t tileRightBorder = tile.getLowerRight().x;
+        len_t blankRightBorder = splitTile->getLowerRight().x;
+        std::cout << "Borders: " << blankLeftBorder << " " << tileLeftBorder << " " << tileRightBorder;
+        std::cout <<" " << blankRightBorder << std::endl;
 
-    // The middle piece (must have)
-    // This should change to tile.type
-    Tile *newMid = new Tile(tileType::BLANK, Cord(tileLeftBorder, topBlank->getLowerLeft().y), tile.getWidth(), topBlank->getHeight());
-    newMid->bl = topBlank->bl;
-    newMid->tr = topBlank->tr;
-    // visualiseAddMark(newMid);
+        // The middle piece (must have)
+        // This should change to tile.type
+        Tile *newMid = new Tile(tileType::BLANK, Cord(tileLeftBorder, splitTile->getLowerLeft().y), tile.getWidth(), splitTile->getHeight());
+        newMid->bl = splitTile->bl;
+        newMid->tr = splitTile->tr;
 
-    std::vector<Tile *> topNeighbors;
-    findTopNeighbors(topBlank, topNeighbors);
-    std::vector<Tile *>bottomNeighbors;
-    findDownNeighbors(topBlank, bottomNeighbors);
+        std::vector<Tile *> topNeighbors;
+        findTopNeighbors(splitTile, topNeighbors);
+        std::vector<Tile *>bottomNeighbors;
+        findDownNeighbors(splitTile, bottomNeighbors);
+        std::vector<Tile *>leftNeighbors;
+        findLeftNeighbors(splitTile, leftNeighbors);
+        std::vector<Tile *>rightNeighbors;
+        findRightNeighbors(splitTile, rightNeighbors);
 
-    // split the left piece if necessary, maintain tr, bl pointer integrity
-    if(blankLeftBorder != tileLeftBorder){
-        Tile *newLeft = new Tile(tileType::BLANK, topBlank->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,topBlank->getHeight());
-        // visualiseAddMark(newLeft);
-        newLeft->tr = newMid;
-        newLeft->bl = topBlank->bl;
+        // split the left piece if necessary, maintain tr, bl pointer integrity
+        if(blankLeftBorder != tileLeftBorder){
+            Tile *newLeft = new Tile(tileType::BLANK, splitTile->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,splitTile->getHeight());
+            // visualiseAddMark(newLeft);
+            newLeft->tr = newMid;
+            newLeft->bl = splitTile->bl;
 
-        newMid->bl = newLeft;
+            newMid->bl = newLeft;
 
-        // maintain rt, lb pointers of the newtile and  top-Neighbors of new Tiles
-        bool rtModified = false;
-        for(int i = 0; i < topNeighbors.size(); ++i){
-            if(topNeighbors[i]->getLowerLeft().x < tileLeftBorder){
-                if(!rtModified){
-                    rtModified = true;
-                    newLeft->rt = topNeighbors[i];
+            // maintain rt, lb pointers of the newtile and  top-Neighbors of new Tiles
+            bool rtModified = false;
+            for(int i = 0; i < topNeighbors.size(); ++i){
+                if(topNeighbors[i]->getLowerLeft().x < tileLeftBorder){
+                    if(!rtModified){
+                        rtModified = true;
+                        newLeft->rt = topNeighbors[i];
+                    }
+                    if(topNeighbors[i]->getLowerLeft().x >= blankLeftBorder){
+                        topNeighbors[i]->lb = newLeft;
+                    }
                 }
-                if(topNeighbors[i]->getLowerLeft().x >= blankLeftBorder){
-                    topNeighbors[i]->lb = newLeft;
+
+            }
+            // assert(rtModified);
+            
+            // maintain rt, lb pointers of the newtile and  bottom-Neighbors of new Tiles
+            bool lbModified = false;
+            for(int i = 0; i < bottomNeighbors.size(); ++i){
+                if(bottomNeighbors[i]->getLowerLeft().x < tileLeftBorder){
+                    if(!lbModified){
+                        lbModified = true;
+                        newLeft->lb = bottomNeighbors[i];
+                    }
+                    if(bottomNeighbors[i]->getLowerRight().x <= tileLeftBorder){
+                        bottomNeighbors[i]->rt = newLeft;
+                    }
+                    
+                }
+            }
+            // assert(lbModified);
+
+            // also change tr pointers of left neighbors to the newly created right tile
+            std::cout << "left neighbors size: " << leftNeighbors.size() << std::endl;
+
+            for(int i = 0; i < leftNeighbors.size(); ++i){
+                leftNeighbors[i]->show(std::cout);
+                leftNeighbors[i]->showLink(std::cout);
+                if(leftNeighbors[i]->tr == splitTile){
+                    leftNeighbors[i]->tr = newLeft;
+                }
+            }
+            std::cout << "done left neighbors stuff" << std::endl;
+
+        }
+
+        // split the right piece if necessary, maintain tr, bl pointer integrity
+        if(tileRightBorder != blankRightBorder){
+            Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(),(blankRightBorder- tileRightBorder) ,newMid->getHeight());
+            // visualiseAddMark(newRight);
+            newRight->tr = splitTile->tr;
+            newRight->bl = newMid;
+
+            newMid->tr = newRight;
+
+            //maintain rt, lb poointers of the newtile and top-Neighbors of new Tiles
+            bool rtModified = false;
+            for(int i = 0; i < topNeighbors.size(); ++i){
+                if(topNeighbors[i]->getLowerRight().x > tileRightBorder){
+                    if(!rtModified){
+                        rtModified = true;
+                        newRight->rt = topNeighbors[i];
+                    }
+                    if(topNeighbors[i]->getLowerLeft().x >= tileRightBorder){
+                        topNeighbors[i]->lb = newRight;
+                    }
                 }
             }
 
+            //maintain rt, lb poointers of the newtile and bottom-Neighbors of new Tiles
+
+            bool lbModified = false;
+            for(int i = 0 ; i < bottomNeighbors.size(); ++i){
+                if(bottomNeighbors[i]->getLowerRight().x > tileRightBorder){
+                    if(!lbModified){
+                        lbModified = true;
+                        newRight->lb = bottomNeighbors[i];
+                    }
+                    if(bottomNeighbors[i]->getLowerRight().x <= blankRightBorder){
+                        bottomNeighbors[i]->rt = newRight;
+                    }
+                }
+            }
+
+            // also change bl pointers of right neighbors to the newly created left tile
+            for(int i = 0; i < rightNeighbors.size(); ++i){
+                if(rightNeighbors[i]->bl == splitTile){
+                    rightNeighbors[i]->bl = newRight;
+                }
+            }
+            
+        }
+
+        // maintain rt & lb pointers integrity for newMid
+        bool rtModified = false;
+        for(int i = 0; i < topNeighbors.size(); ++i){
+            if(topNeighbors[i]->getLowerLeft().x < tileRightBorder){
+                if(!rtModified){
+                    rtModified = true;
+                    newMid->rt = topNeighbors[i];
+                }
+                if(topNeighbors[i]->getLowerLeft().x >= tileLeftBorder){
+                    topNeighbors[i]->lb = newMid;
+                }
+            }
         }
         // assert(rtModified);
-        
-        // maintain rt, lb pointers of the newtile and  bottom-Neighbors of new Tiles
+
         bool lbModified = false;
         for(int i = 0; i < bottomNeighbors.size(); ++i){
-            if(bottomNeighbors[i]->getLowerLeft().x < tileLeftBorder){
+            if(bottomNeighbors[i]->getLowerRight().x > tileLeftBorder){
                 if(!lbModified){
                     lbModified = true;
-                    newLeft->lb = bottomNeighbors[i];
+                    newMid->lb = bottomNeighbors[i];
                 }
-                if(bottomNeighbors[i]->getLowerRight().x <= tileLeftBorder){
-                    bottomNeighbors[i]->rt = newLeft;
+                if(bottomNeighbors[i]->getLowerRight().x <= tileRightBorder){
+                    bottomNeighbors[i]->rt = newMid;
                 }
-                
             }
         }
         // assert(lbModified);
 
-    }
+        std::cout << "Summarize split:" << std::endl;
+        newMid->show(std::cout);
+        newMid->showLink(std::cout);
 
-    // split the right piece if necessary, maintain tr, bl pointer integrity
-    if(tileRightBorder != blankRightBorder){
-        Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(),(blankRightBorder- tileRightBorder) ,newMid->getHeight());
-        // visualiseAddMark(newRight);
-        newRight->tr = topBlank->tr;
-        newRight->bl = newMid;
-
-        newMid->tr = newRight;
-
-        //maintain rt, lb poointers of the newtile and top-Neighbors of new Tiles
-        bool rtModified = false;
-        for(int i = 0; i < topNeighbors.size(); ++i){
-            if(topNeighbors[i]->getLowerRight().x > tileRightBorder){
-                if(!rtModified){
-                    rtModified = true;
-                    newRight->rt = topNeighbors[i];
-                }
-                if(topNeighbors[i]->getLowerLeft().x >= tileRightBorder){
-                    topNeighbors[i]->lb = newRight;
-                }
-            }
-        }
-
-        //maintain rt, lb poointers of the newtile and bottom-Neighbors of new Tiles
-
-        bool lbModified = false;
-        for(int i = 0 ; i < bottomNeighbors.size(); ++i){
-            if(bottomNeighbors[i]->getLowerRight().x > tileRightBorder){
-                if(!lbModified){
-                    lbModified = true;
-                    newRight->lb = bottomNeighbors[i];
-                }
-                if(bottomNeighbors[i]->getLowerRight().x <= blankRightBorder){
-                    bottomNeighbors[i]->rt = newRight;
-                }
-            }
-        }
-        
-    }
-
-    // maintain rt & lb pointers integrity for newMid
-    bool rtModified = false;
-    for(int i = 0; i < topNeighbors.size(); ++i){
-        if(topNeighbors[i]->getLowerLeft().x < tileRightBorder){
-            if(!rtModified){
-                rtModified = true;
-                newMid->rt = topNeighbors[i];
-            }
-            if(topNeighbors[i]->getLowerLeft().x >= tileLeftBorder){
-                topNeighbors[i]->lb = newMid;
-            }
+        oldsplitTile = splitTile;
+        if(findTileY == tile.getLowerLeft().y){
+            delete(oldsplitTile);
+            break;
+        }else{
+            splitTile = findPoint(Cord(tile.getLowerLeft().x, findTileY) - Cord(0,1));
+            findTileY= splitTile->getLowerLeft().y;
+            delete(oldsplitTile);
         }
     }
-    // assert(rtModified);
-
-    bool lbModified = false;
-    std::cout << "bottom n size: " << bottomNeighbors.size() << std::endl;
-    for(int i = 0; i < bottomNeighbors.size(); ++i){
-        if(bottomNeighbors[i]->getLowerRight().x > tileLeftBorder){
-            std::cout << "DID happen!!" << std::endl;
-            if(!lbModified){
-                lbModified = true;
-                newMid->lb = bottomNeighbors[i];
-            }
-            if(bottomNeighbors[i]->getLowerRight().x <= tileRightBorder){
-                bottomNeighbors[i]->rt = newMid;
-            }
-        }
-    }
-    // assert(lbModified);
-    // visualiseAddMark(newMid);
     
 }
 
