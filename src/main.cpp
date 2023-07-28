@@ -32,8 +32,6 @@ int main(int argc, char const *argv[])
     lfLegaliser.softTesserae.push_back(firstT);
     lfLegaliser.insertFirstTile(*(firstT->TileArr[0]));
     
-    lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
-    lfLegaliser.viewLinks("outputs/printlinks.txt");
 
     // Tile *find = lfLegaliser.findPoint(Cord (7,3));
     // printTile(*find);
@@ -55,8 +53,11 @@ int main(int argc, char const *argv[])
     // }
 
     // Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 2);
-    // Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 3);
-    // lfLegaliser.insertTile(*newTile);
+    Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 3);
+    lfLegaliser.insertTile(*newTile);
+
+    lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
+    lfLegaliser.viewLinks("outputs/printlinks.txt");
 
 
 }
