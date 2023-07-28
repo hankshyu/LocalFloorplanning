@@ -4,6 +4,7 @@ CFLAGS = -c
 DEBUGFLAGS = -g
 
 SRCPATH = ./src
+BOOSTPATH = /usr/local/boost_1_82_0
 
 all: lfrun.out
 debug: lfrun_debug
@@ -11,15 +12,15 @@ debug: lfrun_debug
 # LINKFLAGS = -pedantic -Wall -fomit-frame-pointer -funroll-all-loops -O3
 LINKFLAGS = 
 
-lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o
-	$(CXX) $(LINKFLAGS) $^ -o $@
+lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o
+	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
 main.o: $(SRCPATH)/main.cpp 
-	$(CXX) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
+	$(CXX) -I $(BOOSTPATH) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
 
 %.o: $(SRCPATH)/%.cpp $(SRCPATH)/%.h
-	$(CXX) $(CFLAGS) $< -o $@
+	$(CXX) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
 
 
 

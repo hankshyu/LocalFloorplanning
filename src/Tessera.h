@@ -7,41 +7,41 @@
 #include "LFUnits.h"
 #include "Tile.h"
 
-enum class tesseraType{
-    EMPTY ,SOFT, HARD
+enum class tesseraType {
+    EMPTY, SOFT, HARD
 };
 
-class Tessera{
+class Tessera {
 private:
-    
+
     tesseraType mType;
     std::string mName;
     area_t mLegalArea;
-    
+
     Cord mInitLowerLeft;
     len_t mInitWidth;
     len_t mInitHeight;
-    
+
     Cord mBBLowerLeft;
     Cord mBBUpperRight;
 
     void calBoundingBox();
 
 public:
-    std::vector <Tile *> TileArr;
-    std::vector <Tile *> OverlapArr;
+    std::vector <Tile*> TileArr;
+    std::vector <Tile*> OverlapArr;
 
     Tessera();
     Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
 
-    std::string getName () const;
-    area_t getLegalArea () const;
-    Cord getBBLowerLeft () const;
+    std::string getName() const;
+    area_t getLegalArea() const;
+    Cord getBBLowerLeft() const;
     Cord getBBUpperRight() const;
-    len_t getBBWidth () const;
-    len_t getBBHeight () const;
+    len_t getBBWidth() const;
+    len_t getBBHeight() const;
 
-    int insertTiles(tileType type, Tile *tile);
+    int insertTiles(tileType type, Tile* tile);
     void splitRectliearDueToOverlap();
 
 };

@@ -3,58 +3,56 @@
 #include "Tile.h"
 #include "Tessera.h"
 #include "LFLegaliser.h"
+#include "parser.h"
+#include "ppsolver.h"
 
-void printCord(const Cord &c){
+void printCord(const Cord &c) {
     std::cout << "(" << c.x << ", " << c.y << ")";
 }
 
-void printTile(const Tile &t){
-    
-    printCord(t.getLowerLeft());
-    if(t.getType() == tileType::BLOCK){
-        std::cout << "Type: Block "; 
-    }else if(t.getType() == tileType::OVERLAP){
-        std::cout << "Type: OVlap "; 
+void printTile(const Tile &t) {
 
-    }else if(t.getType() == tileType::BLANK){
-        std::cout << "Type: Blank "; 
-    } else{
+    printCord(t.getLowerLeft());
+    if ( t.getType() == tileType::BLOCK ) {
+        std::cout << "Type: Block ";
+    }
+    else if ( t.getType() == tileType::OVERLAP ) {
+        std::cout << "Type: OVlap ";
+
+    }
+    else if ( t.getType() == tileType::BLANK ) {
+        std::cout << "Type: Blank ";
+    }
+    else {
         std::cout << "ERRRROR! Type blank!! ";
     }
     std::cout << ", W=" << t.getWidth() << ", H=" << t.getHeight() << std::endl;
 }
-int main(int argc, char const *argv[])
-{
-    std::cout << "This is Local floorplanner!" << std::endl;
-    
-    LFLegaliser lfLegaliser(8, 7);
-    Tessera *firstT = new Tessera(tesseraType::SOFT, "FPU", 6, Cord(2, 2) , 2, 3);
-    lfLegaliser.softTesserae.push_back(firstT);
-    lfLegaliser.insertFirstTile(*(firstT->TileArr[0]));
-    
 
-    // Tile *find = lfLegaliser.findPoint(Cord (7,3));
-    // printTile(*find);
 
-    // find = lfLegaliser.findPoint(Cord (0, 5));
-    // printTile(*find);
+int main(int argc, char const *argv[]) {
+    Parser parser(argv[1]);
+    PPSolver solver;
+    LFLegaliser legaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
 
-    // Tile f;
-    // bool findb = lfLegaliser.searchArea(Cord (3, 4), 1, 2, f);
-    // std::cout << findb << std::endl;
-    // if(findb) f.show();
+    solver.readFromParser(parser);
 
-    // std::cout << "Start EDA !!" <<std::endl;
-    // std::vector <Tile *> eda;
-    // lfLegaliser.enumerateDirectArea(Cord(2, 2), 3, 3, eda);
-    // std::cout << "EDA: " << eda.size() << std::endl;
-    // for(Tile *t : eda){
-    //     t->show();
-    // }
+    int iteration = 1000;
+    solver.setupPushForce(20);
+    for ( int phase = 1; phase <= 50; phase++ ) {
+        solver.setRadiusRatio(phase * 0.02);
+        for ( int i = 0; i < iteration; i++ ) {
+            solver.calcModuleForce();
+            solver.moveModule();
+        }
+    }
 
-    // Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 2);
-    Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 3);
-    lfLegaliser.insertTile(*newTile);
+    //solver.currentPosition2txt("test.txt");
 
-    lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
+    legaliser.translateGlobalFloorplanning(solver);
+    legaliser.detectfloorplanningOverlaps();
+
+    legaliser.visualiseArtpieceCYY("test.txt");
+
+    return 0;
 }
