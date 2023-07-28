@@ -31,9 +31,14 @@ int main(int argc, char const *argv[])
     Tessera *firstT = new Tessera(tesseraType::SOFT, "FPU", 6, Cord(2, 2) , 2, 3);
     lfLegaliser.softTesserae.push_back(firstT);
     lfLegaliser.insertFirstTile(*(firstT->TileArr[0]));
-    Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 5);
+    
+    Tile *newTile = new Tile(tileType::OVERLAP, Cord(4, 2), 1, 3);
     firstT->OverlapArr.push_back(newTile);
-    lfLegaliser.insertTile(*(firstT->OverlapArr[0]));
+    lfLegaliser.insertTile(*(firstT->OverlapArr.back()));
+    
+    // Tile *newTile2 = new Tile(tileType::OVERLAP, Cord(5, 1), 2, 3);
+    // firstT->OverlapArr.push_back(newTile2);
+    // lfLegaliser.insertTile(*(firstT->OverlapArr.back()));
     
     // Tessera *secondT = new Tessera(tesseraType::HARD, "PAD1", 3, Cord(6,1), 1, 3);
     // lfLegaliser.fixedTesserae.push_back(secondT);

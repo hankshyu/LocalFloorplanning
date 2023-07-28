@@ -652,6 +652,7 @@ void LFLegaliser::insertTile(Tile &tile){
             }
         }
 
+
         // Start Merging process
         // Merge the left blocks if necessary
         bool leftNeedsMerge = (leftMergeWidth != 0) && (leftMergeWidth == (tileLeftBorder - blankLeftBorder));
@@ -732,6 +733,8 @@ void LFLegaliser::insertTile(Tile &tile){
         // update right merge width for latter blocks
         rightMergeWidth = blankRightBorder - tileRightBorder;
 
+
+
         // Finally, merge the middle tile, it MUST merge after the first time
         std::cout << "Came into mid merge" << std::endl;
         
@@ -772,7 +775,10 @@ void LFLegaliser::insertTile(Tile &tile){
             newMid = mergeUp;
         }
         //allow entering the next time.
-        topMostMerge = false;
+
+        std::cout << "Print for check tr state:";
+        newMid->show(std::cout);
+        newMid->showLink(std::cout);
 
         oldsplitTile = splitTile;
         if(findTileY == tile.getLowerLeft().y){
@@ -781,6 +787,10 @@ void LFLegaliser::insertTile(Tile &tile){
             tile.tr = newMid->tr;
             tile.bl = newMid->bl;
             tile.lb = newMid->lb;
+
+            std::cout <<"Tile show 0:" << std::endl;
+            tile.show(std::cout);
+            tile.showLink(std::cout);
             
             // relink the neighbors
             std::vector <Tile *> midUpNeighbors;
@@ -814,15 +824,31 @@ void LFLegaliser::insertTile(Tile &tile){
                     midRightNeighbors[i]->bl = &tile;
                 }
             }
+
+            std::cout <<"Tile show 1:" << std::endl;
+            tile.show(std::cout);
+            tile.showLink(std::cout);
+
+            if(!topMostMerge) delete(newMid);
             
-            delete(newMid);
+            std::cout <<"Tile show 2:" << std::endl;
+            tile.show(std::cout);
+            tile.showLink(std::cout);
+            
             delete(oldsplitTile);
+
+            std::cout <<"Tile show 3:" << std::endl;
+            tile.show(std::cout);
+            tile.showLink(std::cout);
+
             break;
         }else{
             splitTile = findPoint(Cord(tile.getLowerLeft().x, findTileY) - Cord(0,1));
             findTileY= splitTile->getLowerLeft().y;
             delete(oldsplitTile);
         }
+        topMostMerge = false;
+
 
     }
     
