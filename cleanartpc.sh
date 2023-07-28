@@ -1,1 +1,1 @@
-rm -rf outputs/artpc.png outputs/artpc.txt
+rm -rf outputs/artpc.png outputs/artpc.txt outputs/printlinks.txt

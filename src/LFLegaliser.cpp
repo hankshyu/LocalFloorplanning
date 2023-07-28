@@ -479,7 +479,9 @@ void LFLegaliser::insertTile(Tile &tile){
                     leftModified = true;
                     newUp->bl = origLeftNeighbors[i];
                 }
-                origLeftNeighbors[i]->tr = newUp;
+                if(origLeftNeighbors[i]->getUpperLeft().y <= newUp->getUpperLeft().y){
+                    origLeftNeighbors[i]->tr = newUp;
+                }
             }
         }
 
