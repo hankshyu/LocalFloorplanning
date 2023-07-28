@@ -31,30 +31,13 @@ int main(int argc, char const *argv[])
     Tessera *firstT = new Tessera(tesseraType::SOFT, "FPU", 6, Cord(2, 2) , 2, 3);
     lfLegaliser.softTesserae.push_back(firstT);
     lfLegaliser.insertFirstTile(*(firstT->TileArr[0]));
+    Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 5);
+    firstT->OverlapArr.push_back(newTile);
+    lfLegaliser.insertTile(*(firstT->OverlapArr[0]));
     
-
-    // Tile *find = lfLegaliser.findPoint(Cord (7,3));
-    // printTile(*find);
-
-    // find = lfLegaliser.findPoint(Cord (0, 5));
-    // printTile(*find);
-
-    // Tile f;
-    // bool findb = lfLegaliser.searchArea(Cord (3, 4), 1, 2, f);
-    // std::cout << findb << std::endl;
-    // if(findb) f.show();
-
-    // std::cout << "Start EDA !!" <<std::endl;
-    // std::vector <Tile *> eda;
-    // lfLegaliser.enumerateDirectArea(Cord(2, 2), 3, 3, eda);
-    // std::cout << "EDA: " << eda.size() << std::endl;
-    // for(Tile *t : eda){
-    //     t->show();
-    // }
-
-    // Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 2);
-    Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 3);
-    lfLegaliser.insertTile(*newTile);
+    // Tessera *secondT = new Tessera(tesseraType::HARD, "PAD1", 3, Cord(6,1), 1, 3);
+    // lfLegaliser.fixedTesserae.push_back(secondT);
+    // lfLegaliser.insertTile(*(secondT->TileArr[0]));
 
     lfLegaliser.visualiseArtpiece("outputs/artpc.txt");
     lfLegaliser.viewLinks("outputs/printlinks.txt");
