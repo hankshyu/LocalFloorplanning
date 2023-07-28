@@ -298,33 +298,54 @@ void LFLegaliser::insertFirstTile(Tile &newTile){
     assert(this->checkTileInCanvas(newTile));
     // cut the canvas into four parts: above, below, left, rifht
     
-    if(newTile.getLowerLeft().y != 0){
-        Tile *tdown = new Tile(tileType::BLANK, Cord(0,0),
+    Tile *tdown, *tup, *tleft, *tright;
+    bool hasDownTile = (newTile.getLowerLeft().y != 0);
+    bool hasUpTile = (newTile.getUpperRight().y != this->mCanvasHeight);
+    bool hasLeftTile = (newTile.getLowerLeft().x != 0);
+    bool hasRightTile = (newTile.getLowerRight().x != this->mCanvasWidth);
+
+
+    if(hasDownTile){
+        tdown = new Tile(tileType::BLANK, Cord(0,0),
                             this->mCanvasWidth, newTile.getLowerLeft().y);
         newTile.lb = tdown;
-        tdown->rt = &newTile;
     }
 
-    if(newTile.getUpperRight().y <= this->mCanvasHeight){
-        Tile *tup = new Tile(tileType::BLANK, Cord(0,newTile.getUpperRight().y), 
+    if(hasUpTile){
+        tup = new Tile(tileType::BLANK, Cord(0,newTile.getUpperRight().y), 
                             this->mCanvasWidth, (this->mCanvasHeight - newTile.getUpperRight().y));
         newTile.rt = tup;
-        tup->lb = &newTile;
     }
 
-    if(newTile.getLowerLeft().x != 0){
-        Tile *tleft = new Tile(tileType::BLANK, Cord(0, newTile.getLowerLeft().y),
+    if(hasLeftTile){
+        tleft = new Tile(tileType::BLANK, Cord(0, newTile.getLowerLeft().y),
                             newTile.getLowerLeft().x, (newTile.getUpperLeft().y - newTile.getLowerLeft().y));
         newTile.bl = tleft;
-        tleft->tr = &newTile;    
+        tleft->tr = &newTile;
+
+        
+        if(hasDownTile) tleft->lb = tdown;
+        if(hasUpTile) tleft->rt = tup;
+        
+        if(hasUpTile) tup->lb = tleft;
+    }else{
+        if(hasUpTile) tup->lb = &newTile;
     }
 
-    if(newTile.getLowerRight().x != this->mCanvasWidth){
-        Tile *tright = new Tile(tileType::BLANK, newTile.getLowerRight(), 
+    if(hasRightTile){
+        tright = new Tile(tileType::BLANK, newTile.getLowerRight(), 
                             (this->mCanvasWidth - newTile.getUpperRight().x), (newTile.getUpperLeft().y - newTile.getLowerLeft().y));
         newTile.tr = tright;
         tright->bl = &newTile;
+
+        if(hasDownTile) tright->lb = tdown;
+        if(hasUpTile) tright->rt = tup;
+
+        if(hasDownTile) tdown->rt = tright;
+    }else{
+        if(hasDownTile) tdown->rt = &newTile;
     }
+
 }
 
 // Not yet complete.... 

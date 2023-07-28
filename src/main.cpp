@@ -55,8 +55,8 @@ int main(int argc, char const *argv[])
     // }
 
     // Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 2);
-    Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 3);
-    lfLegaliser.insertTile(*newTile);
+    // Tile *newTile = new Tile(tileType::BLOCK, Cord(6, 1), 1, 3);
+    // lfLegaliser.insertTile(*newTile);
 
 
 }
