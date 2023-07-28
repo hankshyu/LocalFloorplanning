@@ -502,7 +502,7 @@ void LFLegaliser::insertTile(Tile &tile){
     // Cord splitTileLL = splitTile->getLowerLeft();
 
     while(true){
-        splitTile->show(std::cout);
+        // splitTile->show(std::cout);
         // Merge helping indexes
         len_t leftMergeWidth = 0, rightMergeWidth = 0;
         Tile *mergeLeft = nullptr, *mergeMid = nullptr, *mergeRight = nullptr;
@@ -512,8 +512,6 @@ void LFLegaliser::insertTile(Tile &tile){
         len_t tileLeftBorder = tile.getLowerLeft().x;
         len_t tileRightBorder = tile.getLowerRight().x;
         len_t blankRightBorder = splitTile->getLowerRight().x;
-        std::cout << "Borders: " << blankLeftBorder << " " << tileLeftBorder << " " << tileRightBorder;
-        std::cout <<" " << blankRightBorder << std::endl;
 
         // The middle piece (must have)
         // This should change to tile.type
@@ -572,16 +570,11 @@ void LFLegaliser::insertTile(Tile &tile){
             // assert(lbModified);
 
             // also change tr pointers of left neighbors to the newly created right tile
-            std::cout << "left neighbors size: " << leftNeighbors.size() << std::endl;
-
             for(int i = 0; i < leftNeighbors.size(); ++i){
-                leftNeighbors[i]->show(std::cout);
-                leftNeighbors[i]->showLink(std::cout);
                 if(leftNeighbors[i]->tr == splitTile){
                     leftNeighbors[i]->tr = newLeft;
                 }
             }
-            std::cout << "done left neighbors stuff" << std::endl;
 
         }
 
@@ -661,9 +654,9 @@ void LFLegaliser::insertTile(Tile &tile){
         }
         // assert(lbModified);
 
-        std::cout << "Summarize split:" << std::endl;
-        newMid->show(std::cout);
-        newMid->showLink(std::cout);
+        // std::cout << "Summarize split:" << std::endl;
+        // newMid->show(std::cout);
+        // newMid->showLink(std::cout);
 
         oldsplitTile = splitTile;
         if(findTileY == tile.getLowerLeft().y){
