@@ -7,14 +7,14 @@ bl: Type: BLANK (0, 2) W=2 H=3
 lb: Type: BLANK (0, 1) W=6 H=1
 
 Type: BLOCK (6, 1) W=1 H=5
-rt: nullptr
-tr: nullptr
-bl: nullptr
-lb: nullptr
+rt: Type: BLANK (0, 6) W=8 H=1
+tr: Type: BLANK (7, 1) W=1 H=5
+bl: Type: BLANK (0, 1) W=6 H=1
+lb: Type: BLANK (0, 0) W=8 H=1
 
 Type: BLANK (0, 5) W=6 H=1
 rt: Type: BLANK (0, 6) W=8 H=1
-tr: Type: BLANK (6, 5) W=1 H=1
+tr: Type: BLOCK (6, 1) W=1 H=5
 bl: nullptr
 lb: Type: BLANK (0, 2) W=2 H=3
 
@@ -32,55 +32,25 @@ lb: Type: BLANK (0, 1) W=6 H=1
 
 Type: BLANK (0, 1) W=6 H=1
 rt: Type: BLANK (4, 2) W=2 H=3
-tr: Type: BLANK (6, 1) W=1 H=1
+tr: Type: BLOCK (6, 1) W=1 H=5
 bl: nullptr
 lb: Type: BLANK (0, 0) W=8 H=1
 
 Type: BLANK (4, 2) W=2 H=3
 rt: Type: BLANK (0, 5) W=6 H=1
-tr: Type: BLANK (6, 2) W=1 H=3
+tr: Type: BLOCK (6, 1) W=1 H=5
 bl: Type: BLOCK (2, 2) W=2 H=3
 lb: Type: BLANK (0, 1) W=6 H=1
 
-Type: BLANK (6, 2) W=1 H=3
-rt: Type: BLANK (6, 5) W=1 H=1
-tr: Type: BLANK (7, 2) W=1 H=3
-bl: Type: BLANK (4, 2) W=2 H=3
-lb: Type: BLANK (6, 1) W=1 H=1
-
-Type: BLANK (6, 5) W=1 H=1
-rt: Type: BLANK (0, 6) W=8 H=1
-tr: Type: BLANK (7, 5) W=1 H=1
-bl: Type: BLANK (0, 5) W=6 H=1
-lb: Type: BLANK (6, 2) W=1 H=3
-
-Type: BLANK (7, 5) W=1 H=1
-rt: Type: BLANK (0, 6) W=8 H=1
-tr: nullptr
-bl: Type: BLANK (6, 5) W=1 H=1
-lb: Type: BLANK (7, 2) W=1 H=3
-
-Type: BLANK (7, 2) W=1 H=3
-rt: Type: BLANK (7, 5) W=1 H=1
-tr: nullptr
-bl: Type: BLANK (6, 2) W=1 H=3
-lb: Type: BLANK (7, 1) W=1 H=1
-
-Type: BLANK (7, 1) W=1 H=1
-rt: Type: BLANK (7, 2) W=1 H=3
-tr: nullptr
-bl: Type: BLANK (6, 1) W=1 H=1
-lb: Type: BLANK (0, 0) W=8 H=1
-
 Type: BLANK (0, 0) W=8 H=1
-rt: Type: BLANK (7, 1) W=1 H=1
+rt: Type: BLANK (7, 1) W=1 H=5
 tr: nullptr
 bl: nullptr
 lb: nullptr
 
-Type: BLANK (6, 1) W=1 H=1
-rt: Type: BLANK (6, 2) W=1 H=3
-tr: Type: BLANK (7, 1) W=1 H=1
-bl: Type: BLANK (0, 1) W=6 H=1
+Type: BLANK (7, 1) W=1 H=5
+rt: Type: BLANK (0, 6) W=8 H=1
+tr: nullptr
+bl: Type: BLOCK (6, 1) W=1 H=5
 lb: Type: BLANK (0, 0) W=8 H=1
 
