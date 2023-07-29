@@ -44,6 +44,10 @@ public:
     int insertTiles(Tile *tile);
     void splitRectliearDueToOverlap();
 
+    void printCorners(std::ostream& fout);
+
 };
+
+
 
 #endif // __TESSERA_H__

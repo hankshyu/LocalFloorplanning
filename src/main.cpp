@@ -85,32 +85,40 @@ int main(int argc, char const *argv[])
     std::cout << std::endl;
 
     bool insertedTile = false;
-    for(int i = 0; i < blueT->TileArr.size(); ++i){
-        if(!insertedTile){
-            insertedTile = true;
-            LFLegaliser.insertFirstTile(*(blueT->TileArr[i]));
-        }else{
-            LFLegaliser.insertTile(*(blueT->TileArr[i]));
-        }
-    }
+    // for(int i = 0; i < blueT->TileArr.size(); ++i){
+    //     if(!insertedTile){
+    //         insertedTile = true;
+    //         LFLegaliser.insertFirstTile(*(blueT->TileArr[i]));
+    //     }else{
+    //         LFLegaliser.insertTile(*(blueT->TileArr[i]));
+    //     }
+    // }
+    LFLegaliser.insertFirstTile(*(blueT->TileArr[0]));
+    LFLegaliser.insertTile(*(blueT->TileArr[1]));
+    // LFLegaliser.insertTile(*(blueT->TileArr[2]));
 
-    for(int i = 0; i < blueT->OverlapArr.size(); ++i){
-        if(!insertedTile){
-            insertedTile = true;
-            LFLegaliser.insertFirstTile(*(blueT->OverlapArr[i]));
-        }else{
-            LFLegaliser.insertTile(*(blueT->OverlapArr[i]));
-        }
-    }
 
-    for(int i = 0; i < greenT->TileArr.size(); ++i){
-        if(!insertedTile){
-            insertedTile = true;
-            LFLegaliser.insertFirstTile(*(greenT->TileArr[i]));
-        }else{
-            LFLegaliser.insertTile(*(greenT->TileArr[i]));
-        }
-    }
+    // for(int i = 0; i < blueT->OverlapArr.size(); ++i){
+    //     if(!insertedTile){
+    //         insertedTile = true;
+    //         LFLegaliser.insertFirstTile(*(blueT->OverlapArr[i]));
+    //     }else{
+    //         LFLegaliser.insertTile(*(blueT->OverlapArr[i]));
+    //     }
+    // }
+
+    // for(int i = 0; i < greenT->TileArr.size(); ++i){
+    //     if(!insertedTile){
+    //         insertedTile = true;
+    //         LFLegaliser.insertFirstTile(*(greenT->TileArr[i]));
+    //     }else{
+    //         LFLegaliser.insertTile(*(greenT->TileArr[i]));
+    //     }
+    // }
+
+    std::ofstream pc ("outputs/case-xx-output.txt");
+    blueT->printCorners(pc);
+    pc.close();
 
     // for(int i = 0; i < greenT->OverlapArr.size(); ++i){
     //     if(!insertedTile){

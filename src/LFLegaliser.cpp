@@ -37,7 +37,6 @@ Tile *LFLegaliser::getRandomTile() const{
     }
 }
 
-
 len_t LFLegaliser::getCanvasWidth () const{
     return this->mCanvasWidth;
 }
@@ -348,7 +347,6 @@ void LFLegaliser::insertFirstTile(Tile &newTile){
 
 }
 
-// Not yet complete.... 
 void LFLegaliser::insertTile(Tile &tile){
     assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
     assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
@@ -491,8 +489,6 @@ void LFLegaliser::insertTile(Tile &tile){
         
     }
     
-    std::cout << "STEP 1: " << ((!tileTouchesSky)&&(!cleanTopCut)) << std::endl;
-    std::cout << "STEP 2: " << ((!tileTouchesGround) && (!cleanBottomCut)) << std::endl;
 
     // STEP3) The area of the new tile is traversed from top to bottom, splitting and joining space tiles on either side
     //        and pointing their stiches at the new tile
@@ -508,7 +504,6 @@ void LFLegaliser::insertTile(Tile &tile){
 
     bool topMostMerge = true;
     while(true){
-        splitTile->show(std::cout);
 
         // split into three pieces
         len_t blankLeftBorder = splitTile->getLowerLeft().x;
@@ -532,7 +527,6 @@ void LFLegaliser::insertTile(Tile &tile){
         findRightNeighbors(splitTile, rightNeighbors);
 
         // split the left piece if necessary, maintain tr, bl pointer integrity
-        std::cout << "MergeLeft: " << (blankLeftBorder != tileLeftBorder) << std::endl;
         if(blankLeftBorder != tileLeftBorder){
             Tile *newLeft = new Tile(tileType::BLANK, splitTile->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,splitTile->getHeight());
             // visualiseAddMark(newLeft);
@@ -590,7 +584,6 @@ void LFLegaliser::insertTile(Tile &tile){
         }
 
         // split the right piece if necessary, maintain tr, bl pointer integrity
-        std::cout << "MergeRight: " << (tileRightBorder != blankRightBorder) << std::endl;
         if(tileRightBorder != blankRightBorder){
             Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(),(blankRightBorder- tileRightBorder) ,newMid->getHeight());
             // visualiseAddMark(newRight);
@@ -674,6 +667,9 @@ void LFLegaliser::insertTile(Tile &tile){
 
         // Start Merging process
         // Merge the left blocks if necessary
+        
+        //This is added....
+        // if(topMostMerge) leftMergeWidth = newMid->bl->rt->getWidth();
         bool leftNeedsMerge = (leftMergeWidth != 0) && (leftMergeWidth == (tileLeftBorder - blankLeftBorder));
         if(leftNeedsMerge){
             Tile *mergeUp = newMid->bl->rt;
@@ -713,6 +709,7 @@ void LFLegaliser::insertTile(Tile &tile){
         // update merge width for latter blocks
         leftMergeWidth = tileLeftBorder - blankLeftBorder;
 
+        // if(topMostMerge) rightMergeWidth = newMid->tr->rt->getWidth();
         // Merge the right blocks if possible
         bool rightNeedsMerge = (rightMergeWidth != 0 ) && (rightMergeWidth == (blankRightBorder - tileRightBorder));        
         if(rightNeedsMerge){
@@ -792,11 +789,6 @@ void LFLegaliser::insertTile(Tile &tile){
             // link newMid back
             newMid = mergeUp;
         }
-        
-
-        std::cout << "Print for check newMid state:" << std::endl;
-        newMid->show(std::cout);
-        newMid->showLink(std::cout);
 
         oldsplitTile = splitTile;
         if(findTileY == tile.getLowerLeft().y){
@@ -844,6 +836,8 @@ void LFLegaliser::insertTile(Tile &tile){
             delete(newMid);
             delete(oldsplitTile);
 
+            mergeBlankTiles(tile);
+            
             break;
         }else{
             splitTile = findPoint(Cord(tile.getLowerLeft().x, findTileY) - Cord(0,1));
@@ -1054,4 +1048,78 @@ void LFLegaliser::traverseBlankLink(std::ofstream &ofs,  Tile &t) {
     }
     
     return;
+}
+
+void LFLegaliser::mergeBlankTiles(Tile &initTile){
+    
+    if(fixedTesserae.size() == 0 && softTesserae.size() == 0) return;
+
+    bool mergableTiles = true;
+    while(mergableTiles){
+
+        Tile tup;
+        Tile tdown;
+
+
+        mergableTiles = findMergableTiles(initTile, tup, tdown);
+
+        // go ahead and merge tup and tdown
+        if(mergableTiles){
+            std::cout << "Find Mergable Tiles!" << std::endl;
+            tup.show(std::cout);
+            tup.showLink(std::cout);
+            std::cout << std::endl;
+            tdown.show(std::cout);
+            tdown.showLink(std::cout);
+            mergableTiles = false;
+        }else{
+            std::cout << "No mergable found " << std::endl;
+        }
+    }
+}
+
+bool LFLegaliser::findMergableTiles(Tile &t, Tile &tup, Tile &tdown){
+
+    t.printLabel = (!t.printLabel);
+    
+    bool answer = false;
+    if(t.getType() == tileType::BLANK){
+        if(t.rt != nullptr){
+            
+            bool sameWidth = ((t.getWidth()) == (t.rt->getWidth()));
+            bool aligned = ((t.getLowerLeft().x) == (t.rt->getLowerLeft().x));
+            
+            if((t.rt->getType() == tileType::BLANK) && sameWidth && aligned){
+                answer = true;
+                tup = *(t.rt);
+                tdown = t;
+            }
+        }
+    }
+
+    if(t.rt != nullptr){
+        if(t.rt->printLabel != t.printLabel){
+            answer = (answer || findMergableTiles(*(t.rt), tup, tdown));
+        }
+    }
+
+    if(t.lb != nullptr){
+        if(t.lb->printLabel != t.printLabel){
+            answer = (answer || findMergableTiles(*(t.lb), tup, tdown));
+        }
+    }
+
+    if(t.bl != nullptr){
+        if(t.bl->printLabel != t.printLabel){
+            answer = (answer || findMergableTiles(*(t.lb), tup, tdown));
+        }
+    }
+
+    if(t.tr != nullptr){
+        if(t.tr->printLabel != t.printLabel){
+            answer = (answer || findMergableTiles(*(t.tr), tup, tdown));
+        }
+    }
+    
+    return answer;
 }

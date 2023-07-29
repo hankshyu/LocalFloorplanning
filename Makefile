@@ -1,5 +1,6 @@
 CXX = g++
 FLAGS = -std=c++11 
+BOOSTPATH = boost_1_82_0
 CFLAGS = -c
 DEBUGFLAGS = -g
 
@@ -12,11 +13,14 @@ debug: lfrun_debug
 LINKFLAGS = 
 
 lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o
-	$(CXX) $(LINKFLAGS) $^ -o $@
+	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
 main.o: $(SRCPATH)/main.cpp 
-	$(CXX) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
+	$(CXX) -I $(BOOSTPATH) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
+
+Tessera.o: $(SRCPATH)/Tessera.cpp $(SRCPATH)/Tessera.h
+	$(CXX) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
 
 %.o: $(SRCPATH)/%.cpp $(SRCPATH)/%.h
 	$(CXX) $(CFLAGS) $< -o $@

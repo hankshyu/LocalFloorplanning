@@ -41,10 +41,6 @@ public:
     void detectfloorplanningOverlaps();
     void splitFloorplanningOverlaps();
 
-
-
-    // int addFirstTessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
-
     /* Functions proposed in the paper */
 
     // Returns the Tile that includes the Cord "key"
@@ -76,6 +72,9 @@ public:
     void visualiseAddMark(Tile * markTile);
 
     void viewLinks(const std::string outputFileName);
+
+    void mergeBlankTiles(Tile &initTile);
+    bool findMergableTiles(Tile &t, Tile &tup, Tile &tdown);
 
 };
 

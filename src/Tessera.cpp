@@ -1,5 +1,11 @@
 #include <assert.h>
+#include <iostream>
+#include <fstream>
+#include <string>
 #include "Tessera.h"
+#include "boost/polygon/polygon.hpp"
+
+namespace gtl = boost::polygon;
 
 Tessera::Tessera()
     : mType(tesseraType::EMPTY) {}
@@ -293,3 +299,58 @@ void Tessera::splitRectliearDueToOverlap(){
     }
     
 }
+
+void Tessera::printCorners(std::ostream& fout){
+    typedef gtl::polygon_data<int> Polygon;
+    typedef gtl::polygon_90_data<int> Polygon90;
+    typedef gtl::polygon_traits<Polygon90>::point_type Point;
+    typedef std::vector<gtl::polygon_90_data<int>> Polygon90Set;
+
+    gtl::polygon_90_set_data<int> polygonSet;
+
+    for (int i = 0; i < TileArr.size(); ++i){
+        Tile* currentTile = TileArr[i];
+        gtl::polygon_90_data<int> boxPolygon;
+        const Point box[4] = {
+            gtl::construct<Point>(currentTile->getLowerLeft().x, currentTile->getLowerLeft().y),
+            gtl::construct<Point>(currentTile->getUpperLeft().x, currentTile->getUpperLeft().y),
+            gtl::construct<Point>(currentTile->getUpperRight().x, currentTile->getUpperRight().y),
+            gtl::construct<Point>(currentTile->getLowerRight().x, currentTile->getLowerRight().y)
+        };
+        
+        gtl::set_points(boxPolygon, box, box+4);
+        gtl::operators::operator+=(polygonSet, boxPolygon); 
+    }
+
+    std::vector<gtl::polygon_data<int>> polySetUnionized;
+    polySetUnionized.clear();
+    polygonSet.get_polygons(polySetUnionized);
+
+    if (polySetUnionized.size() > 1){
+        std::cout << "WARNING: Some tiles are disjoint\n";
+    }
+    else if (polySetUnionized.size() == 0){
+        std::cout << "ERROR: TileSet unable to union operation\n";
+        return;
+    }
+    bool isCounterClockwise = gtl::winding(polySetUnionized[0]).to_int() == 1; 
+
+    std::vector<Point> points;
+    for (auto it = polySetUnionized[0].begin(); it != polySetUnionized[0].end(); ++it){
+        const Point& point_data = *it;
+        points.push_back(point_data);
+    }
+
+    fout << getName() << ' ' << points.size() << '\n'; 
+    if (isCounterClockwise){
+        for (int i = points.size() -1 ; i >= 0; --i){
+            fout << points[i].x() << ' ' << points[i].y() << '\n';
+        }
+    }
+    else {
+        for (int i = 0 ; i < points.size(); i++){
+            fout << points[i].x() << ' ' << points[i].y() << '\n';
+        }
+    }
+}
+
