@@ -57,6 +57,12 @@ def blend_color(colors):
 
     (br, bg, bb) = (br//colorCount, bg//colorCount, bb//colorCount)
     (br, bg, bb) = (hex(br)[2:4], hex(bg)[2:4], hex(bb)[2:4])
+    if len(br) < 2:
+        br = "0" + br;
+    if len(bg) < 2:
+        bg = "0" + bg;
+    if len(bb) < 2:
+        bb = "0" + bb;
     blend = "#" + br + bg + bb
 
     return blend

@@ -7,12 +7,21 @@
 #include <fstream>
 #include <cmath>
 #include <boost/polygon/polygon.hpp>
+#include <boost/polygon/rectangle_data.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
 #include "ppsolver.h"
 
-namespace gtl = boost::polygon;
+namespace bp = boost::polygon;
+namespace bg = boost::geometry;
+
+typedef bg::model::d2::point_xy<int> Point;
+typedef bg::model::box<Point> Box;
+typedef bp::rectangle_data<len_t> Rectangle;
 
 class PPSolver;
 
