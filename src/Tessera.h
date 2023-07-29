@@ -41,7 +41,7 @@ public:
     len_t getBBWidth () const;
     len_t getBBHeight () const;
 
-    int insertTiles(tileType type, Tile *tile);
+    int insertTiles(Tile *tile);
     void splitRectliearDueToOverlap();
 
 };

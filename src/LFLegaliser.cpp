@@ -491,6 +491,9 @@ void LFLegaliser::insertTile(Tile &tile){
         
     }
     
+    std::cout << "STEP 1: " << ((!tileTouchesSky)&&(!cleanTopCut)) << std::endl;
+    std::cout << "STEP 2: " << ((!tileTouchesGround) && (!cleanBottomCut)) << std::endl;
+
     // STEP3) The area of the new tile is traversed from top to bottom, splitting and joining space tiles on either side
     //        and pointing their stiches at the new tile
 
@@ -502,10 +505,10 @@ void LFLegaliser::insertTile(Tile &tile){
 
     // Merge helping indexes
     len_t leftMergeWidth = 0, rightMergeWidth = 0;
-    Tile *mergeLeft = nullptr, *mergeMid = nullptr, *mergeRight = nullptr;
 
     bool topMostMerge = true;
     while(true){
+        splitTile->show(std::cout);
 
         // split into three pieces
         len_t blankLeftBorder = splitTile->getLowerLeft().x;
@@ -529,6 +532,7 @@ void LFLegaliser::insertTile(Tile &tile){
         findRightNeighbors(splitTile, rightNeighbors);
 
         // split the left piece if necessary, maintain tr, bl pointer integrity
+        std::cout << "MergeLeft: " << (blankLeftBorder != tileLeftBorder) << std::endl;
         if(blankLeftBorder != tileLeftBorder){
             Tile *newLeft = new Tile(tileType::BLANK, splitTile->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,splitTile->getHeight());
             // visualiseAddMark(newLeft);
@@ -576,9 +580,17 @@ void LFLegaliser::insertTile(Tile &tile){
                 }
             }
 
+        }else{
+            // change the tr pointers of the left neighbors to newMid
+            for(int i = 0; i < leftNeighbors.size(); ++i){
+                if(leftNeighbors[i]->tr == splitTile){
+                    leftNeighbors[i]->tr = newMid;
+                }
+            }
         }
 
         // split the right piece if necessary, maintain tr, bl pointer integrity
+        std::cout << "MergeRight: " << (tileRightBorder != blankRightBorder) << std::endl;
         if(tileRightBorder != blankRightBorder){
             Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(),(blankRightBorder- tileRightBorder) ,newMid->getHeight());
             // visualiseAddMark(newRight);
@@ -623,6 +635,13 @@ void LFLegaliser::insertTile(Tile &tile){
                 }
             }
             
+        }else{
+            // change bl pointers of right neighbors back to newMid
+            for(int i = 0; i < rightNeighbors.size(); ++i){
+                if(rightNeighbors[i]->bl == splitTile){
+                    rightNeighbors[i]->bl = newMid;
+                }
+            }
         }
 
         // maintain rt & lb pointers integrity for newMid
@@ -736,7 +755,6 @@ void LFLegaliser::insertTile(Tile &tile){
 
 
         // Finally, merge the middle tile, it MUST merge after the first time
-        std::cout << "Came into mid merge" << std::endl;
         
         if(!topMostMerge){
             Tile *mergeUp = newMid->rt;
@@ -774,9 +792,9 @@ void LFLegaliser::insertTile(Tile &tile){
             // link newMid back
             newMid = mergeUp;
         }
-        //allow entering the next time.
+        
 
-        std::cout << "Print for check tr state:";
+        std::cout << "Print for check newMid state:" << std::endl;
         newMid->show(std::cout);
         newMid->showLink(std::cout);
 
@@ -787,10 +805,6 @@ void LFLegaliser::insertTile(Tile &tile){
             tile.tr = newMid->tr;
             tile.bl = newMid->bl;
             tile.lb = newMid->lb;
-
-            std::cout <<"Tile show 0:" << std::endl;
-            tile.show(std::cout);
-            tile.showLink(std::cout);
             
             // relink the neighbors
             std::vector <Tile *> midUpNeighbors;
@@ -811,7 +825,9 @@ void LFLegaliser::insertTile(Tile &tile){
 
             std::vector <Tile *> midLeftNeighbors;
             findLeftNeighbors(newMid, midLeftNeighbors);
+
             for(int i = 0; i < midLeftNeighbors.size(); ++i){
+
                 if(midLeftNeighbors[i]->tr == newMid){
                     midLeftNeighbors[i]->tr = &tile;
                 }
@@ -825,21 +841,8 @@ void LFLegaliser::insertTile(Tile &tile){
                 }
             }
 
-            std::cout <<"Tile show 1:" << std::endl;
-            tile.show(std::cout);
-            tile.showLink(std::cout);
-
-            if(!topMostMerge) delete(newMid);
-            
-            std::cout <<"Tile show 2:" << std::endl;
-            tile.show(std::cout);
-            tile.showLink(std::cout);
-            
+            delete(newMid);
             delete(oldsplitTile);
-
-            std::cout <<"Tile show 3:" << std::endl;
-            tile.show(std::cout);
-            tile.showLink(std::cout);
 
             break;
         }else{
@@ -847,9 +850,9 @@ void LFLegaliser::insertTile(Tile &tile){
             findTileY= splitTile->getLowerLeft().y;
             delete(oldsplitTile);
         }
+
+        // mark this is not the top most merge
         topMostMerge = false;
-
-
     }
     
 }

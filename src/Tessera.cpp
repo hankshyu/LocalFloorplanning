@@ -9,6 +9,7 @@ Tessera::Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft
     mInitLowerLeft(lowerleft), mInitWidth(width), mInitHeight(height) {
         Tile *defaultTess = new Tile(tileType::BLOCK, lowerleft, width, height);
         TileArr.push_back(defaultTess);
+        calBoundingBox();
     }
 
 std::string Tessera::getName () const{
@@ -32,9 +33,9 @@ len_t Tessera::getBBHeight() const{
     return this->mBBUpperRight.y - this->mBBLowerLeft.y;
 }
 
-int Tessera::insertTiles(tileType type, Tile *tile){
-    assert(type != tileType::BLANK);
-    switch (type){
+int Tessera::insertTiles(Tile *tile){
+    assert(tile->getType() != tileType::BLANK);
+    switch (tile->getType()){
         case tileType::BLOCK:
             /* code */
             TileArr.push_back(tile);
@@ -55,27 +56,39 @@ void Tessera::calBoundingBox(){
     if(TileArr.empty() && OverlapArr.empty()) return;
 
     //The lowerleft and upper right tiles
-    Cord LL, UR;
+    Cord BBLL, BBUR;
 
     if(!TileArr.empty()){
-        LL = TileArr[0]->getLowerLeft();
-        UR = TileArr[0]->getUpperRight();
+        BBLL = TileArr[0]->getLowerLeft();
+        BBUR = TileArr[0]->getUpperRight();
     }else{
-        LL = OverlapArr[0]->getLowerLeft();
-        UR = OverlapArr[0]->getUpperRight();
+        BBLL = OverlapArr[0]->getLowerLeft();
+        BBUR = OverlapArr[0]->getUpperRight();
     }
 
     for(Tile *t : TileArr){
-        if(t->getLowerLeft() < LL) LL = t->getLowerLeft();
-        if(t->getUpperRight() > UR) UR = t->getUpperRight();
+        Cord tLL = t->getLowerLeft();
+        Cord tUR = t->getUpperRight();
+
+        if(tLL.x < BBLL.x) BBLL.x = tLL.x;
+        if(tLL.y < BBLL.y) BBLL.y = tLL.y;
+        
+        if(tUR.x > BBUR.x) BBUR.x = tUR.x;
+        if(tUR.y > BBUR.y) BBUR.y = tUR.y;
     }
     for(Tile *t : OverlapArr){
-        if(t->getLowerLeft() < LL) LL = t->getLowerLeft();
-        if(t->getUpperRight() > UR) UR = t->getUpperRight();  
+        Cord tLL = t->getLowerLeft();
+        Cord tUR = t->getUpperRight();
+
+        if(tLL.x < BBLL.x) BBLL.x = tLL.x;
+        if(tLL.y < BBLL.y) BBLL.y = tLL.y;
+        
+        if(tUR.x > BBUR.x) BBUR.x = tUR.x;
+        if(tUR.y > BBUR.y) BBUR.y = tUR.y;
     }
 
-    this->mBBLowerLeft = LL;
-    this->mBBUpperRight = UR;
+    this->mBBLowerLeft = BBLL;
+    this->mBBUpperRight = BBUR;
 }
 
 /*
