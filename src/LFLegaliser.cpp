@@ -490,7 +490,7 @@ void LFLegaliser::insertTile(Tile &tile){
     }
     
 
-    // STEP3) The area of the new tile is traversed from top to bottom, splitting and joining space tiles on either side
+    // STEP 3) The area of the new tile is traversed from top to bottom, splitting and joining space tiles on either side
     //        and pointing their stiches at the new tile
 
     // locate the topmost blank-tile, split in 3 pieces, left, mid and right
@@ -527,7 +527,8 @@ void LFLegaliser::insertTile(Tile &tile){
         findRightNeighbors(splitTile, rightNeighbors);
 
         // split the left piece if necessary, maintain tr, bl pointer integrity
-        if(blankLeftBorder != tileLeftBorder){
+        bool leftSplitNecessary = (blankLeftBorder != tileLeftBorder);
+        if(leftSplitNecessary){
             Tile *newLeft = new Tile(tileType::BLANK, splitTile->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,splitTile->getHeight());
             // visualiseAddMark(newLeft);
             newLeft->tr = newMid;
@@ -584,7 +585,8 @@ void LFLegaliser::insertTile(Tile &tile){
         }
 
         // split the right piece if necessary, maintain tr, bl pointer integrity
-        if(tileRightBorder != blankRightBorder){
+        bool rightSplitNecessary = (tileRightBorder != blankRightBorder);
+        if(rightSplitNecessary){
             Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(),(blankRightBorder- tileRightBorder) ,newMid->getHeight());
             // visualiseAddMark(newRight);
             newRight->tr = splitTile->tr;
@@ -668,9 +670,50 @@ void LFLegaliser::insertTile(Tile &tile){
         // Start Merging process
         // Merge the left blocks if necessary
         
-        //This is added....
-        // if(topMostMerge) leftMergeWidth = newMid->bl->rt->getWidth();
-        bool leftNeedsMerge = (leftMergeWidth != 0) && (leftMergeWidth == (tileLeftBorder - blankLeftBorder));
+        // TODO
+        // Create a mechanism to detect if the first left & right shall merge with the upper blank tile;
+        // Create another mechanism to detect if the final split(or the bottom most tile) shall merge with
+        // the lower blank tile.
+
+        bool initTopLeftMerge = false;
+        if(topMostMerge){
+            Tile *initTopLeftUp, *initTopLeftDown;
+            if(leftSplitNecessary){
+                
+                initTopLeftDown = newMid->bl;
+                if(initTopLeftDown->rt != nullptr){
+                    initTopLeftUp= initTopLeftDown->rt;
+                    bool sameWidth = (initTopLeftUp->getWidth() == initTopLeftDown->getWidth());
+                    bool xAligned = (initTopLeftUp->getLowerLeft().x == initTopLeftDown->getLowerLeft().x);
+                    if(sameWidth && xAligned){
+                        initTopLeftMerge = true;
+                    }
+                }
+            }
+            std::cout << "inittopLeftMerge Result: " << initTopLeftMerge << std::endl;
+        }
+
+
+        bool initTopRightMerge = false;
+        if(topMostMerge){
+            Tile *initTopRightUp, *initTopRightDown;
+            if(rightSplitNecessary){
+                initTopRightDown = newMid->tr;
+                if(initTopRightDown->rt != nullptr){
+                    initTopRightUp = initTopRightDown->rt;
+                    bool sameWidth = (initTopRightUp->getWidth() == initTopRightDown->getWidth());
+                    bool xAligned = (initTopRightUp->getLowerLeft().x == initTopRightDown->getLowerLeft().x);
+                    if((sameWidth) && (xAligned)){
+                        initTopRightMerge = true;
+                    }
+                }
+            }
+            std::cout << "inittopRightMerge Result: " << initTopRightMerge << std::endl;
+        }
+
+
+
+        bool leftNeedsMerge = ((leftMergeWidth != 0) && (leftMergeWidth == (tileLeftBorder - blankLeftBorder))) || initTopLeftMerge;
         if(leftNeedsMerge){
             Tile *mergeUp = newMid->bl->rt;
             Tile *mergeDown = newMid->bl;
@@ -711,7 +754,7 @@ void LFLegaliser::insertTile(Tile &tile){
 
         // if(topMostMerge) rightMergeWidth = newMid->tr->rt->getWidth();
         // Merge the right blocks if possible
-        bool rightNeedsMerge = (rightMergeWidth != 0 ) && (rightMergeWidth == (blankRightBorder - tileRightBorder));        
+        bool rightNeedsMerge = ((rightMergeWidth != 0 ) && (rightMergeWidth == (blankRightBorder - tileRightBorder))) || initTopRightMerge;        
         if(rightNeedsMerge){
             Tile *mergeUp = newMid->tr->rt;
             Tile *mergeDown = newMid->tr;
@@ -748,7 +791,6 @@ void LFLegaliser::insertTile(Tile &tile){
         }
         // update right merge width for latter blocks
         rightMergeWidth = blankRightBorder - tileRightBorder;
-
 
 
         // Finally, merge the middle tile, it MUST merge after the first time
@@ -836,7 +878,7 @@ void LFLegaliser::insertTile(Tile &tile){
             delete(newMid);
             delete(oldsplitTile);
 
-            mergeBlankTiles(tile);
+            // mergeBlankTiles(tile);
             
             break;
         }else{
