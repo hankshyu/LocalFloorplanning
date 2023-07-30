@@ -32,27 +32,40 @@ void printTile(const Tile &t) {
 
 int main(int argc, char const *argv[]) {
     Parser parser(argv[1]);
-    PPSolver solver;
-    LFLegaliser legaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
+    int pushForceList[3] = { 20, 200, 300 };
+    int pushScale = 0;
+    PPSolver *solver;
+    LFLegaliser *legaliser;
 
-    solver.readFromParser(parser);
+    do {
+        delete solver;
+        delete legaliser;
+        solver = new PPSolver;
+        legaliser = new LFLegaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
 
-    int iteration = 1000;
-    solver.setupPushForce(20);
-    for ( int phase = 1; phase <= 50; phase++ ) {
-        solver.setRadiusRatio(phase * 0.02);
-        for ( int i = 0; i < iteration; i++ ) {
-            solver.calcModuleForce();
-            solver.moveModule();
+        solver->readFromParser(parser);
+
+        int iteration = 1000;
+        solver->setupPushForce(pushForceList[pushScale++]);
+        for ( int phase = 1; phase <= 50; phase++ ) {
+            solver->setRadiusRatio(phase * 0.02);
+            for ( int i = 0; i < iteration; i++ ) {
+                solver->calcModuleForce();
+                solver->moveModule();
+            }
         }
-    }
 
-    //solver.currentPosition2txt("test.txt");
+        legaliser->translateGlobalFloorplanning(*solver);
+        legaliser->detectfloorplanningOverlaps();
+    } while ( legaliser->has3overlap() );
 
-    legaliser.translateGlobalFloorplanning(solver);
-    legaliser.detectfloorplanningOverlaps();
 
-    legaliser.visualiseArtpieceCYY("test.txt");
+
+    solver->currentPosition2txt("global_test.txt");
+
+    std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
+
+    legaliser->visualiseArtpieceCYY("transform_test.txt");
 
     return 0;
 }

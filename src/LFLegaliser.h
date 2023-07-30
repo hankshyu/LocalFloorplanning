@@ -29,6 +29,7 @@ class LFLegaliser {
 private:
     len_t mCanvasWidth;
     len_t mCanvasHeight;
+    bool overlap3;
 
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
     bool checkTileInCanvas(Tile &tile) const;
@@ -53,7 +54,10 @@ public:
 
     void translateGlobalFloorplanning(const PPSolver &solver);
     void detectfloorplanningOverlaps();
+    bool has3overlap();
     void splitFloorplanningOverlaps();
+
+
 
 
 
