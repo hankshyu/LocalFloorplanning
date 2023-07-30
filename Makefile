@@ -40,4 +40,4 @@ Tessera_db.o: $(SRCPATH)/Tessera.cpp $(SRCPATH)/Tessera.h
 	$(CXX) $(DEBUGFLAGS) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o *.gch lfrun.out
+	rm -rf *.o *.gch lfrun.out lfrun_db.out
