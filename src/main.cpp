@@ -32,10 +32,10 @@ void printTile(const Tile &t) {
 
 int main(int argc, char const *argv[]) {
     Parser parser(argv[1]);
-    int pushForceList[3] = { 20, 200, 300 };
+    int pushForceList[8] = { 10, 20, 50, 100, 200, 300, 500, 1000 };
     int pushScale = 0;
-    PPSolver *solver;
-    LFLegaliser *legaliser;
+    PPSolver *solver = new PPSolver;
+    LFLegaliser *legaliser = new LFLegaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
 
     do {
         delete solver;

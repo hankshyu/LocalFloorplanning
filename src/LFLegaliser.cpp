@@ -48,7 +48,6 @@ Tile *LFLegaliser::getRandomTile() const {
     }
 }
 
-
 len_t LFLegaliser::getCanvasWidth() const {
     return this->mCanvasWidth;
 }
@@ -112,7 +111,6 @@ bool hasCycle3(std::vector< std::set<len_t> > graph, std::vector<bool> visited, 
     visited[curr] = false;
     return false;
 }
-
 
 void LFLegaliser::detectfloorplanningOverlaps() {
     // If an overlap is detected, You should:
@@ -220,7 +218,7 @@ void LFLegaliser::detectfloorplanningOverlaps() {
                     ( nodes[2] < softTesserae.size() ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(nodes[2]) :
                         overlapTile->OverlapFixedTesseraeIdx.push_back(nodes[2] - softTesserae.size());
 
-                    curTess->insertTiles(tileType::OVERLAP, overlapTile);
+                    curTess->insertTiles(overlapTile);
                 }
             }
         }
@@ -284,8 +282,8 @@ void LFLegaliser::detectfloorplanningOverlaps() {
             ( isSoftOverlap ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(overlapId)
                 : overlapTile->OverlapFixedTesseraeIdx.push_back(overlapId);
 
-            curTess->insertTiles(tileType::OVERLAP, overlapTile);
-            overlapTess->insertTiles(tileType::OVERLAP, overlapTile);
+            curTess->insertTiles(overlapTile);
+            overlapTess->insertTiles(overlapTile);
         }
     }
 }
@@ -469,8 +467,8 @@ bool LFLegaliser::searchArea(Cord lowerleft, len_t width, len_t height) const {
         if ( currentFind->getType() != tileType::BLANK ) {
             // This is an edge of a solid tile
             return true;
-        }
-        else if ( currentFind->getUpperRight().x < lowerleft.x + width ) {
+        }        
+else if ( currentFind->getUpperRight().x < lowerleft.x + width ) {
             // See if the right edge within AOI, right must be a tile
             return true;
         }
@@ -531,36 +529,58 @@ void LFLegaliser::insertFirstTile(Tile &newTile) {
     assert(this->checkTileInCanvas(newTile));
     // cut the canvas into four parts: above, below, left, rifht
 
-    if ( newTile.getLowerLeft().y != 0 ) {
-        Tile *tdown = new Tile(tileType::BLANK, Cord(0, 0),
+    Tile *tdown, *tup, *tleft, *tright;
+    bool hasDownTile = ( newTile.getLowerLeft().y != 0 );
+    bool hasUpTile = ( newTile.getUpperRight().y != this->mCanvasHeight );
+    bool hasLeftTile = ( newTile.getLowerLeft().x != 0 );
+    bool hasRightTile = ( newTile.getLowerRight().x != this->mCanvasWidth );
+
+
+    if ( hasDownTile ) {
+        tdown = new Tile(tileType::BLANK, Cord(0, 0),
             this->mCanvasWidth, newTile.getLowerLeft().y);
         newTile.lb = tdown;
-        tdown->rt = &newTile;
     }
 
-    if ( newTile.getUpperRight().y <= this->mCanvasHeight ) {
-        Tile *tup = new Tile(tileType::BLANK, Cord(0, newTile.getUpperRight().y),
+    if ( hasUpTile ) {
+        tup = new Tile(tileType::BLANK, Cord(0, newTile.getUpperRight().y),
             this->mCanvasWidth, ( this->mCanvasHeight - newTile.getUpperRight().y ));
         newTile.rt = tup;
-        tup->lb = &newTile;
     }
 
-    if ( newTile.getLowerLeft().x != 0 ) {
-        Tile *tleft = new Tile(tileType::BLANK, Cord(0, newTile.getLowerLeft().y),
+    if ( hasLeftTile ) {
+        tleft = new Tile(tileType::BLANK, Cord(0, newTile.getLowerLeft().y),
             newTile.getLowerLeft().x, ( newTile.getUpperLeft().y - newTile.getLowerLeft().y ));
         newTile.bl = tleft;
         tleft->tr = &newTile;
+
+
+        if ( hasDownTile ) tleft->lb = tdown;
+        if ( hasUpTile ) tleft->rt = tup;
+
+        if ( hasUpTile ) tup->lb = tleft;
+    }
+    else {
+        if ( hasUpTile ) tup->lb = &newTile;
     }
 
-    if ( newTile.getLowerRight().x != this->mCanvasWidth ) {
-        Tile *tright = new Tile(tileType::BLANK, newTile.getLowerRight(),
+    if ( hasRightTile ) {
+        tright = new Tile(tileType::BLANK, newTile.getLowerRight(),
             ( this->mCanvasWidth - newTile.getUpperRight().x ), ( newTile.getUpperLeft().y - newTile.getLowerLeft().y ));
         newTile.tr = tright;
         tright->bl = &newTile;
+
+        if ( hasDownTile ) tright->lb = tdown;
+        if ( hasUpTile ) tright->rt = tup;
+
+        if ( hasDownTile ) tdown->rt = tright;
     }
+    else {
+        if ( hasDownTile ) tdown->rt = &newTile;
+    }
+
 }
 
-// Not yet complete.... 
 void LFLegaliser::insertTile(Tile &tile) {
     assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
     assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
@@ -593,8 +613,8 @@ void LFLegaliser::insertTile(Tile &tile) {
                 t->rt = newDown;
             }
         }
-
-        // change right neighbors to point their bl to the correct tile (one of the split)
+        // 1. find the correct tr for newDown
+        // 2. change right neighbors to point their bl to the correct tile (one of the split)
         std::vector <Tile *> origRightNeighbors;
         findRightNeighbors(origTop, origRightNeighbors);
 
@@ -605,7 +625,9 @@ void LFLegaliser::insertTile(Tile &tile) {
                     rightModified = true;
                     newDown->tr = origRightNeighbors[i];
                 }
-                origRightNeighbors[i]->bl = newDown;
+                if ( origRightNeighbors[i]->getLowerLeft().y >= tile.getLowerRight().y ) {
+                    origRightNeighbors[i]->bl = newDown;
+                }
 
             }
         }
@@ -616,7 +638,7 @@ void LFLegaliser::insertTile(Tile &tile) {
 
         bool leftModified = false;
         for ( int i = 0; i < origLeftNeighbors.size(); ++i ) {
-            if ( origLeftNeighbors[i]->getUpperLeft().y > tile.getUpperLeft().y ) {
+            if ( origLeftNeighbors[i]->getUpperLeft().y > newDown->getUpperLeft().y ) {
                 if ( !leftModified ) {
                     leftModified = true;
                     origTop->bl = origLeftNeighbors[i];
@@ -691,7 +713,9 @@ void LFLegaliser::insertTile(Tile &tile) {
                     leftModified = true;
                     newUp->bl = origLeftNeighbors[i];
                 }
-                origLeftNeighbors[i]->tr = newUp;
+                if ( origLeftNeighbors[i]->getUpperLeft().y <= newUp->getUpperLeft().y ) {
+                    origLeftNeighbors[i]->tr = newUp;
+                }
             }
         }
 
@@ -701,44 +725,498 @@ void LFLegaliser::insertTile(Tile &tile) {
 
     }
 
-    // STEP3) The area of the new tile is traversed from top to bottom, splitting and joining space tiles on either side
+
+    // STEP 3) The area of the new tile is traversed from top to bottom, splitting and joining space tiles on either side
     //        and pointing their stiches at the new tile
 
     // locate the topmost blank-tile, split in 3 pieces, left, mid and right
 
-    Tile *topBlank = findPoint(Cord(tile.getUpperLeft() - Cord(0, 1)));
+    Tile *splitTile = findPoint(Cord(tile.getUpperLeft() - Cord(0, 1)));
+    len_t findTileY = splitTile->getLowerLeft().y;
+    Tile *oldsplitTile;
 
     // Merge helping indexes
     len_t leftMergeWidth = 0, rightMergeWidth = 0;
-    Tile *mergeLeft = nullptr, *mergeMid = nullptr, *mergeRight = nullptr;
 
-    // split into three pieces
-    len_t blankLeftBorder = topBlank->getLowerLeft().x;
-    len_t tileLeftBorder = tile.getLowerLeft().x;
-    len_t tileRightBorder = tile.getLowerRight().x;
-    len_t blankRightBorder = topBlank->getLowerRight().x;
+    bool topMostMerge = true;
+    while ( true ) {
 
-    // The middle piece (must have)
-    //Tile *newMid = new Tile(tile.getType(), Cord(tileLeftBorder, topBlank->getLowerLeft().y), tile.getWidth(), topBlank->getHeight());
-    //newMid
+        // split into three pieces
+        len_t blankLeftBorder = splitTile->getLowerLeft().x;
+        len_t tileLeftBorder = tile.getLowerLeft().x;
+        len_t tileRightBorder = tile.getLowerRight().x;
+        len_t blankRightBorder = splitTile->getLowerRight().x;
 
-    // split the left piece
+        // The middle piece (must have)
+        // This should change to tile.type
+        Tile *newMid = new Tile(tileType::BLANK, Cord(tileLeftBorder, splitTile->getLowerLeft().y), tile.getWidth(), splitTile->getHeight());
+        newMid->bl = splitTile->bl;
+        newMid->tr = splitTile->tr;
 
-    //if(blankLeftBorder != tileLeftBorder){
-    //    Tile *newLeft = new Tile(tileType::BLANK, topBlank->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,topBlank->getHeight());
-    //    visualiseAddMark(newLeft);
-    //    newLeft->tr = topBlank;
-    //    new
-    //    
-    //}
+        std::vector<Tile *> topNeighbors;
+        findTopNeighbors(splitTile, topNeighbors);
+        std::vector<Tile *>bottomNeighbors;
+        findDownNeighbors(splitTile, bottomNeighbors);
+        std::vector<Tile *>leftNeighbors;
+        findLeftNeighbors(splitTile, leftNeighbors);
+        std::vector<Tile *>rightNeighbors;
+        findRightNeighbors(splitTile, rightNeighbors);
+
+        // split the left piece if necessary, maintain tr, bl pointer integrity
+        bool leftSplitNecessary = ( blankLeftBorder != tileLeftBorder );
+        if ( leftSplitNecessary ) {
+            Tile *newLeft = new Tile(tileType::BLANK, splitTile->getLowerLeft(), ( tileLeftBorder - blankLeftBorder ), splitTile->getHeight());
+            // visualiseAddMark(newLeft);
+            newLeft->tr = newMid;
+            newLeft->bl = splitTile->bl;
+
+            newMid->bl = newLeft;
+
+            // maintain rt, lb pointers of the newtile and  top-Neighbors of new Tiles
+            bool rtModified = false;
+            for ( int i = 0; i < topNeighbors.size(); ++i ) {
+                if ( topNeighbors[i]->getLowerLeft().x < tileLeftBorder ) {
+                    if ( !rtModified ) {
+                        rtModified = true;
+                        newLeft->rt = topNeighbors[i];
+                    }
+                    if ( topNeighbors[i]->getLowerLeft().x >= blankLeftBorder ) {
+                        topNeighbors[i]->lb = newLeft;
+                    }
+                }
+
+            }
+
+            // maintain rt, lb pointers of the newtile and  bottom-Neighbors of new Tiles
+            bool lbModified = false;
+            for ( int i = 0; i < bottomNeighbors.size(); ++i ) {
+                if ( bottomNeighbors[i]->getLowerLeft().x < tileLeftBorder ) {
+                    if ( !lbModified ) {
+                        lbModified = true;
+                        newLeft->lb = bottomNeighbors[i];
+                    }
+                    if ( bottomNeighbors[i]->getLowerRight().x <= tileLeftBorder ) {
+                        bottomNeighbors[i]->rt = newLeft;
+                    }
+
+                }
+            }
+
+            // also change tr pointers of left neighbors to the newly created right tile
+            for ( int i = 0; i < leftNeighbors.size(); ++i ) {
+                if ( leftNeighbors[i]->tr == splitTile ) {
+                    leftNeighbors[i]->tr = newLeft;
+                }
+            }
+
+        }
+        else {
+            // change the tr pointers of the left neighbors to newMid
+            for ( int i = 0; i < leftNeighbors.size(); ++i ) {
+                if ( leftNeighbors[i]->tr == splitTile ) {
+                    leftNeighbors[i]->tr = newMid;
+                }
+            }
+        }
+
+        // split the right piece if necessary, maintain tr, bl pointer integrity
+        bool rightSplitNecessary = ( tileRightBorder != blankRightBorder );
+        if ( rightSplitNecessary ) {
+            Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(), ( blankRightBorder - tileRightBorder ), newMid->getHeight());
+            // visualiseAddMark(newRight);
+            newRight->tr = splitTile->tr;
+            newRight->bl = newMid;
+
+            newMid->tr = newRight;
+
+            //maintain rt, lb poointers of the newtile and top-Neighbors of new Tiles
+            bool rtModified = false;
+            for ( int i = 0; i < topNeighbors.size(); ++i ) {
+                if ( topNeighbors[i]->getLowerRight().x > tileRightBorder ) {
+                    if ( !rtModified ) {
+                        rtModified = true;
+                        newRight->rt = topNeighbors[i];
+                    }
+                    if ( topNeighbors[i]->getLowerLeft().x >= tileRightBorder ) {
+                        topNeighbors[i]->lb = newRight;
+                    }
+                }
+            }
+
+            //maintain rt, lb poointers of the newtile and bottom-Neighbors of new Tiles
+
+            bool lbModified = false;
+            for ( int i = 0; i < bottomNeighbors.size(); ++i ) {
+                if ( bottomNeighbors[i]->getLowerRight().x > tileRightBorder ) {
+                    if ( !lbModified ) {
+                        lbModified = true;
+                        newRight->lb = bottomNeighbors[i];
+                    }
+                    if ( bottomNeighbors[i]->getLowerRight().x <= blankRightBorder ) {
+                        bottomNeighbors[i]->rt = newRight;
+                    }
+                }
+            }
+
+            // also change bl pointers of right neighbors to the newly created left tile
+            for ( int i = 0; i < rightNeighbors.size(); ++i ) {
+                if ( rightNeighbors[i]->bl == splitTile ) {
+                    rightNeighbors[i]->bl = newRight;
+                }
+            }
+
+        }
+        else {
+            // change bl pointers of right neighbors back to newMid
+            for ( int i = 0; i < rightNeighbors.size(); ++i ) {
+                if ( rightNeighbors[i]->bl == splitTile ) {
+                    rightNeighbors[i]->bl = newMid;
+                }
+            }
+        }
+
+        // maintain rt & lb pointers integrity for newMid
+        bool rtModified = false;
+        for ( int i = 0; i < topNeighbors.size(); ++i ) {
+            if ( topNeighbors[i]->getLowerLeft().x < tileRightBorder ) {
+                if ( !rtModified ) {
+                    rtModified = true;
+                    newMid->rt = topNeighbors[i];
+                }
+                if ( topNeighbors[i]->getLowerLeft().x >= tileLeftBorder ) {
+                    topNeighbors[i]->lb = newMid;
+                }
+            }
+        }
+
+        bool lbModified = false;
+        for ( int i = 0; i < bottomNeighbors.size(); ++i ) {
+            if ( bottomNeighbors[i]->getLowerRight().x > tileLeftBorder ) {
+                if ( !lbModified ) {
+                    lbModified = true;
+                    newMid->lb = bottomNeighbors[i];
+                }
+                if ( bottomNeighbors[i]->getLowerRight().x <= tileRightBorder ) {
+                    bottomNeighbors[i]->rt = newMid;
+                }
+            }
+        }
 
 
-    // if(topBlank->getLowerRight().x != tile.getLowerRight().x){
+        // Start Merging process
 
-    // }
+        // Merge the left blocks if necessary
+        bool initTopLeftMerge = false;
+        if ( topMostMerge ) {
+            Tile *initTopLeftUp, *initTopLeftDown;
+            if ( leftSplitNecessary ) {
+
+                initTopLeftDown = newMid->bl;
+                if ( initTopLeftDown->rt != nullptr ) {
+                    initTopLeftUp = initTopLeftDown->rt;
+                    bool sameWidth = ( initTopLeftUp->getWidth() == initTopLeftDown->getWidth() );
+                    bool xAligned = ( initTopLeftUp->getLowerLeft().x == initTopLeftDown->getLowerLeft().x );
+                    if ( ( initTopLeftUp->getType() == tileType::BLANK ) && sameWidth && xAligned ) {
+                        initTopLeftMerge = true;
+                    }
+                }
+            }
+        }
+
+        bool leftNeedsMerge = ( ( leftMergeWidth != 0 ) && ( leftMergeWidth == ( tileLeftBorder - blankLeftBorder ) ) ) || initTopLeftMerge;
+        if ( leftNeedsMerge ) {
+            Tile *mergeUp = newMid->bl->rt;
+            Tile *mergeDown = newMid->bl;
+
+            std::vector<Tile *> mergedownLeftNeighbors;
+            findLeftNeighbors(mergeDown, mergedownLeftNeighbors);
+            for ( int i = 0; i < mergedownLeftNeighbors.size(); ++i ) {
+                if ( mergedownLeftNeighbors[i]->tr == mergeDown ) {
+                    mergedownLeftNeighbors[i]->tr = mergeUp;
+                }
+            }
+
+            std::vector<Tile *> mergedownDownNeighbors;
+            findDownNeighbors(mergeDown, mergedownDownNeighbors);
+            for ( int i = 0; i < mergedownDownNeighbors.size(); ++i ) {
+                if ( mergedownDownNeighbors[i]->rt == mergeDown ) {
+                    mergedownDownNeighbors[i]->rt = mergeUp;
+                }
+            }
+            std::vector<Tile *> mergedownRightNeighbors;
+            findRightNeighbors(mergeDown, mergedownRightNeighbors);
+            for ( int i = 0; i < mergedownRightNeighbors.size(); ++i ) {
+                if ( mergedownRightNeighbors[i]->bl == mergeDown ) {
+                    mergedownRightNeighbors[i]->bl = mergeUp;
+                }
+            }
+
+            mergeUp->bl = mergeDown->bl;
+            mergeUp->lb = mergeDown->lb;
+
+            mergeUp->setLowerLeft(mergeDown->getLowerLeft());
+            mergeUp->setHeight(mergeUp->getHeight() + mergeDown->getHeight());
+
+            delete( mergeDown );
+        }
+        // update merge width for latter blocks
+        leftMergeWidth = tileLeftBorder - blankLeftBorder;
 
 
+        // Merge the right blocks if possible
+        bool initTopRightMerge = false;
+        if ( topMostMerge ) {
+            Tile *initTopRightUp, *initTopRightDown;
+            if ( rightSplitNecessary ) {
+                initTopRightDown = newMid->tr;
+                if ( initTopRightDown->rt != nullptr ) {
+                    initTopRightUp = initTopRightDown->rt;
+                    bool sameWidth = ( initTopRightUp->getWidth() == initTopRightDown->getWidth() );
+                    bool xAligned = ( initTopRightUp->getLowerLeft().x == initTopRightDown->getLowerLeft().x );
+                    if ( ( initTopRightUp->getType() == tileType::BLANK ) && ( sameWidth ) && ( xAligned ) ) {
+                        initTopRightMerge = true;
+                    }
+                }
+            }
+        }
 
+        bool rightNeedsMerge = ( ( rightMergeWidth != 0 ) && ( rightMergeWidth == ( blankRightBorder - tileRightBorder ) ) ) || initTopRightMerge;
+        if ( rightNeedsMerge ) {
+            Tile *mergeUp = newMid->tr->rt;
+            Tile *mergeDown = newMid->tr;
+
+            std::vector<Tile *> mergedownLeftNeighbors;
+            findLeftNeighbors(mergeDown, mergedownLeftNeighbors);
+            for ( int i = 0; i < mergedownLeftNeighbors.size(); ++i ) {
+                if ( mergedownLeftNeighbors[i]->tr == mergeDown ) {
+                    mergedownLeftNeighbors[i]->tr = mergeUp;
+                }
+            }
+
+            std::vector<Tile *> mergedownDownNeighbors;
+            findDownNeighbors(mergeDown, mergedownDownNeighbors);
+            for ( int i = 0; i < mergedownDownNeighbors.size(); ++i ) {
+                if ( mergedownDownNeighbors[i]->rt == mergeDown ) {
+                    mergedownDownNeighbors[i]->rt = mergeUp;
+                }
+            }
+            std::vector<Tile *> mergedownRightNeighbors;
+            findRightNeighbors(mergeDown, mergedownRightNeighbors);
+            for ( int i = 0; i < mergedownRightNeighbors.size(); ++i ) {
+                if ( mergedownRightNeighbors[i]->bl == mergeDown ) {
+                    mergedownRightNeighbors[i]->bl = mergeUp;
+                }
+            }
+            mergeUp->bl = mergeDown->bl;
+            mergeUp->lb = mergeDown->lb;
+
+            mergeUp->setLowerLeft(mergeDown->getLowerLeft());
+            mergeUp->setHeight(mergeUp->getHeight() + mergeDown->getHeight());
+
+            delete( mergeDown );
+        }
+        // update right merge width for latter blocks
+        rightMergeWidth = blankRightBorder - tileRightBorder;
+
+
+        // Finally, merge the middle tile, it MUST merge after the first time
+
+        if ( !topMostMerge ) {
+            Tile *mergeUp = newMid->rt;
+            Tile *mergeDown = newMid;
+
+            std::vector<Tile *> mergedownLeftNeighbors;
+            findLeftNeighbors(mergeDown, mergedownLeftNeighbors);
+            for ( int i = 0; i < mergedownLeftNeighbors.size(); ++i ) {
+                if ( mergedownLeftNeighbors[i]->tr == mergeDown ) {
+                    mergedownLeftNeighbors[i]->tr = mergeUp;
+                }
+            }
+
+            std::vector<Tile *> mergedownDownNeighbors;
+            findDownNeighbors(mergeDown, mergedownDownNeighbors);
+            for ( int i = 0; i < mergedownDownNeighbors.size(); ++i ) {
+                if ( mergedownDownNeighbors[i]->rt == mergeDown ) {
+                    mergedownDownNeighbors[i]->rt = mergeUp;
+                }
+            }
+            std::vector<Tile *> mergedownRightNeighbors;
+            findRightNeighbors(mergeDown, mergedownRightNeighbors);
+            for ( int i = 0; i < mergedownRightNeighbors.size(); ++i ) {
+                if ( mergedownRightNeighbors[i]->bl == mergeDown ) {
+                    mergedownRightNeighbors[i]->bl = mergeUp;
+                }
+            }
+            mergeUp->bl = mergeDown->bl;
+            mergeUp->lb = mergeDown->lb;
+
+            mergeUp->setLowerLeft(mergeDown->getLowerLeft());
+            mergeUp->setHeight(mergeUp->getHeight() + mergeDown->getHeight());
+
+            delete( mergeDown );
+            // link newMid back
+            newMid = mergeUp;
+        }
+
+        oldsplitTile = splitTile;
+        if ( findTileY == tile.getLowerLeft().y ) {
+            // Merging the bottom most split blank tile and the blank tile below if necessary
+
+            // Detect & Merging left bottom & the blank below
+            bool lastDownLeftMerge = false;
+            Tile *lastBotLeftUp, *lastBotLeftDown;
+            if ( leftSplitNecessary ) {
+                lastBotLeftUp = newMid->bl;
+                if ( lastBotLeftUp->lb != nullptr ) {
+                    lastBotLeftDown = lastBotLeftUp->lb;
+                    bool sameWidth = ( lastBotLeftUp->getWidth() == lastBotLeftDown->getWidth() );
+                    bool xAligned = ( lastBotLeftUp->getLowerLeft().x == lastBotLeftDown->getLowerLeft().x );
+                    if ( lastBotLeftDown->getType() == tileType::BLANK && sameWidth && xAligned ) {
+                        lastDownLeftMerge = true;
+                    }
+                }
+            }
+
+            if ( lastDownLeftMerge ) {
+                std::vector<Tile *> mergedownLeftNeighbors;
+                findLeftNeighbors(lastBotLeftDown, mergedownLeftNeighbors);
+                for ( int i = 0; i < mergedownLeftNeighbors.size(); ++i ) {
+                    if ( mergedownLeftNeighbors[i]->tr == lastBotLeftDown ) {
+                        mergedownLeftNeighbors[i]->tr = lastBotLeftUp;
+                    }
+                }
+
+                std::vector<Tile *> mergedownDownNeighbors;
+                findDownNeighbors(lastBotLeftDown, mergedownDownNeighbors);
+                for ( int i = 0; i < mergedownDownNeighbors.size(); ++i ) {
+                    if ( mergedownDownNeighbors[i]->rt == lastBotLeftDown ) {
+                        mergedownDownNeighbors[i]->rt = lastBotLeftUp;
+                    }
+                }
+                std::vector<Tile *> mergedownRightNeighbors;
+                findRightNeighbors(lastBotLeftDown, mergedownRightNeighbors);
+                for ( int i = 0; i < mergedownRightNeighbors.size(); ++i ) {
+                    if ( mergedownRightNeighbors[i]->bl == lastBotLeftDown ) {
+                        mergedownRightNeighbors[i]->bl = lastBotLeftUp;
+                    }
+                }
+
+                lastBotLeftUp->bl = lastBotLeftDown->bl;
+                lastBotLeftUp->lb = lastBotLeftDown->lb;
+
+                lastBotLeftUp->setLowerLeft(lastBotLeftDown->getLowerLeft());
+                lastBotLeftUp->setHeight(lastBotLeftUp->getHeight() + lastBotLeftDown->getHeight());
+
+                delete( lastBotLeftDown );
+            }
+
+
+            // Detect & Merging right bottom & the blank below            
+
+            bool lastDownRightmerge = false;
+            Tile *lastBotRightUp, *lastBotRightDown;
+            if ( rightSplitNecessary ) {
+                lastBotRightUp = newMid->tr;
+                if ( lastBotRightUp->lb != nullptr ) {
+                    lastBotRightDown = lastBotRightUp->lb;
+                    bool sameWidth = ( lastBotRightUp->getWidth() == lastBotRightDown->getWidth() );
+                    bool xAligned = ( lastBotRightUp->getLowerLeft().x == lastBotRightDown->getLowerLeft().x );
+                    if ( lastBotRightDown->getType() == tileType::BLANK && sameWidth && xAligned ) {
+                        lastDownRightmerge = true;
+                    }
+
+                }
+            }
+
+            if ( lastDownRightmerge ) {
+                std::vector<Tile *> mergedownLeftNeighbors;
+                findLeftNeighbors(lastBotRightDown, mergedownLeftNeighbors);
+                for ( int i = 0; i < mergedownLeftNeighbors.size(); ++i ) {
+                    if ( mergedownLeftNeighbors[i]->tr == lastBotRightDown ) {
+                        mergedownLeftNeighbors[i]->tr = lastBotRightUp;
+                    }
+                }
+
+                std::vector<Tile *> mergedownDownNeighbors;
+                findDownNeighbors(lastBotRightDown, mergedownDownNeighbors);
+                for ( int i = 0; i < mergedownDownNeighbors.size(); ++i ) {
+                    if ( mergedownDownNeighbors[i]->rt == lastBotRightDown ) {
+                        mergedownDownNeighbors[i]->rt = lastBotRightUp;
+                    }
+                }
+                std::vector<Tile *> mergedownRightNeighbors;
+                findRightNeighbors(lastBotRightDown, mergedownRightNeighbors);
+                for ( int i = 0; i < mergedownRightNeighbors.size(); ++i ) {
+                    if ( mergedownRightNeighbors[i]->bl == lastBotRightDown ) {
+                        mergedownRightNeighbors[i]->bl = lastBotRightUp;
+                    }
+                }
+                lastBotRightUp->bl = lastBotRightDown->bl;
+                lastBotRightUp->lb = lastBotRightDown->lb;
+
+                lastBotRightUp->setLowerLeft(lastBotRightDown->getLowerLeft());
+                lastBotRightUp->setHeight(lastBotRightUp->getHeight() + lastBotRightDown->getHeight());
+
+                delete( lastBotRightDown );
+            }
+
+            // substitute the middle tile with the input "tile"
+            tile.rt = newMid->rt;
+            tile.tr = newMid->tr;
+            tile.bl = newMid->bl;
+            tile.lb = newMid->lb;
+
+            // relink the neighbors
+            std::vector <Tile *> midUpNeighbors;
+            findTopNeighbors(newMid, midUpNeighbors);
+            for ( int i = 0; i < midUpNeighbors.size(); ++i ) {
+                if ( midUpNeighbors[i]->lb == newMid ) {
+                    midUpNeighbors[i]->lb = &tile;
+                }
+            }
+
+            std::vector <Tile *> midDownNeighbors;
+            findDownNeighbors(newMid, midDownNeighbors);
+            for ( int i = 0; i < midDownNeighbors.size(); ++i ) {
+                if ( midDownNeighbors[i]->rt == newMid ) {
+                    midDownNeighbors[i]->rt = &tile;
+                }
+            }
+
+            std::vector <Tile *> midLeftNeighbors;
+            findLeftNeighbors(newMid, midLeftNeighbors);
+
+            for ( int i = 0; i < midLeftNeighbors.size(); ++i ) {
+
+                if ( midLeftNeighbors[i]->tr == newMid ) {
+                    midLeftNeighbors[i]->tr = &tile;
+                }
+            }
+
+            std::vector <Tile *> midRightNeighbors;
+            findRightNeighbors(newMid, midRightNeighbors);
+            for ( int i = 0; i < midRightNeighbors.size(); ++i ) {
+                if ( midRightNeighbors[i]->bl == newMid ) {
+                    midRightNeighbors[i]->bl = &tile;
+                }
+            }
+
+            delete( newMid );
+            delete( oldsplitTile );
+
+            // mergeBlankTiles(tile);
+
+            break;
+        }
+        else {
+            splitTile = findPoint(Cord(tile.getLowerLeft().x, findTileY) - Cord(0, 1));
+            findTileY = splitTile->getLowerLeft().y;
+            delete( oldsplitTile );
+        }
+
+        // mark this is not the top most merge
+        topMostMerge = false;
+    }
 
 }
 
@@ -790,8 +1268,8 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
         else {
             traverseBlank(ofs, *( this->fixedTesserae[0]->OverlapArr[0] ));
         }
-    }
-    else {
+    }    
+else {
         if ( softTesserae.size() != 0 ) {
             traverseBlank(ofs, *( this->softTesserae[0]->TileArr[0] ));
         }
@@ -921,4 +1399,175 @@ void LFLegaliser::traverseBlank(std::ofstream &ofs, Tile &t) {
 
 void LFLegaliser::visualiseAddMark(Tile *markTile) {
     this->mMarkedTiles.push_back(markTile);
+}
+
+void LFLegaliser::viewLinks(const std::string outputFileName) {
+    std::cout << "Dumping links to ..." << outputFileName << std::endl;
+
+    std::ofstream ofs(outputFileName);
+    if ( fixedTesserae.size() == 0 && softTesserae.size() == 0 ) {
+        //there is no blocks
+        ofs.close();
+        return;
+    }
+
+    for ( Tessera *tess : softTesserae ) {
+        ofs << tess->getName() << " " << tess->getLegalArea() << " ";
+        ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
+        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " " << "SOFT_BLOCK" << std::endl;
+        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
+        for ( Tile *t : tess->TileArr ) {
+            t->show(ofs);
+            t->showLink(ofs);
+        }
+        for ( Tile *t : tess->OverlapArr ) {
+            t->show(ofs);
+            t->showLink(ofs);
+        }
+    }
+
+    for ( Tessera *tess : fixedTesserae ) {
+        ofs << tess->getName() << " " << tess->getLegalArea() << " ";
+        ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
+        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " " << "SOFT_BLOCK" << std::endl;
+        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
+        for ( Tile *t : tess->TileArr ) {
+            t->show(ofs);
+            t->showLink(ofs);
+        }
+        for ( Tile *t : tess->OverlapArr ) {
+            t->show(ofs);
+            t->showLink(ofs);
+        }
+    }
+
+    // DFS Traverse through all balnk tiles
+    if ( fixedTesserae.size() != 0 ) {
+        if ( this->fixedTesserae[0]->TileArr.size() != 0 ) {
+            traverseBlankLink(ofs, *( this->fixedTesserae[0]->TileArr[0] ));
+        }
+        else {
+            traverseBlankLink(ofs, *( this->fixedTesserae[0]->OverlapArr[0] ));
+        }
+    }
+    else {
+        if ( softTesserae.size() != 0 ) {
+            traverseBlankLink(ofs, *( this->softTesserae[0]->TileArr[0] ));
+        }
+        else {
+            traverseBlankLink(ofs, *( this->softTesserae[0]->OverlapArr[0] ));
+        }
+    }
+
+}
+
+void LFLegaliser::traverseBlankLink(std::ofstream &ofs, Tile &t) {
+
+    t.printLabel = ( !t.printLabel );
+
+    if ( t.getType() == tileType::BLANK ) {
+        t.show(ofs);
+        t.showLink(ofs);
+    }
+
+    if ( t.rt != nullptr ) {
+        if ( t.rt->printLabel != t.printLabel ) {
+            traverseBlankLink(ofs, *( t.rt ));
+        }
+    }
+
+    if ( t.lb != nullptr ) {
+        if ( t.lb->printLabel != t.printLabel ) {
+            traverseBlankLink(ofs, *( t.lb ));
+        }
+    }
+
+    if ( t.bl != nullptr ) {
+        if ( t.bl->printLabel != t.printLabel ) {
+            traverseBlankLink(ofs, *( t.bl ));
+        }
+    }
+
+    if ( t.tr != nullptr ) {
+        if ( t.tr->printLabel != t.printLabel ) {
+            traverseBlankLink(ofs, *( t.tr ));
+        }
+    }
+
+    return;
+}
+
+void LFLegaliser::mergeBlankTiles(Tile &initTile) {
+
+    if ( fixedTesserae.size() == 0 && softTesserae.size() == 0 ) return;
+
+    bool mergableTiles = true;
+    while ( mergableTiles ) {
+
+        Tile tup;
+        Tile tdown;
+
+
+        mergableTiles = findMergableTiles(initTile, tup, tdown);
+
+        // go ahead and merge tup and tdown
+        if ( mergableTiles ) {
+            std::cout << "Find Mergable Tiles!" << std::endl;
+            tup.show(std::cout);
+            tup.showLink(std::cout);
+            std::cout << std::endl;
+            tdown.show(std::cout);
+            tdown.showLink(std::cout);
+            mergableTiles = false;
+        }
+        else {
+            std::cout << "No mergable found " << std::endl;
+        }
+    }
+}
+
+bool LFLegaliser::findMergableTiles(Tile &t, Tile &tup, Tile &tdown) {
+
+    t.printLabel = ( !t.printLabel );
+
+    bool answer = false;
+    if ( t.getType() == tileType::BLANK ) {
+        if ( t.rt != nullptr ) {
+
+            bool sameWidth = ( ( t.getWidth() ) == ( t.rt->getWidth() ) );
+            bool aligned = ( ( t.getLowerLeft().x ) == ( t.rt->getLowerLeft().x ) );
+
+            if ( ( t.rt->getType() == tileType::BLANK ) && sameWidth && aligned ) {
+                answer = true;
+                tup = *( t.rt );
+                tdown = t;
+            }
+        }
+    }
+
+    if ( t.rt != nullptr ) {
+        if ( t.rt->printLabel != t.printLabel ) {
+            answer = ( answer || findMergableTiles(*( t.rt ), tup, tdown) );
+        }
+    }
+
+    if ( t.lb != nullptr ) {
+        if ( t.lb->printLabel != t.printLabel ) {
+            answer = ( answer || findMergableTiles(*( t.lb ), tup, tdown) );
+        }
+    }
+
+    if ( t.bl != nullptr ) {
+        if ( t.bl->printLabel != t.printLabel ) {
+            answer = ( answer || findMergableTiles(*( t.lb ), tup, tdown) );
+        }
+    }
+
+    if ( t.tr != nullptr ) {
+        if ( t.tr->printLabel != t.printLabel ) {
+            answer = ( answer || findMergableTiles(*( t.tr ), tup, tdown) );
+        }
+    }
+
+    return answer;
 }

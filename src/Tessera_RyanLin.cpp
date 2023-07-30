@@ -3,20 +3,13 @@
 #include <fstream>
 #include <string>
 #include "Tessera.h"
-#include "boost/polygon/polygon.hpp"
-
-namespace gtl = boost::polygon;
 
 Tessera::Tessera()
     : mType(tesseraType::EMPTY) {}
 
 Tessera::Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height)
     : mType(type), mName(name), mLegalArea(area), 
-    mInitLowerLeft(lowerleft), mInitWidth(width), mInitHeight(height) {
-        Tile *defaultTess = new Tile(tileType::BLOCK, lowerleft, width, height);
-        TileArr.push_back(defaultTess);
-        calBoundingBox();
-    }
+    mInitLowerLeft(lowerleft), mInitWidth(width), mInitHeight(height) {}
 
 std::string Tessera::getName () const{
     return this->mName;
@@ -26,22 +19,22 @@ area_t Tessera::getLegalArea () const{
     return this->mLegalArea;
 }
 
-Cord Tessera::getBBLowerLeft() const{
+Cord Tessera::getBBLowerLeft (){
     return this->mBBLowerLeft;
 }
-Cord Tessera::getBBUpperRight() const{
+Cord Tessera::getBBUpperRight(){
     return this->mBBUpperRight;
 }
-len_t Tessera::getBBWidth() const{
+len_t Tessera::getBBWidth (){
     return this->mBBUpperRight.x - this->mBBLowerLeft.x;
 }
-len_t Tessera::getBBHeight() const{
+len_t Tessera::getBBHeight (){
     return this->mBBUpperRight.y - this->mBBLowerLeft.y;
 }
 
-int Tessera::insertTiles(Tile *tile){
-    assert(tile->getType() != tileType::BLANK);
-    switch (tile->getType()){
+int Tessera::insertTiles(tileType type, Tile *tile){
+    assert(type != tileType::BLANK);
+    switch (type){
         case tileType::BLOCK:
             /* code */
             TileArr.push_back(tile);
@@ -62,42 +55,31 @@ void Tessera::calBoundingBox(){
     if(TileArr.empty() && OverlapArr.empty()) return;
 
     //The lowerleft and upper right tiles
-    Cord BBLL, BBUR;
+    Cord LL, UR;
 
     if(!TileArr.empty()){
-        BBLL = TileArr[0]->getLowerLeft();
-        BBUR = TileArr[0]->getUpperRight();
+        LL = TileArr[0]->getLowerLeft();
+        UR = TileArr[0]->getUpperRight();
     }else{
-        BBLL = OverlapArr[0]->getLowerLeft();
-        BBUR = OverlapArr[0]->getUpperRight();
+        LL = OverlapArr[0]->getLowerLeft();
+        UR = OverlapArr[0]->getUpperRight();
     }
 
     for(Tile *t : TileArr){
-        Cord tLL = t->getLowerLeft();
-        Cord tUR = t->getUpperRight();
-
-        if(tLL.x < BBLL.x) BBLL.x = tLL.x;
-        if(tLL.y < BBLL.y) BBLL.y = tLL.y;
-        
-        if(tUR.x > BBUR.x) BBUR.x = tUR.x;
-        if(tUR.y > BBUR.y) BBUR.y = tUR.y;
+        if(t->getLowerLeft() < LL) LL = t->getLowerLeft();
+        if(t->getUpperRight() > UR) UR = t->getUpperRight();
     }
     for(Tile *t : OverlapArr){
-        Cord tLL = t->getLowerLeft();
-        Cord tUR = t->getUpperRight();
-
-        if(tLL.x < BBLL.x) BBLL.x = tLL.x;
-        if(tLL.y < BBLL.y) BBLL.y = tLL.y;
-        
-        if(tUR.x > BBUR.x) BBUR.x = tUR.x;
-        if(tUR.y > BBUR.y) BBUR.y = tUR.y;
+        if(t->getLowerLeft() < LL) LL = t->getLowerLeft();
+        if(t->getUpperRight() > UR) UR = t->getUpperRight();  
     }
 
-    this->mBBLowerLeft = BBLL;
-    this->mBBUpperRight = BBUR;
+    this->mBBLowerLeft = LL;
+    this->mBBUpperRight = UR;
 }
 
 /*
+    // TODO
     Notes for Ryan Lin...
     We would call translateGlobalFloorplanning() from LFLegaliser.h to translate cirlces from 
     global floorplanning to Rectangles (Tessera.h), and it would include a default Tile (Tile.h)
@@ -130,6 +112,8 @@ void Tessera::splitRectliearDueToOverlap(){
     Tile *newsmallersplit = new Tile(tileType::BLOCK, Cord(x, y), width, height);
     
     You don't have to maintain *up *donw *left right pointers, they will be taken care of when insertion happen
+
+
     */
 
     // if overlap exists, default tile will always be split
@@ -300,57 +284,21 @@ void Tessera::splitRectliearDueToOverlap(){
     
 }
 
-void Tessera::printCorners(std::ostream& fout){
-    typedef gtl::polygon_data<int> Polygon;
-    typedef gtl::polygon_90_data<int> Polygon90;
-    typedef gtl::polygon_traits<Polygon90>::point_type Point;
-    typedef std::vector<gtl::polygon_90_data<int>> Polygon90Set;
+void Tessera::printLayout(){
+    std::string filename = mName + "layout.txt";
 
-    gtl::polygon_90_set_data<int> polygonSet;
-
-    for (int i = 0; i < TileArr.size(); ++i){
-        Tile* currentTile = TileArr[i];
-        gtl::polygon_90_data<int> boxPolygon;
-        const Point box[4] = {
-            gtl::construct<Point>(currentTile->getLowerLeft().x, currentTile->getLowerLeft().y),
-            gtl::construct<Point>(currentTile->getUpperLeft().x, currentTile->getUpperLeft().y),
-            gtl::construct<Point>(currentTile->getUpperRight().x, currentTile->getUpperRight().y),
-            gtl::construct<Point>(currentTile->getLowerRight().x, currentTile->getLowerRight().y)
-        };
-        
-        gtl::set_points(boxPolygon, box, box+4);
-        gtl::operators::operator+=(polygonSet, boxPolygon); 
+    std::ofstream ofs(filename);
+    ofs << "BLOCK " << TileArr.size() + OverlapArr.size() << std::endl;
+    ofs << getBBWidth() << " " << getBBHeight() << std::endl;
+    ofs << "OUTLINE -1 0 0 " << getBBWidth() << " " << getBBHeight() << " " << "DIE_BLOCK" << std::endl;
+    for (int t = 0; t < TileArr.size(); t++){
+        Tile* tile = TileArr[t];
+        ofs << "Tile"+std::to_string(t) << " 1 " << tile->getLowerLeft().x << " " << tile->getLowerLeft().y << " " << tile->getWidth() << " " << tile->getHeight() << " SOFT_BLOCK" << std::endl;
     }
-
-    std::vector<gtl::polygon_data<int>> polySetUnionized;
-    polySetUnionized.clear();
-    polygonSet.get_polygons(polySetUnionized);
-
-    if (polySetUnionized.size() > 1){
-        std::cout << "WARNING: Some tiles are disjoint\n";
+    
+    for (int t = 0; t < OverlapArr.size(); t++){
+        Tile* tile = OverlapArr[t];
+        ofs << "OVERLAP"+std::to_string(t) << " 1 " << tile->getLowerLeft().x << " " << tile->getLowerLeft().y << " " << tile->getWidth() << " " << tile->getHeight() << " OVERLAP_BLOCK" << std::endl;
     }
-    else if (polySetUnionized.size() == 0){
-        std::cout << "ERROR: TileSet unable to union operation\n";
-        return;
-    }
-    bool isCounterClockwise = gtl::winding(polySetUnionized[0]).to_int() == 1; 
-
-    std::vector<Point> points;
-    for (auto it = polySetUnionized[0].begin(); it != polySetUnionized[0].end(); ++it){
-        const Point& point_data = *it;
-        points.push_back(point_data);
-    }
-
-    fout << getName() << ' ' << points.size() << '\n'; 
-    if (isCounterClockwise){
-        for (int i = points.size() -1 ; i >= 0; --i){
-            fout << points[i].x() << ' ' << points[i].y() << '\n';
-        }
-    }
-    else {
-        for (int i = 0 ; i < points.size(); i++){
-            fout << points[i].x() << ' ' << points[i].y() << '\n';
-        }
-    }
+    ofs.close();
 }
-
