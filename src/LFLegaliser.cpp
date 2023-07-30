@@ -1,7 +1,6 @@
 #include <iostream>
 #include "LFLegaliser.h"
 
-
 LFLegaliser::LFLegaliser(len_t chipWidth, len_t chipHeight)
     : mCanvasWidth(chipWidth), mCanvasHeight(chipHeight) {}
 
@@ -215,7 +214,7 @@ void LFLegaliser::detectfloorplanningOverlaps() {
                     ( nodes[2] < softTesserae.size() ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(nodes[2]) :
                         overlapTile->OverlapFixedTesseraeIdx.push_back(nodes[2] - softTesserae.size());
 
-                    curTess->insertTiles(tileType::OVERLAP, overlapTile);
+                    curTess->insertTiles(overlapTile);
                 }
             }
         }
@@ -279,8 +278,8 @@ void LFLegaliser::detectfloorplanningOverlaps() {
             ( isSoftOverlap ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(overlapId)
                 : overlapTile->OverlapFixedTesseraeIdx.push_back(overlapId);
 
-            curTess->insertTiles(tileType::OVERLAP, overlapTile);
-            overlapTess->insertTiles(tileType::OVERLAP, overlapTile);
+            curTess->insertTiles(overlapTile);
+            overlapTess->insertTiles(overlapTile);
         }
     }
 }
