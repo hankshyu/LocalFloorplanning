@@ -1,7 +1,6 @@
 #include <iostream>
 #include "LFLegaliser.h"
 
-
 LFLegaliser::LFLegaliser(len_t chipWidth, len_t chipHeight)
     : mCanvasWidth(chipWidth), mCanvasHeight(chipHeight) {}
 
