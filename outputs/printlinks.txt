@@ -1,25 +1,25 @@
 CPU 13 6 2 6 3 SOFT_BLOCK
 2 2
 Type: BLOCK (7, 4) W=3 H=1
-rt: Type: BLANK (5, 5) W=7 H=3
-tr: Type: BLANK (10, 4) W=2 H=1
-bl: Type: OVERLAP (6, 4) W=1 H=1
-lb: Type: OVERLAP (6, 3) W=2 H=1
+rt: nullptr
+tr: nullptr
+bl: nullptr
+lb: nullptr
 
 Type: BLOCK (8, 2) W=4 H=2
-rt: Type: BLANK (10, 4) W=2 H=1
+rt: Type: BLANK (7, 4) W=5 H=1
 tr: nullptr
 bl: Type: BLANK (0, 2) W=8 H=1
 lb: Type: BLANK (0, 0) W=12 H=2
 
 Type: OVERLAP (6, 4) W=1 H=1
 rt: Type: BLANK (5, 5) W=7 H=3
-tr: Type: BLOCK (7, 4) W=3 H=1
+tr: Type: BLANK (7, 4) W=5 H=1
 bl: Type: BLANK (5, 4) W=1 H=1
 lb: Type: OVERLAP (6, 3) W=2 H=1
 
 Type: OVERLAP (6, 3) W=2 H=1
-rt: Type: BLOCK (7, 4) W=3 H=1
+rt: Type: BLANK (7, 4) W=5 H=1
 tr: Type: BLOCK (8, 2) W=4 H=2
 bl: Type: BLOCK (3, 3) W=3 H=1
 lb: Type: BLANK (0, 2) W=8 H=1
@@ -46,12 +46,12 @@ lb: Type: BLANK (0, 2) W=8 H=1
 
 Type: OVERLAP (6, 4) W=1 H=1
 rt: Type: BLANK (5, 5) W=7 H=3
-tr: Type: BLOCK (7, 4) W=3 H=1
+tr: Type: BLANK (7, 4) W=5 H=1
 bl: Type: BLANK (5, 4) W=1 H=1
 lb: Type: OVERLAP (6, 3) W=2 H=1
 
 Type: OVERLAP (6, 3) W=2 H=1
-rt: Type: BLOCK (7, 4) W=3 H=1
+rt: Type: BLANK (7, 4) W=5 H=1
 tr: Type: BLOCK (8, 2) W=4 H=2
 bl: Type: BLOCK (3, 3) W=3 H=1
 lb: Type: BLANK (0, 2) W=8 H=1
@@ -98,11 +98,11 @@ tr: Type: BLOCK (8, 2) W=4 H=2
 bl: nullptr
 lb: Type: BLANK (0, 0) W=12 H=2
 
-Type: BLANK (10, 4) W=2 H=1
+Type: BLANK (7, 4) W=5 H=1
 rt: Type: BLANK (5, 5) W=7 H=3
 tr: nullptr
-bl: Type: BLOCK (7, 4) W=3 H=1
-lb: Type: BLOCK (8, 2) W=4 H=2
+bl: Type: OVERLAP (6, 4) W=1 H=1
+lb: Type: OVERLAP (6, 3) W=2 H=1
 
 Type: BLANK (0, 0) W=12 H=2
 rt: Type: BLOCK (8, 2) W=4 H=2
