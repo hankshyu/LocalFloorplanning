@@ -25,7 +25,7 @@ used_color = ["#FFE", "#FFF", "#F00"]
 
 def set_rand_color():
     (R, G, B) = (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
-    while R+G+B < 20:
+    while R+G+B < 24:
         (R, G, B) = (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
     (Rc, Gc, Bc) = (hex(R)[2], hex(G)[2], hex(B)[2])
     color = "#" + Rc + Gc + Bc
@@ -105,7 +105,10 @@ for block in range(total_block_number):
     bx, by, bw, bh = float(ss[1]), float(ss[2]), float(ss[3]), float(ss[4])
     plt.text(bx+bw/2, by+bh/2, ss[0])
     name2pos[ss[0]] = (bx+bw/2, by+bh/2)
-    color = set_rand_color()
+    if ss[5] == "HARD_BLOCK":
+        color = "#777"
+    else:
+        color = set_rand_color()
     name2color[ss[0]] = color
     i += 1
     ss = f[i].split(" ")
