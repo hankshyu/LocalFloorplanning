@@ -5,19 +5,35 @@
 #include <vector>
 #include <assert.h>
 #include <fstream>
+#include <cmath>
+#include <boost/polygon/polygon.hpp>
+#include <boost/polygon/rectangle_data.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
+#include "ppsolver.h"
 
+namespace bp = boost::polygon;
+namespace bg = boost::geometry;
+
+typedef bg::model::d2::point_xy<int> Point;
+typedef bg::model::box<Point> Box;
+typedef bp::rectangle_data<len_t> Rectangle;
+
+class PPSolver;
 
 class LFLegaliser{
 private:
     len_t mCanvasWidth;
     len_t mCanvasHeight;
+    bool overlap3;
     
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
     bool checkTileInCanvas(Tile &tile) const;
-    void traverseBlank(std::ofstream &ofs, Tile &t) ;
+    void traverseBlank(std::ofstream &ofs, Tile &t);
     void traverseBlankLink(std::ofstream &ofs, Tile &t) ;
     Tile *getRandomTile() const;
 
@@ -28,18 +44,21 @@ private:
     
 
 public:
-    std::vector <Tessera*> fixedTesserae;
-    std::vector <Tessera*> softTesserae;
+    std::vector <Tessera *> fixedTesserae;
+    std::vector <Tessera *> softTesserae;
 
     LFLegaliser() = delete;
     LFLegaliser(len_t chipWidth, len_t chipHeight);
+    ~LFLegaliser();
 
     len_t getCanvasWidth() const;
     len_t getCanvasHeight() const;
 
-    void translateGlobalFloorplanning();
+    void translateGlobalFloorplanning(const PPSolver &solver);
     void detectfloorplanningOverlaps();
+    bool has3overlap();
     void splitFloorplanningOverlaps();
+    
 
     /* Functions proposed in the paper */
 
@@ -69,7 +88,8 @@ public:
 
     // deleteTile (Don't need)
     void visualiseArtpiece(const std::string outputFileName);
-    void visualiseAddMark(Tile * markTile);
+    void visualiseArtpieceCYY(const std::string outputFileName);
+    void visualiseAddMark(Tile *markTile);
 
     void viewLinks(const std::string outputFileName);
 

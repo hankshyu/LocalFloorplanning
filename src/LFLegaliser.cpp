@@ -5,6 +5,14 @@
 LFLegaliser::LFLegaliser(len_t chipWidth, len_t chipHeight)
     : mCanvasWidth(chipWidth), mCanvasHeight(chipHeight) {}
 
+LFLegaliser::~LFLegaliser() {
+    for ( int i = 0; i < softTesserae.size(); i++ )
+        delete softTesserae[i];
+    for ( int i = 0; i < fixedTesserae.size(); i++ )
+        delete fixedTesserae[i];
+    //std::cerr << "LFLegaliser Deleted Successfully\n";
+}
+
 bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const {
     bool x_valid, y_valid;
     x_valid = (lowerLeft.x >= 0) && (lowerLeft.x + width <= this->mCanvasWidth);
@@ -37,27 +45,71 @@ Tile *LFLegaliser::getRandomTile() const{
     }
 }
 
-len_t LFLegaliser::getCanvasWidth () const{
+len_t LFLegaliser::getCanvasWidth() const{
     return this->mCanvasWidth;
 }
 
-len_t LFLegaliser::getCanvasHeight () const{
+len_t LFLegaliser::getCanvasHeight() const {
     return this->mCanvasHeight;
 }
 
-//TODO: For cyuyang
-
-void LFLegaliser::translateGlobalFloorplanning(){
+void LFLegaliser::translateGlobalFloorplanning(const PPSolver &solver) {
     // You could define the I/O of this function
     // To create a soft Tessera:
     // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
     // softTesserae.push_back(newTess);
     // The constructor would automatically create a default tile for you.
 
+    float aspect_ratio = (float) mCanvasHeight / mCanvasWidth;
+    for ( int i = 0; i < solver.moduleNum; i++ ) {
+        //std::cout << solver.modules[i]->name << ": ";
+        //std::cout << solver.modules[i]->x << ", " << solver.modules[i]->y << std::endl;
+        PPModule *curModule = solver.modules[i];
+        if ( curModule->fixed ) {
+            Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
+                Cord(curModule->fx, curModule->fy), curModule->fw, curModule->fh);
+            fixedTesserae.push_back(newTess);
+        }
+        else {
+            len_t width = (len_t) std::ceil(std::sqrt(curModule->area / aspect_ratio));
+            len_t height = (len_t) std::ceil(std::sqrt(curModule->area * aspect_ratio));
+            Tessera *newTess = new Tessera(tesseraType::SOFT, curModule->name, curModule->area,
+                Cord(curModule->x - (len_t) width / 2, (len_t) curModule->y - height / 2), width, height);
+            softTesserae.push_back(newTess);
+        }
+    }
 
 }
-//TODO: For cyuyang
-void LFLegaliser::detectfloorplanningOverlaps(){
+
+bool hasCycle3(std::vector< std::set<len_t> > graph, std::vector<bool> visited, int curr, int parent, int depth, int nodes[3]) {
+    if ( depth == 3 ) {
+        for ( int neighbor : graph[curr] ) {
+            // std::cout << parent << " " << curr << " " << neighbor << std::endl;
+            if ( neighbor == parent )
+                continue;
+            if ( visited[neighbor] ) {
+                nodes[2] = curr;
+                return true;
+            }
+        }
+        return false;
+    }
+    visited[curr] = true;
+    for ( int neighbor : graph[curr] ) {
+        if ( neighbor == parent )
+            continue;
+        if ( !visited[neighbor] ) {
+            if ( hasCycle3(graph, visited, neighbor, curr, depth + 1, nodes) ) {
+                nodes[depth - 1] = curr;
+                return true;
+            }
+        }
+    }
+    visited[curr] = false;
+    return false;
+}
+
+void LFLegaliser::detectfloorplanningOverlaps() {
     // If an overlap is detected, You should:
     // 1. Locate the overlap and crate a new Tile marking the overlap, the tile should include the spacing info and the voerlap Tessera idx
     // Tile *overlapTile = new Tile(tileType::OVERLAP, Cord(1,3), 4, 5);
@@ -67,7 +119,174 @@ void LFLegaliser::detectfloorplanningOverlaps(){
     // 2. Split (both) the Tesserae into smaller tiles if it become rectlinear.
     // 3. Update (both) the Tesserae's tile list.
 
+    //first we create an object to do the connectivity extraction
+    bp::connectivity_extraction_90<int> ce;
 
+    std::vector<Rectangle > test_data;
+    for ( Tessera *curTes : softTesserae ) {
+        Cord lowerLeft = curTes->TileArr[0]->getLowerLeft();
+        Cord upperRight = curTes->TileArr[0]->getUpperRight();
+        test_data.push_back(Rectangle(lowerLeft.x, lowerLeft.y, upperRight.x, upperRight.y));
+    }
+
+    for ( Tessera *curTes : fixedTesserae ) {
+        Cord lowerLeft = curTes->TileArr[0]->getLowerLeft();
+        Cord upperRight = curTes->TileArr[0]->getUpperRight();
+        test_data.push_back(Rectangle(lowerLeft.x, lowerLeft.y, upperRight.x, upperRight.y));
+    }
+
+    for ( unsigned int i = 0; i < test_data.size(); ++i ) {
+        //insert returns an id starting at zero and incrementing
+        //with each call
+        assert(ce.insert(test_data[i]) == i);
+    }
+    //notice that ids returned by ce.insert happen to match
+    //index into vector of inputs in this case
+
+    //make sure the vector graph has elements for our nodes
+    std::vector< std::set<len_t> > graph(test_data.size());
+
+    //populate the graph with edge data
+    ce.extract(graph);
+
+    /*
+    std::cout << graph.size() << std::endl;
+    for ( int i = 0; i < graph.size(); i++ ) {
+        bool isSoft = i < softTesserae.size();
+        int id = ( isSoft ) ? i : i - softTesserae.size();
+        // std::cout << ( ( isSoft ) ? softTesserae[id]->getName() : fixedTesserae[id]->getName() ) << ": ";
+        std::cout << i << ": ";
+        for ( auto &n : graph[i] ) {
+            bool isSoft = n < softTesserae.size();
+            int id = ( isSoft ) ? n : n - softTesserae.size();
+            // std::cout << ( ( isSoft ) ? softTesserae[id]->getName() : fixedTesserae[id]->getName() ) << " ";
+            std::cout << n << " ";
+        }
+        std::cout << std::endl;
+    }
+    */
+
+    overlap3 = false;
+    // 3 overlapped
+    for ( int i = 0; i < test_data.size(); i++ ) {
+        std::vector<bool> visited(test_data.size(), 0);
+        int nodes[3] = { -1 };
+        if ( hasCycle3(graph, visited, i, -1, 1, nodes) ) {
+            overlap3 = true;
+            Box box[3];
+            for ( int n = 0; n < 3; n++ ) {
+                int curNode = nodes[n];
+                bool isSoft = curNode < softTesserae.size();
+                int id = ( isSoft ) ? curNode : curNode - softTesserae.size();
+                Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
+                box[n].min_corner() = Point(curTess->TileArr[0]->getLowerLeft().x, curTess->TileArr[0]->getLowerLeft().y);
+                box[n].max_corner() = Point(curTess->TileArr[0]->getUpperRight().x, curTess->TileArr[0]->getUpperRight().y);
+            }
+            Box intersectionBox;
+            bg::intersection(box[0], box[1], intersectionBox);
+            bg::intersection(intersectionBox, box[2], intersectionBox);
+            std::cout << "3 Modules Intersection: ";
+            std::cout << "(" << bg::get<bg::min_corner, 0>(intersectionBox) << ", " << bg::get<bg::min_corner, 1>(intersectionBox) << "), ";
+            std::cout << "(" << bg::get<bg::max_corner, 0>(intersectionBox) << ", " << bg::get<bg::max_corner, 1>(intersectionBox) << ")\n";
+            for ( int n = 0; n < 3; n++ ) {
+                int curNode = nodes[n];
+                bool isSoft = curNode < softTesserae.size();
+                int id = ( isSoft ) ? curNode : curNode - softTesserae.size();
+                Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
+                len_t x = bg::get<bg::min_corner, 0>(intersectionBox);
+                len_t y = bg::get<bg::min_corner, 1>(intersectionBox);
+                len_t w = bg::get<bg::max_corner, 0>(intersectionBox) - x;
+                len_t h = bg::get<bg::max_corner, 1>(intersectionBox) - y;
+                bool existed = false;
+                for ( Tile *tile : curTess->OverlapArr ) {
+                    if ( tile->getLowerLeft().x == x && tile->getLowerLeft().y == y && tile->getWidth() == w && tile->getHeight() == h ) {
+                        existed = true;
+                        break;
+                    }
+                }
+                if ( !existed ) {
+                    Tile *overlapTile = new Tile(tileType::OVERLAP, Cord(x, y), w, h);
+                    ( nodes[0] < softTesserae.size() ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(nodes[0]) :
+                        overlapTile->OverlapFixedTesseraeIdx.push_back(nodes[0] - softTesserae.size());
+
+                    ( nodes[1] < softTesserae.size() ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(nodes[1]) :
+                        overlapTile->OverlapFixedTesseraeIdx.push_back(nodes[1] - softTesserae.size());
+
+                    ( nodes[2] < softTesserae.size() ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(nodes[2]) :
+                        overlapTile->OverlapFixedTesseraeIdx.push_back(nodes[2] - softTesserae.size());
+
+                    curTess->insertTiles(tileType::OVERLAP, overlapTile);
+                }
+            }
+        }
+    }
+
+    /*
+    for ( Tessera *curTess : softTesserae ) {
+        std::cout << curTess->getName() << ": " << curTess->OverlapArr.size() << std::endl;
+    }
+    for ( Tessera *curTess : fixedTesserae ) {
+        std::cout << curTess->getName() << ": " << curTess->OverlapArr.size() << std::endl;
+    }
+    */
+
+    // 2 overlapped
+    for ( int i = 0; i < test_data.size(); i++ ) {
+        bool isSoft = i < softTesserae.size();
+        int id = ( isSoft ) ? i : i - softTesserae.size();
+        Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
+        //std::cout << curTess->getName() << std::endl;
+        Box curBox;
+        curBox.min_corner() = Point(curTess->TileArr[0]->getLowerLeft().x, curTess->TileArr[0]->getLowerLeft().y);
+        curBox.max_corner() = Point(curTess->TileArr[0]->getUpperRight().x, curTess->TileArr[0]->getUpperRight().y);
+        for ( int n : graph[i] ) {
+            if ( n < i )
+                continue;
+            bool isSoftOverlap = n < softTesserae.size();
+            int overlapId = ( isSoftOverlap ) ? n : n - softTesserae.size();
+            Tessera *overlapTess = ( isSoftOverlap ) ? softTesserae[overlapId] : fixedTesserae[overlapId];
+            Box overlapBox;
+            overlapBox.min_corner() = Point(overlapTess->TileArr[0]->getLowerLeft().x, overlapTess->TileArr[0]->getLowerLeft().y);
+            overlapBox.max_corner() = Point(overlapTess->TileArr[0]->getUpperRight().x, overlapTess->TileArr[0]->getUpperRight().y);
+            Box intersectionBox;
+            bg::intersection(curBox, overlapBox, intersectionBox);
+            len_t x = bg::get<bg::min_corner, 0>(intersectionBox);
+            len_t y = bg::get<bg::min_corner, 1>(intersectionBox);
+            len_t w = bg::get<bg::max_corner, 0>(intersectionBox) - x;
+            len_t h = bg::get<bg::max_corner, 1>(intersectionBox) - y;
+            /*
+            for ( Tile *tile : curTess->OverlapArr ) {
+                Box overlap3Box;
+                overlap3Box.min_corner() = Point(tile->getLowerLeft().x, tile->getLowerLeft().y);
+                overlap3Box.max_corner() = Point(tile->getUpperRight().x, tile->getUpperRight().y);
+                Box interection3Box;
+                bg::intersection(intersectionBox, overlap3Box, interection3Box);
+                if ( interection3Box.max_corner().x() == interection3Box.min_corner().x() && interection3Box.max_corner().y() == interection3Box.min_corner().y() ) {
+                    std::cout << "nothing overlap\n";
+                }
+                else {
+                    std::cout << "Overlapped Detected: ";
+                    std::cout << "(" << bg::get<bg::min_corner, 0>(interection3Box) << ", " << bg::get<bg::min_corner, 1>(interection3Box) << "), ";
+                    std::cout << "(" << bg::get<bg::max_corner, 0>(interection3Box) << ", " << bg::get<bg::max_corner, 1>(interection3Box) << ")\n";
+                }
+
+            }
+            */
+            Tile *overlapTile = new Tile(tileType::OVERLAP, Cord(x, y), w, h);
+            ( isSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(id)
+                : overlapTile->OverlapFixedTesseraeIdx.push_back(id);
+
+            ( isSoftOverlap ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(overlapId)
+                : overlapTile->OverlapFixedTesseraeIdx.push_back(overlapId);
+
+            curTess->insertTiles(tileType::OVERLAP, overlapTile);
+            overlapTess->insertTiles(tileType::OVERLAP, overlapTile);
+        }
+    }
+}
+
+bool LFLegaliser::has3overlap() {
+    return overlap3;
 }
 
 void LFLegaliser::splitFloorplanningOverlaps(){
@@ -84,7 +303,7 @@ void LFLegaliser::splitFloorplanningOverlaps(){
 }
 
 Tile *LFLegaliser::findPoint(const Cord &key) const{
-    assert(key >= Cord(0,0));
+    assert(key >= Cord(0, 0));
     assert(key.x < getCanvasWidth());
     assert(key.y < getCanvasHeight());
 
@@ -116,7 +335,7 @@ Tile *LFLegaliser::findPoint(const Cord &key) const{
 }
 
 Tile *LFLegaliser::findPoint(const Cord &key, Tile *initTile) const{
-    assert(key >= Cord(0,0));
+    assert(key >= Cord(0, 0));
     assert(key.x < getCanvasWidth());
     assert(key.y < getCanvasHeight());
 
@@ -1040,6 +1259,78 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
     // print all the marked tiles
     for(Tile *t : this->mMarkedTiles){
         ofs << t->getLowerLeft().x <<" "<< t->getLowerLeft().y <<" "<< t->getWidth() <<" "<< t->getHeight() << " MARKED" << std::endl;
+    }
+
+    ofs.close();
+}
+
+void LFLegaliser::visualiseArtpieceCYY(const std::string outputFileName) {
+
+    std::cout << "print to file..." << outputFileName << std::endl;
+
+    std::ofstream ofs(outputFileName);
+    ofs << "BLOCK " << fixedTesserae.size() + softTesserae.size() << std::endl;
+    ofs << this->mCanvasWidth << " " << this->mCanvasHeight << std::endl;
+
+    if ( fixedTesserae.size() == 0 && softTesserae.size() == 0 ) {
+        //there is no blocks
+        ofs.close();
+        return;
+    }
+
+
+    for ( int i = 0; i < softTesserae.size(); i++ ) {
+        Tessera *tess = softTesserae[i];
+        ofs << tess->getName() << " ";
+        // ofs << i << " ";
+        ofs << tess->TileArr[0]->getLowerLeft().x << " " << tess->TileArr[0]->getLowerLeft().y << " ";
+        ofs << tess->TileArr[0]->getWidth() << " " << tess->TileArr[0]->getHeight() << " " << "SOFT_BLOCK" << std::endl;
+        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
+        for ( Tile *t : tess->TileArr ) {
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
+        }
+        for ( Tile *t : tess->OverlapArr ) {
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" << std::endl;
+        }
+    }
+
+    for ( int i = 0; i < fixedTesserae.size(); i++ ) {
+        Tessera *tess = fixedTesserae[i];
+        ofs << tess->getName() << " ";
+        // ofs << i + softTesserae.size() << " ";
+        ofs << tess->TileArr[0]->getLowerLeft().x << " " << tess->TileArr[0]->getLowerLeft().y << " ";
+        ofs << tess->TileArr[0]->getWidth() << " " << tess->TileArr[0]->getHeight() << " " << "HARD_BLOCK" << std::endl;
+        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
+        for ( Tile *t : tess->TileArr ) {
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
+        }
+        for ( Tile *t : tess->OverlapArr ) {
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" << std::endl;
+        }
+    }
+
+    // DFS Traverse through all balnk tiles
+    if ( fixedTesserae.size() != 0 ) {
+        if ( this->fixedTesserae[0]->TileArr.size() != 0 ) {
+            traverseBlank(ofs, *( this->fixedTesserae[0]->TileArr[0] ));
+        }
+        else {
+            traverseBlank(ofs, *( this->fixedTesserae[0]->OverlapArr[0] ));
+        }
+    }
+    else {
+        if ( softTesserae.size() != 0 ) {
+            traverseBlank(ofs, *( this->softTesserae[0]->TileArr[0] ));
+        }
+        else {
+            traverseBlank(ofs, *( this->softTesserae[0]->OverlapArr[0] ));
+        }
+    }
+    ofs << "CONNECTION 0" << std::endl;
+
+    // print all the marked tiles
+    for ( Tile *t : this->mMarkedTiles ) {
+        ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " MARKED" << std::endl;
     }
 
     ofs.close();

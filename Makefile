@@ -12,7 +12,7 @@ debug: lfrun_db.out
 # LINKFLAGS = -pedantic -Wall -fomit-frame-pointer -funroll-all-loops -O3
 LINKFLAGS = 
 
-lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o
+lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o
 	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
@@ -26,18 +26,18 @@ Tessera.o: $(SRCPATH)/Tessera.cpp $(SRCPATH)/Tessera.h
 	$(CXX) $(CFLAGS) $< -o $@
 
 
-lfrun_db.out: main_db.o Tile_db.o $(SRCPATH)/LFUnits.h Tessera_db.o LFLegaliser_db.o
-	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
+# lfrun_db.out: main_db.o Tile_db.o $(SRCPATH)/LFUnits.h Tessera_db.o LFLegaliser_db.o
+# 	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
-main_db.o: $(SRCPATH)/main.cpp 
-	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
+# main_db.o: $(SRCPATH)/main.cpp 
+# 	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
 
-Tessera_db.o: $(SRCPATH)/Tessera.cpp $(SRCPATH)/Tessera.h
-	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
+# Tessera_db.o: $(SRCPATH)/Tessera.cpp $(SRCPATH)/Tessera.h
+# 	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
 
-%_db.o: $(SRCPATH)/%.cpp $(SRCPATH)/%.h
-	$(CXX) $(DEBUGFLAGS) $(CFLAGS) $< -o $@
+# %_db.o: $(SRCPATH)/%.cpp $(SRCPATH)/%.h
+# 	$(CXX) $(DEBUGFLAGS) $(CFLAGS) $< -o $@
 
 clean:
 	rm -rf *.o *.gch lfrun.out lfrun_db.out
