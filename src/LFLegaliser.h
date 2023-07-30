@@ -1,7 +1,6 @@
 #ifndef __LFLEGALISER_H__
 #define __LFLEGALISER_H__
 
-
 #include <vector>
 #include <assert.h>
 #include <fstream>

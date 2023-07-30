@@ -1,1 +1,1 @@
-rm -rf outputs/artpc.png outputs/artpc.txt outputs/printlinks.txt
+rm -rf outputs/*.png global_test.txt
