@@ -6,30 +6,6 @@
 #include "parser.h"
 #include "ppsolver.h"
 
-void printCord(const Cord &c) {
-    std::cout << "(" << c.x << ", " << c.y << ")";
-}
-
-void printTile(const Tile &t) {
-
-    printCord(t.getLowerLeft());
-    if ( t.getType() == tileType::BLOCK ) {
-        std::cout << "Type: Block ";
-    }
-    else if ( t.getType() == tileType::OVERLAP ) {
-        std::cout << "Type: OVlap ";
-
-    }
-    else if ( t.getType() == tileType::BLANK ) {
-        std::cout << "Type: Blank ";
-    }
-    else {
-        std::cout << "ERRRROR! Type blank!! ";
-    }
-    std::cout << ", W=" << t.getWidth() << ", H=" << t.getHeight() << std::endl;
-}
-
-
 int main(int argc, char const *argv[]) {
     Parser parser(argv[1]);
     int pushForceList[8] = { 10, 20, 50, 100, 200, 300, 500, 1000 };
