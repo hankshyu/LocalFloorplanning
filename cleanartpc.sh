@@ -1,1 +1,1 @@
-rm -rf outputs/*.png global_test.txt
+rm -rf outputs/*.png outputs/*.txt

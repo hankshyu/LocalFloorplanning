@@ -288,7 +288,7 @@ bool LFLegaliser::has3overlap() {
     return overlap3;
 }
 
-void LFLegaliser::splitFloorplanningOverlaps(){
+void LFLegaliser::splitTesseraeOverlaps(){
     // Soft&Hard block overlap are located and split if necessary in OverlapArr of each Tessera
     // now cut rectlinear blank space of each Tessera into multiple blank tiles.
 
@@ -1184,8 +1184,6 @@ void LFLegaliser::insertTile(Tile &tile){
             delete(newMid);
             delete(oldsplitTile);
 
-            // mergeBlankTiles(tile);
-            
             break;
         }else{
             splitTile = findPoint(Cord(tile.getLowerLeft().x, findTileY) - Cord(0,1));
@@ -1470,76 +1468,73 @@ void LFLegaliser::traverseBlankLink(std::ofstream &ofs,  Tile &t) {
     return;
 }
 
-void LFLegaliser::mergeBlankTiles(Tile &initTile){
-    
-    if(fixedTesserae.size() == 0 && softTesserae.size() == 0) return;
-
-    bool mergableTiles = true;
-    while(mergableTiles){
-
-        Tile tup;
-        Tile tdown;
-
-
-        mergableTiles = findMergableTiles(initTile, tup, tdown);
-
-        // go ahead and merge tup and tdown
-        if(mergableTiles){
-            std::cout << "Find Mergable Tiles!" << std::endl;
-            tup.show(std::cout);
-            tup.showLink(std::cout);
-            std::cout << std::endl;
-            tdown.show(std::cout);
-            tdown.showLink(std::cout);
-            mergableTiles = false;
-        }else{
-            std::cout << "No mergable found " << std::endl;
+// heloper function
+bool LFLegaliser::checkPlacedTileLL(Cord c){
+        for(auto const &e : this->mPlacedTile){
+            if(e == c) return true;
         }
-    }
-}
+        return false;
+} 
 
-bool LFLegaliser::findMergableTiles(Tile &t, Tile &tup, Tile &tdown){
+// bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
+//         for(auto const &e : vec){
+//             if(e == c) return true;
+//         }
+//         return false;
+// }
 
-    t.printLabel = (!t.printLabel);
+void LFLegaliser::arrangeTesseraetoCanvas(){
     
-    bool answer = false;
-    if(t.getType() == tileType::BLANK){
-        if(t.rt != nullptr){
-            
-            bool sameWidth = ((t.getWidth()) == (t.rt->getWidth()));
-            bool aligned = ((t.getLowerLeft().x) == (t.rt->getLowerLeft().x));
-            
-            if((t.rt->getType() == tileType::BLANK) && sameWidth && aligned){
-                answer = true;
-                tup = *(t.rt);
-                tdown = t;
+
+    std::cout << "Painting Fixed Tessera to Canvas:" << std::endl;
+    for(Tessera *tess : this->fixedTesserae){
+        std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << ", Overlaps->" << tess->OverlapArr.size() << std::endl;
+        
+        for(Tile *tile : tess->TileArr){
+            assert(!checkPlacedTileLL(tile->getLowerLeft()));
+
+            if(this->mPlacedTile.empty()) insertFirstTile(*tile);
+            else insertTile(*tile);
+
+            this->mPlacedTile.push_back(tile->getLowerLeft());
+        }
+        
+        for(Tile *tile : tess->OverlapArr){
+            // for overlap tiles, only push when it's never met
+            if(!checkPlacedTileLL(tile->getLowerLeft()) && (tile->getWidth() != 0) && (tile->getHeight() != 0)){
+                
+                if(this->mPlacedTile.empty()) insertFirstTile(*tile);
+                else insertTile(*tile);
+                
+                this->mPlacedTile.push_back(tile->getLowerLeft());
             }
         }
     }
 
-    if(t.rt != nullptr){
-        if(t.rt->printLabel != t.printLabel){
-            answer = (answer || findMergableTiles(*(t.rt), tup, tdown));
+    std::cout << "Painting Soft Tessera to Canvas:" << std::endl;
+    for(Tessera *tess : this->softTesserae){
+        std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << ", Overlaps->" << tess->OverlapArr.size() << std::endl;
+        
+        for(Tile *tile : tess->TileArr){
+            assert(!checkPlacedTileLL(tile->getLowerLeft()));
+
+            if(this->mPlacedTile.empty()) insertFirstTile(*tile);
+            else insertTile(*tile);
+
+            this->mPlacedTile.push_back(tile->getLowerLeft());
+        }
+        
+        for(Tile *tile : tess->OverlapArr){
+            // for overlap tiles, only push when it's never met
+            if(!checkPlacedTileLL(tile->getLowerLeft()) && (tile->getWidth() != 0) && (tile->getHeight() != 0)){
+                
+                if(this->mPlacedTile.empty()) insertFirstTile(*tile);
+                else insertTile(*tile);
+                
+                this->mPlacedTile.push_back(tile->getLowerLeft());
+            }
         }
     }
 
-    if(t.lb != nullptr){
-        if(t.lb->printLabel != t.printLabel){
-            answer = (answer || findMergableTiles(*(t.lb), tup, tdown));
-        }
-    }
-
-    if(t.bl != nullptr){
-        if(t.bl->printLabel != t.printLabel){
-            answer = (answer || findMergableTiles(*(t.lb), tup, tdown));
-        }
-    }
-
-    if(t.tr != nullptr){
-        if(t.tr->printLabel != t.printLabel){
-            answer = (answer || findMergableTiles(*(t.tr), tup, tdown));
-        }
-    }
-    
-    return answer;
 }
+

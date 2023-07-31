@@ -1,7 +1,6 @@
 #ifndef __LFUNITS_H__
 #define __LFUNITS_H__
 
-
 typedef int len_t;
 typedef int area_t;
 
@@ -29,6 +28,10 @@ public:
 
     bool operator == (const Cord &comp) const{
         return ((x == comp.x) && (y == comp.y));
+    }
+
+    bool operator != (const Cord &comp) const{
+        return ((x != comp.x) || (y != comp.y));
     }
 
     bool operator < (const Cord &comp) const{

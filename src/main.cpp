@@ -1,11 +1,15 @@
 #include <iostream>
 #include "LFUnits.h"
+#include <algorithm>
 #include "Tile.h"
 #include "Tessera.h"
 #include "LFLegaliser.h"
 #include "parser.h"
 #include "ppsolver.h"
 
+void printCord(Cord cord){
+    std::cout << "(" << cord.x << ", " << cord.y << ")";
+}
 int main(int argc, char const *argv[]) {
     Parser parser(argv[1]);
     int pushForceList[8] = { 10, 20, 50, 100, 200, 300, 500, 1000 };
@@ -37,11 +41,17 @@ int main(int argc, char const *argv[]) {
 
 
 
-    solver->currentPosition2txt("global_test.txt");
 
+    solver->currentPosition2txt("outputs/global_test.txt");
     std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
 
-    legaliser->visualiseArtpieceCYY("transform_test.txt");
+    legaliser->visualiseArtpieceCYY("outputs/transform_test.txt");
+
+    std::cout << "Performing split..."<< std::endl;
+    legaliser->splitTesseraeOverlaps();
+
+    legaliser->arrangeTesseraetoCanvas();
+    legaliser->visualiseArtpiece("outputs/cornerStiching.txt");
 
     return 0;
 }

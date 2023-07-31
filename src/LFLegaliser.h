@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <fstream>
 #include <cmath>
+#include <set>
 #include "boost/polygon/polygon.hpp"
 #include "boost/polygon/rectangle_data.hpp"
 #include "boost/geometry.hpp"
@@ -39,7 +40,11 @@ private:
     // subRoutine used in enumerateDirectArea
     void enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles, Tile *targetTile) const;
 
+    // This is for marking tiles to show on presentation
     std::vector <Tile *> mMarkedTiles;
+
+    std::vector<Cord> mPlacedTile;
+    bool checkPlacedTileLL(Cord c);
     
 
 public:
@@ -56,7 +61,9 @@ public:
     void translateGlobalFloorplanning(const PPSolver &solver);
     void detectfloorplanningOverlaps();
     bool has3overlap();
-    void splitFloorplanningOverlaps();
+    void splitTesseraeOverlaps();
+
+    void arrangeTesseraetoCanvas();
     
 
     /* Functions proposed in the paper */
@@ -92,9 +99,9 @@ public:
 
     void viewLinks(const std::string outputFileName);
 
+    // obsolete, don't use
     void mergeBlankTiles(Tile &initTile);
     bool findMergableTiles(Tile &t, Tile &tup, Tile &tdown);
-
 };
 
 #endif // __LFLEGALISER_H__
