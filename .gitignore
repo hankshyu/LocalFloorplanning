@@ -3,3 +3,4 @@ boost_1_82_0
 .vscode
 *.o*
 *.out
+*test*

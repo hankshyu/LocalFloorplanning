@@ -102,10 +102,10 @@ overlapDict = {}
 
 for block in range(total_block_number):
     ss = f[i].split(" ")
-    bx, by, bw, bh = float(ss[1]), float(ss[2]), float(ss[3]), float(ss[4])
+    bx, by, bw, bh = float(ss[2]), float(ss[3]), float(ss[4]), float(ss[5])
     plt.text(bx+bw/2, by+bh/2, ss[0])
     name2pos[ss[0]] = (bx+bw/2, by+bh/2)
-    if ss[5] == "HARD_BLOCK":
+    if ss[6] == "HARD_BLOCK":
         color = "#777"
     else:
         color = set_rand_color()
