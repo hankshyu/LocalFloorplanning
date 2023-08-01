@@ -1198,7 +1198,7 @@ void LFLegaliser::insertTile(Tile &tile){
 }
 
 void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
-    visualiseReset();
+
     std::cout << "print to file..."<< outputFileName <<std::endl;
 
     std::ofstream ofs(outputFileName);
@@ -1307,23 +1307,9 @@ void LFLegaliser::visualiseArtpieceCYY(const std::string outputFileName) {
         }
     }
 
-    // DFS Traverse through all balnk tiles
-    if ( fixedTesserae.size() != 0 ) {
-        if ( this->fixedTesserae[0]->TileArr.size() != 0 ) {
-            traverseBlank(ofs, *( this->fixedTesserae[0]->TileArr[0] ));
-        }
-        else {
-            traverseBlank(ofs, *( this->fixedTesserae[0]->OverlapArr[0] ));
-        }
-    }
-    else {
-        if ( softTesserae.size() != 0 ) {
-            traverseBlank(ofs, *( this->softTesserae[0]->TileArr[0] ));
-        }
-        else {
-            traverseBlank(ofs, *( this->softTesserae[0]->OverlapArr[0] ));
-        }
-    }
+    // Warning!! At this stage, no Empty tiles are created, DFS would cause error to the markings of tiles.
+    // Bug found, 8/1, 2023, DFS Traverse through all balnk tiles removed
+
     ofs << "CONNECTION 0" << std::endl;
 
     // print all the marked tiles
@@ -1335,13 +1321,14 @@ void LFLegaliser::visualiseArtpieceCYY(const std::string outputFileName) {
 }
 
 void LFLegaliser::traverseBlank(std::ofstream &ofs,  Tile &t) {
-    std::cout << "Visiting : " << std::endl;
-    t.show(std::cout);
-    t.showLink(std::cout);
-    std::cout << "PL: " << t.printLabel << " -> " << ~(t.printLabel) <<std::endl;
+    // std::cout << "Visiting : " << std::endl;
+    // t.show(std::cout);
+    // t.showLink(std::cout);
+    // std::cout << "PL: " << t.printLabel << " -> " << ~(t.printLabel) <<std::endl;
 
 
-    t.printLabel = (t.printLabel == false)? true : false;
+    // t.printLabel = (t.printLabel == false)? true : false;
+    t.printLabel = (!t.printLabel);
     
     if(t.getType() == tileType::BLANK){
 
@@ -1350,11 +1337,7 @@ void LFLegaliser::traverseBlank(std::ofstream &ofs,  Tile &t) {
         ofs << "BLANK_TILE" << std::endl;
     }
 
-    if(t.rt != nullptr){
-        std::cout << "PL->rt: " << t.rt->printLabel <<std::endl;
-        t.rt->show(std::cout);
-        t.rt->showLink(std::cout);
-        
+    if(t.rt != nullptr){        
         if(t.rt->printLabel != t.printLabel){
             traverseBlank(ofs, *(t.rt));
         }
@@ -1568,10 +1551,9 @@ void LFLegaliser::visualiseReset(){
 void LFLegaliser::visualiseResetDFS(Tile &t){
     
     t.show(std::cout);
-    std::cout << "PL: " << t.mprintReset << " -> " << (!t.mprintReset) <<" [" << t.printLabel << "]" <<std::endl;
-    t.showLink(std::cout);
+    std::cout << " [" << t.printLabel << "]" <<std::endl;
 
-    t.mprintReset = (t.mprintReset == false)? true : false;
+    t.mprintReset = (!t.mprintReset);
     t.printLabel = false;
 
     if(t.rt != nullptr){        

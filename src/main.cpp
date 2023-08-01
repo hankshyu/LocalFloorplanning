@@ -46,6 +46,7 @@ int main(int argc, char const *argv[]) {
     std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
 
     legaliser->visualiseArtpieceCYY("outputs/transform_test.txt");
+    // legaliser->visualiseReset();
 
     std::cout << "Performing split..."<< std::endl;
     legaliser->splitTesseraeOverlaps();
