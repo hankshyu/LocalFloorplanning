@@ -53,5 +53,8 @@ int main(int argc, char const *argv[]) {
     legaliser->arrangeTesseraetoCanvas();
     legaliser->visualiseArtpiece("outputs/cornerStiching.txt");
 
+    // legaliser->fixedTesserae[0]->TileArr[0]->show(std::cout);
+    // legaliser->fixedTesserae[0]->TileArr[0]->showLink(std::cout);
+
     return 0;
 }

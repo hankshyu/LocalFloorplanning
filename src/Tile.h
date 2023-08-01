@@ -15,13 +15,13 @@ private:
     len_t mWidth;
     len_t mHeight;
 
-    
-
 public:
     std::vector <int> OverlapFixedTesseraeIdx;
     std::vector <int> OverlapSoftTesseraeIdx;
 
     Tile *rt, *tr, *bl, *lb;
+    
+    bool mprintReset;
     bool printLabel;
 
     Tile();

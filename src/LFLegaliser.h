@@ -35,6 +35,7 @@ private:
     bool checkTileInCanvas(Tile &tile) const;
     void traverseBlank(std::ofstream &ofs, Tile &t);
     void traverseBlankLink(std::ofstream &ofs, Tile &t) ;
+    void visualiseResetDFS(Tile &t);
     Tile *getRandomTile() const;
 
     // subRoutine used in enumerateDirectArea
@@ -92,16 +93,13 @@ public:
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
 
-    // deleteTile (Don't need)
+    void visualiseReset();
     void visualiseArtpiece(const std::string outputFileName);
     void visualiseArtpieceCYY(const std::string outputFileName);
     void visualiseAddMark(Tile *markTile);
 
     void viewLinks(const std::string outputFileName);
 
-    // obsolete, don't use
-    void mergeBlankTiles(Tile &initTile);
-    bool findMergableTiles(Tile &t, Tile &tup, Tile &tdown);
 };
 
 #endif // __LFLEGALISER_H__
