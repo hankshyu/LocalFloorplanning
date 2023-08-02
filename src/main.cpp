@@ -41,18 +41,18 @@ int main(int argc, char const *argv[]) {
 
 
 
-
     solver->currentPosition2txt("outputs/global_test.txt");
     std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
 
-    legaliser->visualiseArtpieceCYY("outputs/transform_test.txt");
-    // legaliser->visualiseReset();
+    // legaliser->visualiseArtpieceCYY("outputs/transform_test.txt");
+    // legaliser->visualiseArtpieceCYY("outputs/transform_test.txt");
+    legaliser->visualiseArtpiece("outputs/transform_test.txt", false);
 
     std::cout << "Performing split..."<< std::endl;
     legaliser->splitTesseraeOverlaps();
 
     legaliser->arrangeTesseraetoCanvas();
-    legaliser->visualiseArtpiece("outputs/cornerStiching.txt");
+    legaliser->visualiseArtpiece("outputs/cornerStiching.txt", true);
 
     // legaliser->fixedTesserae[0]->TileArr[0]->show(std::cout);
     // legaliser->fixedTesserae[0]->TileArr[0]->showLink(std::cout);

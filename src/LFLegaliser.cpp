@@ -1197,7 +1197,7 @@ void LFLegaliser::insertTile(Tile &tile){
     
 }
 
-void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
+void LFLegaliser::visualiseArtpiece(const std::string outputFileName, bool checkBlankTile) {
 
     std::cout << "print to file..."<< outputFileName <<std::endl;
 
@@ -1238,18 +1238,23 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName) {
     }
 
     // DFS Traverse through all balnk tiles
-    if(fixedTesserae.size() !=0 ){
-        if(this->fixedTesserae[0]->TileArr.size() != 0){
-            std::cout << "come from here!" << std::endl;
-            traverseBlank(ofs, *(this->fixedTesserae[0]->TileArr[0]));
+
+    // Bug found, 8/1, 2023
+    // Warning!! At this stage, no Empty tiles are created, DFS would cause error to the markings of tiles.
+    if(checkBlankTile){
+        if(fixedTesserae.size() !=0 ){
+            if(this->fixedTesserae[0]->TileArr.size() != 0){
+                std::cout << "come from here!" << std::endl;
+                traverseBlank(ofs, *(this->fixedTesserae[0]->TileArr[0]));
+            }else{
+                traverseBlank(ofs, *(this->fixedTesserae[0]->OverlapArr[0]));
+            }
         }else{
-            traverseBlank(ofs, *(this->fixedTesserae[0]->OverlapArr[0]));
-        }
-    }else{
-        if(softTesserae.size() != 0){
-            traverseBlank(ofs, *(this->softTesserae[0]->TileArr[0]));
-        }else{
-            traverseBlank(ofs, *(this->softTesserae[0]->OverlapArr[0]));
+            if(softTesserae.size() != 0){
+                traverseBlank(ofs, *(this->softTesserae[0]->TileArr[0]));
+            }else{
+                traverseBlank(ofs, *(this->softTesserae[0]->OverlapArr[0]));
+            }
         }
     }
     ofs << "CONNECTION 0" << std::endl;
