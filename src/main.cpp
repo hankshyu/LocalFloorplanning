@@ -44,8 +44,7 @@ int main(int argc, char const *argv[]) {
     solver->currentPosition2txt("outputs/global_test.txt");
     std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
 
-    // legaliser->visualiseArtpieceCYY("outputs/transform_test.txt");
-    // legaliser->visualiseArtpieceCYY("outputs/transform_test.txt");
+    // visualiseArtPieceCYY is integratd into visualiseArtpiece fnc + false option.
     legaliser->visualiseArtpiece("outputs/transform_test.txt", false);
 
     std::cout << "Performing split..."<< std::endl;

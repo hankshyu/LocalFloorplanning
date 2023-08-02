@@ -1267,64 +1267,6 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName, bool check
     ofs.close();
 }
 
-void LFLegaliser::visualiseArtpieceCYY(const std::string outputFileName) {
-
-    std::cout << "print to file..." << outputFileName << std::endl;
-
-    std::ofstream ofs(outputFileName);
-    ofs << "BLOCK " << fixedTesserae.size() + softTesserae.size() << std::endl;
-    ofs << this->mCanvasWidth << " " << this->mCanvasHeight << std::endl;
-
-    if ( fixedTesserae.size() == 0 && softTesserae.size() == 0 ) {
-        //there is no blocks
-        ofs.close();
-        return;
-    }
-
-
-    for ( int i = 0; i < softTesserae.size(); i++ ) {
-        Tessera *tess = softTesserae[i];
-        ofs << tess->getName() << " ";
-        // ofs << i << " ";
-        ofs << tess->TileArr[0]->getLowerLeft().x << " " << tess->TileArr[0]->getLowerLeft().y << " ";
-        ofs << tess->TileArr[0]->getWidth() << " " << tess->TileArr[0]->getHeight() << " " << "SOFT_BLOCK" << std::endl;
-        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
-        for ( Tile *t : tess->TileArr ) {
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
-        }
-        for ( Tile *t : tess->OverlapArr ) {
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" << std::endl;
-        }
-    }
-
-    for ( int i = 0; i < fixedTesserae.size(); i++ ) {
-        Tessera *tess = fixedTesserae[i];
-        ofs << tess->getName() << " ";
-        // ofs << i + softTesserae.size() << " ";
-        ofs << tess->TileArr[0]->getLowerLeft().x << " " << tess->TileArr[0]->getLowerLeft().y << " ";
-        ofs << tess->TileArr[0]->getWidth() << " " << tess->TileArr[0]->getHeight() << " " << "HARD_BLOCK" << std::endl;
-        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
-        for ( Tile *t : tess->TileArr ) {
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
-        }
-        for ( Tile *t : tess->OverlapArr ) {
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" << std::endl;
-        }
-    }
-
-    // Warning!! At this stage, no Empty tiles are created, DFS would cause error to the markings of tiles.
-    // Bug found, 8/1, 2023, DFS Traverse through all balnk tiles removed
-
-    ofs << "CONNECTION 0" << std::endl;
-
-    // print all the marked tiles
-    for ( Tile *t : this->mMarkedTiles ) {
-        ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " MARKED" << std::endl;
-    }
-
-    ofs.close();
-}
-
 void LFLegaliser::traverseBlank(std::ofstream &ofs,  Tile &t) {
     // std::cout << "Visiting : " << std::endl;
     // t.show(std::cout);

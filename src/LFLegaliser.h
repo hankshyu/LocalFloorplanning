@@ -95,7 +95,6 @@ public:
 
     void visualiseReset();
     void visualiseArtpiece(const std::string outputFileName, bool checkBlankTile);
-    void visualiseArtpieceCYY(const std::string outputFileName);
     void visualiseAddMark(Tile *markTile);
 
     void viewLinks(const std::string outputFileName);
