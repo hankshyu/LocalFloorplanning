@@ -35,7 +35,8 @@ private:
     bool checkTileInCanvas(Tile &tile) const;
     void traverseBlank(std::ofstream &ofs, Tile &t);
     void traverseBlankLink(std::ofstream &ofs, Tile &t) ;
-    void visualiseResetDFS(Tile &t);
+    void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
+    void visualiseDebugDFS(std::ofstream &ofs, Tile &t);
     Tile *getRandomTile() const;
 
     // subRoutine used in enumerateDirectArea
@@ -97,8 +98,12 @@ public:
     void visualiseArtpiece(const std::string outputFileName, bool checkBlankTile);
     void visualiseAddMark(Tile *markTile);
 
+    void visualiseDebug(const std::string outputFileName);
+
     void viewLinks(const std::string outputFileName);
 
 };
+
+bool checkVectorInclude(std::vector<Cord> &vec, Cord c);
 
 #endif // __LFLEGALISER_H__

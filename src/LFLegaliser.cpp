@@ -609,8 +609,12 @@ void LFLegaliser::insertTile(Tile &tile){
                     rightModified = true;
                     newDown->tr = origRightNeighbors[i];
                 }
-                if(origRightNeighbors[i]->getLowerLeft().y >= tile.getLowerRight().y){
+                // bug fix: change "tile" -> "newDown", add break statement to terminate unecessary serarch early
+                // 08/06/2023
+                if(origRightNeighbors[i]->getLowerLeft().y >= newDown->getLowerLeft().y){
                     origRightNeighbors[i]->bl = newDown;
+                }else{
+                    break;
                 }
                 
             }
@@ -626,6 +630,8 @@ void LFLegaliser::insertTile(Tile &tile){
                 if(!leftModified){
                     leftModified = true;
                     origTop->bl = origLeftNeighbors[i];
+                    // add break statement to terminate unecessary serarch early
+                    break;
                 }
             }else{
                 origLeftNeighbors[i]->tr = newDown;
@@ -672,12 +678,17 @@ void LFLegaliser::insertTile(Tile &tile){
         std::vector <Tile *> origRightNeighbors;
         findRightNeighbors(origBottom, origRightNeighbors);
 
+
         bool rightModified = false;
         for(int i = 0; i < origRightNeighbors.size(); ++i){
-            if(origRightNeighbors[i]->getLowerLeft().y < tile.getLowerLeft().y){
-                if(rightModified){
+            if(origRightNeighbors[i]->getLowerLeft().y < newUp->getLowerLeft().y){
+                // bug found, "!" rightModified
+                // 8/5/2023
+                if(!rightModified){
                     rightModified = true;
                     origBottom->tr = origRightNeighbors[i];
+                    // add break statement to terminate unecessary serarch early
+                    break;
                 }
             }else{
                 origRightNeighbors[i]->bl = newUp;
@@ -690,13 +701,17 @@ void LFLegaliser::insertTile(Tile &tile){
 
         bool leftModified = false;
         for(int i = 0; i < origLeftNeighbors.size(); ++i){
-            if(origLeftNeighbors[i]->getUpperLeft().y > tile.getLowerLeft().y){
+            if(origLeftNeighbors[i]->getUpperLeft().y > newUp->getLowerLeft().y){
                 if(!leftModified){
                     leftModified = true;
                     newUp->bl = origLeftNeighbors[i];
                 }
+                // bug fix: change "tile" -> "newUp", add break statement to terminate unecessary serarch early
+                // 08/06/2023
                 if(origLeftNeighbors[i]->getUpperLeft().y <= newUp->getUpperLeft().y){
                     origLeftNeighbors[i]->tr = newUp;
+                }else{
+                    break;
                 }
             }
         }
@@ -754,7 +769,7 @@ void LFLegaliser::insertTile(Tile &tile){
 
             newMid->bl = newLeft;
 
-            // maintain rt, lb pointers of the newtile and  top-Neighbors of new Tiles
+            // maintain rt, lb pointers of the newtile and top-Neighbors of new Tiles
             bool rtModified = false;
             for(int i = 0; i < topNeighbors.size(); ++i){
                 if(topNeighbors[i]->getLowerLeft().x < tileLeftBorder){
@@ -764,12 +779,13 @@ void LFLegaliser::insertTile(Tile &tile){
                     }
                     if(topNeighbors[i]->getLowerLeft().x >= blankLeftBorder){
                         topNeighbors[i]->lb = newLeft;
+                    }else{
+                        break;
                     }
                 }
-
             }
             
-            // maintain rt, lb pointers of the newtile and  bottom-Neighbors of new Tiles
+            // maintain rt, lb pointers of the newtile and bottom-Neighbors of new Tiles
             bool lbModified = false;
             for(int i = 0; i < bottomNeighbors.size(); ++i){
                 if(bottomNeighbors[i]->getLowerLeft().x < tileLeftBorder){
@@ -781,6 +797,8 @@ void LFLegaliser::insertTile(Tile &tile){
                         bottomNeighbors[i]->rt = newLeft;
                     }
                     
+                }else{
+                    break;
                 }
             }
 
@@ -821,6 +839,8 @@ void LFLegaliser::insertTile(Tile &tile){
                     if(topNeighbors[i]->getLowerLeft().x >= tileRightBorder){
                         topNeighbors[i]->lb = newRight;
                     }
+                }else{
+                    break;
                 }
             }
 
@@ -835,6 +855,8 @@ void LFLegaliser::insertTile(Tile &tile){
                     }
                     if(bottomNeighbors[i]->getLowerRight().x <= blankRightBorder){
                         bottomNeighbors[i]->rt = newRight;
+                    }else{
+                        break;
                     }
                 }
             }
@@ -865,6 +887,8 @@ void LFLegaliser::insertTile(Tile &tile){
                 }
                 if(topNeighbors[i]->getLowerLeft().x >= tileLeftBorder){
                     topNeighbors[i]->lb = newMid;
+                }else{
+                    break;
                 }
             }
         }
@@ -878,6 +902,8 @@ void LFLegaliser::insertTile(Tile &tile){
                 }
                 if(bottomNeighbors[i]->getLowerRight().x <= tileRightBorder){
                     bottomNeighbors[i]->rt = newMid;
+                }else{
+                    break;
                 }
             }
         }
@@ -1244,7 +1270,6 @@ void LFLegaliser::visualiseArtpiece(const std::string outputFileName, bool check
     if(checkBlankTile){
         if(fixedTesserae.size() !=0 ){
             if(this->fixedTesserae[0]->TileArr.size() != 0){
-                std::cout << "come from here!" << std::endl;
                 traverseBlank(ofs, *(this->fixedTesserae[0]->TileArr[0]));
             }else{
                 traverseBlank(ofs, *(this->fixedTesserae[0]->OverlapArr[0]));
@@ -1416,12 +1441,7 @@ bool LFLegaliser::checkPlacedTileLL(Cord c){
         return false;
 } 
 
-// bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
-//         for(auto const &e : vec){
-//             if(e == c) return true;
-//         }
-//         return false;
-// }
+
 
 void LFLegaliser::arrangeTesseraetoCanvas(){
     
@@ -1452,77 +1472,177 @@ void LFLegaliser::arrangeTesseraetoCanvas(){
     }
 
     std::cout << "Painting Soft Tessera to Canvas:" << std::endl;
-    for(Tessera *tess : this->softTesserae){
+    Tessera *tess;
+    for(int i = 0; i < this->softTesserae.size(); ++i){
+        tess = this->softTesserae[i];
+
         std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << ", Overlaps->" << tess->OverlapArr.size() << std::endl;
         
-        for(Tile *tile : tess->TileArr){
+        // for(Tile *tile : tess->TileArr){
+        Tile *tile;
+        for(int j = 0; j < tess->TileArr.size(); ++j){
+            tile = tess->TileArr[j];
             assert(!checkPlacedTileLL(tile->getLowerLeft()));
+            std::cout << "T[" << j << "]";
+            tile->show(std::cout);
 
             if(this->mPlacedTile.empty()) insertFirstTile(*tile);
             else insertTile(*tile);
 
+            std::cout << "After Insertion..." << std::endl;
+            tile->show(std::cout);
+            tile->showLink(std::cout);
+
             this->mPlacedTile.push_back(tile->getLowerLeft());
+
         }
-        
-        for(Tile *tile : tess->OverlapArr){
+        for(int j = 0; j < tess->OverlapArr.size(); ++j){
+        // for(Tile *tile : tess->OverlapArr){
             // for overlap tiles, only push when it's never met
+            tile = tess->OverlapArr[j];
             if(!checkPlacedTileLL(tile->getLowerLeft()) && (tile->getWidth() != 0) && (tile->getHeight() != 0)){
-                
+                std::cout << "O[" << j << "]";
+                tile->show(std::cout);
                 if(this->mPlacedTile.empty()) insertFirstTile(*tile);
                 else insertTile(*tile);
-                
+                std::cout << "After Insertion..." << std::endl;
+                tile->show(std::cout);
+                tile->showLink(std::cout);
                 this->mPlacedTile.push_back(tile->getLowerLeft());
             }
         }
+
     }
 
 }
 
 void LFLegaliser::visualiseReset(){
     //DFS to reset every tile
+    std::vector <Cord> record;
     if(fixedTesserae.size() !=0 ){
         if(this->fixedTesserae[0]->TileArr.size() != 0){
-            visualiseResetDFS(*(this->fixedTesserae[0]->TileArr[0]));
+            visualiseResetDFS(*(this->fixedTesserae[0]->TileArr[0]), record);
         }else{
-            visualiseResetDFS(*(this->fixedTesserae[0]->OverlapArr[0]));
+            visualiseResetDFS(*(this->fixedTesserae[0]->OverlapArr[0]), record);
         }
     }else{
         if(softTesserae.size() != 0){
-            visualiseResetDFS(*(this->softTesserae[0]->TileArr[0]));
+            visualiseResetDFS(*(this->softTesserae[0]->TileArr[0]), record);
         }else{
-            visualiseResetDFS(*(this->softTesserae[0]->OverlapArr[0]));
+            visualiseResetDFS(*(this->softTesserae[0]->OverlapArr[0]), record);
         }
     }
 }
 
-void LFLegaliser::visualiseResetDFS(Tile &t){
-    
-    t.show(std::cout);
-    std::cout << " [" << t.printLabel << "]" <<std::endl;
+void LFLegaliser::visualiseResetDFS(Tile &t, std::vector <Cord> &record){
 
-    t.mprintReset = (!t.mprintReset);
+    record.push_back(t.getLowerLeft());    
+
     t.printLabel = false;
 
-    if(t.rt != nullptr){        
-        if(t.rt->mprintReset != t.mprintReset){
-            visualiseResetDFS(*(t.rt));
+    if(t.rt != nullptr){
+        if(!checkVectorInclude(record, t.rt->getLowerLeft())){
+            visualiseResetDFS(*(t.rt), record);
         }
     }
     if(t.lb != nullptr){
-        if(t.lb->mprintReset != t.mprintReset){
-            visualiseResetDFS(*(t.lb));
+       if(!checkVectorInclude(record, t.lb->getLowerLeft())){
+            visualiseResetDFS(*(t.lb), record);
         }
     }
     if(t.bl != nullptr){
-        if(t.bl->mprintReset != t.mprintReset){
-            visualiseResetDFS(*(t.bl));
+        if(!checkVectorInclude(record, t.bl->getLowerLeft())){
+            visualiseResetDFS(*(t.bl), record);
         }
     }
     if(t.tr != nullptr){
-        if(t.tr->mprintReset != t.mprintReset){
-            visualiseResetDFS(*(t.tr));
+        if(!checkVectorInclude(record, t.tr->getLowerLeft())){
+            visualiseResetDFS(*(t.tr), record);
         }
     }
     
     return;
+}
+
+void LFLegaliser::visualiseDebug(const std::string outputFileName){
+    visualiseReset();
+    std::cout << "print DEBUGS to file..."<< outputFileName <<std::endl;
+
+    std::ofstream ofs(outputFileName);
+    ofs << this->mCanvasWidth << " " << this->mCanvasHeight << std::endl;
+
+    if(fixedTesserae.size() == 0 && softTesserae.size() == 0){
+        //there is no blocks
+        ofs.close();
+        return;
+    }
+
+    if(fixedTesserae.size() !=0 ){
+        if(this->fixedTesserae[0]->TileArr.size() != 0){
+            std::cout << "come from here!" << std::endl;
+            visualiseDebugDFS(ofs, *(this->fixedTesserae[0]->TileArr[0]));
+        }else{
+            visualiseDebugDFS(ofs, *(this->fixedTesserae[0]->OverlapArr[0]));
+        }
+    }else{
+        if(softTesserae.size() != 0){
+            visualiseDebugDFS(ofs, *(this->softTesserae[0]->TileArr[0]));
+        }else{
+            visualiseDebugDFS(ofs, *(this->softTesserae[0]->OverlapArr[0]));
+        }
+    }
+    ofs.close();
+
+}
+
+void LFLegaliser::visualiseDebugDFS(std::ofstream &ofs, Tile &t){
+    t.printLabel = (!t.printLabel);
+    
+    ofs << t.getLowerLeft().x << " " << t.getLowerLeft().y << " " << t.getWidth() << " " << t.getHeight() << " ";
+    if(t.getType() == tileType::BLOCK){
+        ofs << "BLOCK";
+    }else if(t.getType() == tileType::OVERLAP){
+        ofs << "OVERLAP";
+    }else if(t.getType() == tileType::BLANK){
+        ofs << "BLANK_TILE";
+    }else{
+        ofs << "ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOOOOOORRR";
+    }
+    ofs << std::endl;
+    t.show(ofs);
+    t.showLink(ofs);
+
+
+    if(t.rt != nullptr){
+        if(t.rt->printLabel != t.printLabel){
+            visualiseDebugDFS(ofs, *(t.rt));
+        }
+    }
+
+    if(t.lb != nullptr){
+        if(t.lb->printLabel != t.printLabel){
+            visualiseDebugDFS(ofs, *(t.lb));
+        }
+    }
+
+    if(t.bl != nullptr){
+        if(t.bl->printLabel != t.printLabel){
+            visualiseDebugDFS(ofs, *(t.bl));
+        }
+    }
+
+    if(t.tr != nullptr){
+        if(t.tr->printLabel != t.printLabel){
+            visualiseDebugDFS(ofs, *(t.tr));
+        }
+    }
+    
+    return;
+}
+
+bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
+        for(auto const &e : vec){
+            if(e == c) return true;
+        }
+        return false;
 }

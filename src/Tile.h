@@ -21,7 +21,7 @@ public:
 
     Tile *rt, *tr, *bl, *lb;
     
-    bool mprintReset;
+
     bool printLabel;
 
     Tile();
