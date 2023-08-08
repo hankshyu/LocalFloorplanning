@@ -47,9 +47,6 @@ private:
     // This is for marking tiles to show on presentation
     std::vector <Tile *> mMarkedTiles;
 
-    // std::vector<Cord> mPlacedTile;
-    // bool checkPlacedTileLL(Cord c);
-    
 
 public:
     std::vector <Tessera *> fixedTesserae;
