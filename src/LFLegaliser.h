@@ -88,8 +88,7 @@ public:
     // Clone of searchArea, no "target" is returned
     bool searchArea(Cord lowerleft, len_t width, len_t height) const;
     
-    // Enumerates all tiles in a given area, each tile is visited(pushed into vector) only after all the tiles above and to
-    // its left is visited
+    // Enumerates all tiles in a given area, each tile is visited only after all the tiles above and to its left does
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
     
     // pushes 
