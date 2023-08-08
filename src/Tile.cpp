@@ -2,11 +2,11 @@
 #include "Tile.h"
 
 Tile::Tile()
-    : type(tileType::BLANK), mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0), printLabel(false),
+    : type(tileType::BLANK), mLowerLeft(Cord(0,0)), mWidth(0), mHeight(0),
         rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
 
 Tile::Tile(tileType t, Cord LL, len_t w, len_t h) 
-    : type(t), mLowerLeft(LL), mWidth(w), mHeight(h), printLabel(false),
+    : type(t), mLowerLeft(LL), mWidth(w), mHeight(h),
         rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
 
 tileType Tile::getType() const {

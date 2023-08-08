@@ -21,9 +21,6 @@ public:
 
     Tile *rt, *tr, *bl, *lb;
     
-
-    bool printLabel;
-
     Tile();
     Tile(tileType t, Cord LL, len_t w, len_t h);
     

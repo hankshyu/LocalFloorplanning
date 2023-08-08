@@ -29,14 +29,16 @@ class LFLegaliser{
 private:
     len_t mCanvasWidth;
     len_t mCanvasHeight;
+    
     bool overlap3;
     
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
     bool checkTileInCanvas(Tile &tile) const;
-    void traverseBlank(std::ofstream &ofs, Tile &t);
-    void traverseBlankLink(std::ofstream &ofs, Tile &t) ;
-    void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
-    void visualiseDebugDFS(std::ofstream &ofs, Tile &t);
+    
+    void traverseBlank(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
+    // void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
+    void visualiseDebugDFS(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
+    
     Tile *getRandomTile() const;
 
     // subRoutine used in enumerateDirectArea
@@ -45,8 +47,8 @@ private:
     // This is for marking tiles to show on presentation
     std::vector <Tile *> mMarkedTiles;
 
-    std::vector<Cord> mPlacedTile;
-    bool checkPlacedTileLL(Cord c);
+    // std::vector<Cord> mPlacedTile;
+    // bool checkPlacedTileLL(Cord c);
     
 
 public:
@@ -94,13 +96,10 @@ public:
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
 
-    void visualiseReset();
+
     void visualiseArtpiece(const std::string outputFileName, bool checkBlankTile);
     void visualiseAddMark(Tile *markTile);
-
     void visualiseDebug(const std::string outputFileName);
-
-    void viewLinks(const std::string outputFileName);
 
 };
 
