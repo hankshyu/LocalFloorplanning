@@ -16,16 +16,17 @@
 #include "Tessera.h"
 #include "ppsolver.h"
 
-namespace bp = boost::polygon;
-namespace bg = boost::geometry;
+namespace gtl = boost::polygon;
 
-typedef bg::model::d2::point_xy<int> Point;
-typedef bg::model::box<Point> Box;
-typedef bp::rectangle_data<len_t> Rectangle;
+typedef gtl::polygon_data<len_t>                 Polygon;
+typedef gtl::rectangle_data<len_t>               Rectangle;
+// typedef gtl::polygon_traits<Polygon>::point_type Point;
+typedef gtl::point_data<len_t> Point;
+typedef std::vector<Polygon>                     PolygonSet;
 
 class PPSolver;
 
-class LFLegaliser{
+class LFLegaliser {
 private:
     len_t mCanvasWidth;
     len_t mCanvasHeight;
@@ -47,6 +48,10 @@ private:
     // This is for marking tiles to show on presentation
     std::vector <Tile *> mMarkedTiles;
 
+    // * These are new added functions for tile manipulation
+    std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
+    std::vector<Tile> mergeTile(Tile tile1, Tile tile2);
+    std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut);
 
 public:
     std::vector <Tessera *> fixedTesserae;

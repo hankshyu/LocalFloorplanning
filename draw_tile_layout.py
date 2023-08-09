@@ -56,7 +56,14 @@ def blend_color(colors):
         bb += b[i]
 
     (br, bg, bb) = (br//colorCount, bg//colorCount, bb//colorCount)
-    (br, bg, bb) = (hex(br)[2:4], hex(bg)[2:4], hex(bb)[2:4])
+    (br, bg, bb) = (hex(br)[2:], hex(bg)[2:], hex(bb)[2:])
+    if len(br) < 2:
+        br += "0"
+    if len(bg) < 2:
+        bg += "0"
+    if len(bb) < 2:
+        bb += "0"
+
     blend = "#" + br + bg + bb
 
     return blend
@@ -76,7 +83,7 @@ total_block_number = int(f[0].split(" ")[1])
 window_width = int(f[1].split(" ")[0])
 window_height = int(f[1].split(" ")[1])
 
-fig = plt.figure(figsize=png_size, dpi=300)
+fig = plt.figure(figsize=png_size)
 
 ax = fig.add_subplot(111)
 ax.set_xbound(0, window_width)
