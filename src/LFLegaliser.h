@@ -6,23 +6,11 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
-#include "boost/polygon/polygon.hpp"
-#include "boost/polygon/rectangle_data.hpp"
-#include "boost/geometry.hpp"
-#include "boost/geometry/geometries/box.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
 #include "ppsolver.h"
 
-namespace gtl = boost::polygon;
-
-typedef gtl::polygon_data<len_t>                 Polygon;
-typedef gtl::rectangle_data<len_t>               Rectangle;
-// typedef gtl::polygon_traits<Polygon>::point_type Point;
-typedef gtl::point_data<len_t> Point;
-typedef std::vector<Polygon>                     PolygonSet;
 
 class PPSolver;
 
@@ -47,11 +35,6 @@ private:
 
     // This is for marking tiles to show on presentation
     std::vector <Tile *> mMarkedTiles;
-
-    // * These are new added functions for tile manipulation
-    std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
-    std::vector<Tile> mergeTile(Tile tile1, Tile tile2);
-    std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut);
 
 public:
     std::vector <Tessera *> fixedTesserae;
