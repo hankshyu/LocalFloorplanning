@@ -12,7 +12,7 @@ debug: lfrun_debug.out
 # LINKFLAGS = -pedantic -Wall -fomit-frame-pointer -funroll-all-loops -O3
 LINKFLAGS = 
 
-lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o
+lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o maxflow.o maxflowLegaliser.o
 	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
@@ -24,7 +24,7 @@ main.o: $(SRCPATH)/main.cpp
 
 
 
-lfrun_debug.out: main_db.o Tile_db.o $(SRCPATH)/LFUnits.h Tessera_db.o LFLegaliser_db.o parser_db.o ppmodule_db.o ppsolver_db.o
+lfrun_debug.out: main_db.o Tile_db.o $(SRCPATH)/LFUnits.h Tessera_db.o LFLegaliser_db.o parser_db.o ppmodule_db.o ppsolver_db.o maxflow_db.o maxflowLegaliser_db.o
 	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 main_db.o: $(SRCPATH)/main.cpp 
@@ -34,4 +34,4 @@ main_db.o: $(SRCPATH)/main.cpp
 	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o *.gch lfrun.out
+	rm -rf *.o *.gch *.out

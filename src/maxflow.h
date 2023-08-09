@@ -9,8 +9,8 @@
 #include <string>
 #include <unordered_map>
 
-const int MAXNODE = 100;
-const int INT_MAX = 2147483647;
+const int MAXNODE = 1000;
+const int MAXFLOW_MAX_INT = 2147483647;
 
 enum NodeType { NODE, SOURCE, SINK };
 

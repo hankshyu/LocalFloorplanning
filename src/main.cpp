@@ -6,6 +6,7 @@
 #include "LFLegaliser.h"
 #include "parser.h"
 #include "ppsolver.h"
+#include "maxflowLegaliser.h"
 
 void printCord(Cord cord){
     std::cout << "(" << cord.x << ", " << cord.y << ")";
@@ -53,8 +54,45 @@ int main(int argc, char const *argv[]) {
     legaliser->arrangeTesseraetoCanvas();
     legaliser->visualiseArtpiece("outputs/cornerStiching.txt", true);
 
-    // legaliser->fixedTesserae[0]->TileArr[0]->show(std::cout);
-    // legaliser->fixedTesserae[0]->TileArr[0]->showLink(std::cout);
+    MFL::MaxflowLegaliser MFL;
+    MFL.initMFL(legaliser);
+    MFL.legaliseByMaxflow();
+    std::vector<MFL::MFLTileFlowInfo> overlapTileFlows, blockTileFlows, blankTileFlows;
+    MFL.outputFlows(overlapTileFlows, blockTileFlows, blankTileFlows);
 
-    return 0;
+    std::cout << " ======= MaxFlow Result Report ======= " << std::endl;
+    std::cout << "OverlapTileFlows:" << std::endl;
+    for(MFL::MFLTileFlowInfo tf : blockTileFlows){
+        // tf.tile->show(std::cout);
+
+        for(MFL::MFLSingleFlowInfo s : tf.fromFlows){
+
+            s.sourceTile->show(std::cout);
+            std::cout << "------" << s.flowAmount << "------";
+            std::cout << "[";
+            switch (s.direction)
+            {
+            case MFL::TOP:
+                std::cout << "TOP";
+                break;
+            case MFL::RIGHT:
+                std::cout << "RIGHT";
+                break;
+            case MFL::DOWN:
+                std::cout << "DOWN";
+                break;
+            case MFL::LEFT:
+                std::cout << "LEFT";
+                break;
+            default:
+                break;
+            }
+            std::cout << "]------------->";
+
+            s.destTile->show(std::cout);
+            
+        }
+    }
+
+
 }

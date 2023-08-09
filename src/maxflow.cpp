@@ -49,7 +49,7 @@ int MaxFlow::bfs(int startNode, int endNode) {
     q.push(startNode);
 
     parentsList[startNode] = -2;
-    currentPathCapacity[startNode] = INT_MAX;
+    currentPathCapacity[startNode] = MAXFLOW_MAX_INT;
 
     while ( !q.empty() ) {
         int currentNode = q.front();
@@ -101,14 +101,14 @@ void MaxFlow::solve() {
 
     for ( int s = 0; s < sourceCount; s++ ) {
         int curSource = sources[s];
-        capacities[superSource][curSource] = INT_MAX;
+        capacities[superSource][curSource] = MAXFLOW_MAX_INT;
         graph[superSource].push_back(curSource);
         graph[curSource].push_back(superSource);
     }
 
     for ( int s = 0; s < sinkCount; s++ ) {
         int curSink = sinks[s];
-        capacities[curSink][superSink] = INT_MAX;
+        capacities[curSink][superSink] = MAXFLOW_MAX_INT;
         graph[superSink].push_back(curSink);
         graph[curSink].push_back(superSink);
     }
