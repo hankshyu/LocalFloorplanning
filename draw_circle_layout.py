@@ -47,7 +47,7 @@ total_connection_number = int(f[0].split(" ")[3])
 window_width = int(f[1].split(" ")[0])
 window_height = int(f[1].split(" ")[1])
 
-fig = plt.figure(figsize=png_size)
+fig = plt.figure(figsize=png_size, dpi=300)
 
 ax = fig.add_subplot(111)
 ax.set_xbound(0, window_width)

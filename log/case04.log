@@ -1,0 +1,77 @@
+Set push force = 90000.000000
+Estimated HPWL: 77431720.00
+Set push force = 180000.00
+Estimated HPWL: 76807768.00
+Set push force = 270000.00
+Estimated HPWL: 77007016.00
+Set push force = 360000.00
+Estimated HPWL: 77827584.00
+Set push force = 450000.00
+Estimated HPWL: 77619944.00
+Set push force = 540000.00
+Estimated HPWL: 77562056.00
+Set push force = 720000.00
+Estimated HPWL: 77480208.00
+Set push force = 900000.00
+Estimated HPWL: 77447336.00
+Estimated HPWL in Global Phase: 76807768.00
+has 3 overlapped? 0
+print to file...outputs/transform_test.txt
+Performing split...
+Painting Fixed Tessera to Canvas:
+PAD0: Tiles->1, Overlaps->0
+PAD1: Tiles->2, Overlaps->1
+PAD2: Tiles->1, Overlaps->0
+PAD3: Tiles->1, Overlaps->0
+PAD4: Tiles->1, Overlaps->0
+PAD5: Tiles->1, Overlaps->0
+PAD6: Tiles->1, Overlaps->0
+PAD7: Tiles->2, Overlaps->1
+print DEBUGS to file...outputs/debug.txt
+Painting Soft Tessera to Canvas:
+CPU0: Tiles->2, Overlaps->1
+CPU1: Tiles->1, Overlaps->0
+CPU2: Tiles->4, Overlaps->3
+CPU3: Tiles->2, Overlaps->1
+CPU4: Tiles->2, Overlaps->1
+CPU5: Tiles->2, Overlaps->1
+CPU6: Tiles->3, Overlaps->2
+CPU7: Tiles->3, Overlaps->2
+GPU0: Tiles->2, Overlaps->1
+GPU1: Tiles->1, Overlaps->0
+GPU2: Tiles->2, Overlaps->1
+GPU3: Tiles->1, Overlaps->0
+GPU4: Tiles->1, Overlaps->0
+NPU0: Tiles->2, Overlaps->1
+NPU1: Tiles->1, Overlaps->0
+NPU2: Tiles->2, Overlaps->1
+DSP: Tiles->1, Overlaps->0
+VIDEO: Tiles->3, Overlaps->2
+MODEM: Tiles->2, Overlaps->1
+ISP: Tiles->1, Overlaps->0
+print to file...outputs/cornerStiching.txt
+MaxFlow Solved. Flow = 122076
+ ======= MaxFlow Result Report ======= 
+OverlapTileFlows:
+Type: BLOCK (2763, 3535) W=922 H=666
+------19456------[TOP]------------->Type: BLANK (1786, 4201) W=1983 H=12
+Type: BLOCK (3609, 3138) W=625 H=141
+------9486------[LEFT]------------->Type: BLANK (3578, 2915) W=31 H=306
+Type: BLOCK (3609, 3138) W=625 H=141
+------1686------[LEFT]------------->Type: BLANK (2667, 3221) W=942 H=58
+Type: BLOCK (2820, 2838) W=360 H=307
+------5035------[TOP]------------->Type: BLANK (1472, 3145) W=1746 H=31
+Type: BLOCK (3218, 2915) W=360 H=306
+------5184------[TOP]------------->Type: BLANK (2667, 3221) W=942 H=58
+Type: BLOCK (3085, 2491) W=360 H=294
+------2587------[LEFT]------------->Type: BLANK (0, 2478) W=3085 H=31
+Type: BLOCK (3578, 2861) W=264 H=49
+------1165------[RIGHT]------------->Type: BLANK (3842, 2555) W=343 H=355
+Type: BLOCK (2381, 150) W=746 H=712
+------4318------[TOP]------------->Type: BLANK (2333, 862) W=881 H=72
+Type: BLOCK (196, 3410) W=753 H=680
+------730------[TOP]------------->Type: BLANK (0, 4090) W=1033 H=123
+Type: BLOCK (72, 1663) W=1040 H=737
+------61509------[TOP]------------->Type: BLANK (0, 2400) W=3246 H=78
+Type: BLOCK (72, 1500) W=837 H=163
+------10920------[LEFT]------------->Type: BLANK (0, 1500) W=72 H=900
