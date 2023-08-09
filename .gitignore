@@ -1,5 +1,5 @@
 boost_1_82_0
 *.tar*
-.vscode
+.vscode/*
 *.o*
 *.out
