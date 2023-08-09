@@ -102,7 +102,7 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-    //TODO: add physical allocation of blocks
+    //TODO: add physical allocation of blocks.
 
 
 }
