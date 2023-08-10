@@ -1346,7 +1346,7 @@ void LFLegaliser::arrangeTesseraetoCanvas(){
         }
     }
 
-    visualiseDebug("outputs/debug.txt");
+    // visualiseDebug("outputs/debug.txt");
     std::cout << "Painting Soft Tessera to Canvas:" << std::endl;
     Tessera *tess;
     for(int i = 0; i < this->softTesserae.size(); ++i){

@@ -1,18 +1,25 @@
 #include <iostream>
 #include <iomanip>
-#include "LFUnits.h"
 #include <algorithm>
+#include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
 #include "LFLegaliser.h"
 #include "parser.h"
 #include "ppsolver.h"
 #include "maxflowLegaliser.h"
+#include "monitor.h"
 
-void printCord(Cord cord) {
-    std::cout << "(" << cord.x << ", " << cord.y << ")";
-}
 int main(int argc, char const *argv[]) {
+    
+    MNT::Monitor monitor;
+    monitor.printCopyRight();
+    
+    /* Phase 1: Global Floorplanning */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Global Floorplanning Phase");
+    auto clockCounterbegin = std::chrono::steady_clock::now();
+
     Parser parser(argv[1]);
     int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
     int pushScale = 0;
@@ -47,20 +54,36 @@ int main(int argc, char const *argv[]) {
     legaliser->translateGlobalFloorplanning(*bestSolution);
     legaliser->detectfloorplanningOverlaps();
 
-
-
+    // Phase 1 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
     std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << bestSolution->calcEstimatedHPWL() << std::endl;
+    std::cout << "Multiple Tile overlap (>3) count: " << legaliser->has3overlap() << std::endl;
     bestSolution->currentPosition2txt("outputs/global_test.txt");
-    std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
-
-    // visualiseArtPieceCYY is integratd into visualiseArtpiece fnc + false option.
     legaliser->visualiseArtpiece("outputs/transform_test.txt", false);
+    
 
-    std::cout << "Performing split..."<< std::endl;
+    /* Phase 2: Processing Corner Stiching */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Extracting geographical information to IR");
+
+
+    std::cout << "Performing split ...";
     legaliser->splitTesseraeOverlaps();
+    std::cout << "done!" << std::endl;
 
     legaliser->arrangeTesseraetoCanvas();
+
+    // Phase 2 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
+    
     legaliser->visualiseArtpiece("outputs/cornerStiching.txt", true);
+
+
+    /* Phase 3: Overlap distribution via Network Flow */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Overlap distribution");
 
     MFL::MaxflowLegaliser MFL;
     MFL.initMFL(legaliser);
@@ -101,8 +124,17 @@ int main(int argc, char const *argv[]) {
             
         }
     }
+    
+    // Phase 3 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
 
-    //TODO: add physical allocation of blocks.
+    /* Phase 4: Physical Overlap distribution */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Physical Overlap distribution");
 
+    // Phase 4 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
 
 }
