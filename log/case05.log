@@ -67,6 +67,8 @@ TMU1: Tiles->1, Overlaps->0
 EU0: Tiles->2, Overlaps->1
 EU1: Tiles->2, Overlaps->2
 GCL: Tiles->3, Overlaps->2
+Start combinable tile search, 0 candidates found
+
 
 ------------------------------------------------------
 Phase Two Report                                     |
@@ -136,3 +138,7 @@ Time Elapsed: 0.00 (s)                               |
 Phase Four: Physical Overlap distribution                                |
 ==========================================================================
 
+------------------------------------------------------
+Phase Four Report                                    |
+Time Elapsed: 0.00 (s)                               |
+------------------------------------------------------

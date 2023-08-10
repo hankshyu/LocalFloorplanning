@@ -30,7 +30,7 @@ Estimated HPWL: 44669824.00
 
 ------------------------------------------------------
 Phase One Report                                     |
-Time Elapsed: 85.91 (s)                              |
+Time Elapsed: 86.05 (s)                              |
 ------------------------------------------------------
 Estimated HPWL in Global Phase: 43605056.00
 Multiple Tile overlap (>3) count: 0
@@ -77,6 +77,17 @@ TPC5: Tiles->1, Overlaps->0
 CPC0: Tiles->3, Overlaps->2
 CPC1: Tiles->3, Overlaps->2
 CPC2: Tiles->2, Overlaps->1
+Start combinable tile search, 3 candidates found
+
+Type: BLANK (2760, 1235) W=90 H=65
+Type: BLANK (2760, 1138) W=90 H=97
+
+Type: BLANK (1302, 2407) W=362 H=112
+Type: BLANK (1302, 2352) W=362 H=55
+
+Type: BLANK (1064, 1723) W=193 H=4
+Type: BLANK (1064, 1695) W=193 H=28
+
 
 ------------------------------------------------------
 Phase Two Report                                     |
@@ -118,7 +129,7 @@ Type: BLOCK (726, 1723) W=338 H=310
 
 ------------------------------------------------------
 Phase Three Report                                   |
-Time Elapsed: 0.00 (s)                               |
+Time Elapsed: 0.02 (s)                               |
 ------------------------------------------------------
 
 
@@ -126,3 +137,7 @@ Time Elapsed: 0.00 (s)                               |
 Phase Four: Physical Overlap distribution                                |
 ==========================================================================
 
+------------------------------------------------------
+Phase Four Report                                    |
+Time Elapsed: 0.00 (s)                               |
+------------------------------------------------------

@@ -34,7 +34,7 @@ Estimated HPWL: 194703328.00
 
 ------------------------------------------------------
 Phase One Report                                     |
-Time Elapsed: 29.81 (s)                              |
+Time Elapsed: 29.45 (s)                              |
 ------------------------------------------------------
 Estimated HPWL in Global Phase: 180112816.00
 Multiple Tile overlap (>3) count: 1
@@ -67,6 +67,11 @@ D1: Tiles->3, Overlaps->2
 E0: Tiles->3, Overlaps->5
 A0: Tiles->1, Overlaps->2
 PW0: Tiles->4, Overlaps->6
+Start combinable tile search, 1 candidates found
+
+Type: BLANK (4841, 9600) W=268 H=383
+Type: BLANK (4841, 7110) W=268 H=2490
+
 
 ------------------------------------------------------
 Phase Two Report                                     |
@@ -154,3 +159,7 @@ Time Elapsed: 0.00 (s)                               |
 Phase Four: Physical Overlap distribution                                |
 ==========================================================================
 
+------------------------------------------------------
+Phase Four Report                                    |
+Time Elapsed: 0.00 (s)                               |
+------------------------------------------------------

@@ -1316,6 +1316,10 @@ void LFLegaliser::visualiseAddMark(Tile * markTile){
     this->mMarkedTiles.push_back(markTile);
 }
 
+void LFLegaliser::visualiseRemoveAllmark(){
+    this->mMarkedTiles.clear();
+}
+
 
 void LFLegaliser::arrangeTesseraetoCanvas(){
 
@@ -1454,9 +1458,78 @@ void LFLegaliser::visualiseDebugDFS(std::ofstream &ofs, Tile &t, std::vector <Co
     return;
 }
 
+void LFLegaliser::detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile){
+    
+    std::vector <Cord> record;
+
+    if(fixedTesserae.size() !=0 ){
+        if(this->fixedTesserae[0]->TileArr.size() != 0){
+            detectCombinableBlanksDFS(candidateTile, *(this->fixedTesserae[0]->TileArr[0]), record);
+        }else{
+            detectCombinableBlanksDFS(candidateTile, *(this->fixedTesserae[0]->OverlapArr[0]), record);
+        }
+    }else{
+        if(softTesserae.size() != 0){
+            detectCombinableBlanksDFS(candidateTile, *(this->softTesserae[0]->TileArr[0]), record);
+        }else{
+            detectCombinableBlanksDFS(candidateTile, *(this->softTesserae[0]->OverlapArr[0]), record);
+        }
+    }
+
+}
+
+void LFLegaliser::detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile *>> &candidateTile, Tile &t, std::vector <Cord> &record){
+    
+    record.push_back(t.getLowerLeft());
+
+    // if tile & tile.lb are mergable, push in vector and record!
+    if(t.lb != nullptr){
+        bool typeCorrect = (t.getType() == tileType::BLANK) && (t.lb->getType() == tileType::BLANK);
+        bool leftAligned = (t.getLowerLeft().x == t.lb->getLowerLeft().x);
+        bool rightAligned = (t.getWidth() == t.lb->getWidth());
+
+        if(typeCorrect && leftAligned && rightAligned){
+            candidateTile.push_back(std::make_pair(&t, t.lb));
+        }
+    }
+    
+
+    if(t.rt != nullptr){
+        if(!checkVectorInclude(record,t.rt->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.rt), record);
+        }
+    }
+
+    if(t.lb != nullptr){
+        if(!checkVectorInclude(record,t.lb->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.lb), record);
+        }
+    }
+
+    if(t.bl != nullptr){
+        if(!checkVectorInclude(record,t.bl->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.bl), record);
+        }
+    }
+
+    if(t.tr != nullptr){
+        if(!checkVectorInclude(record,t.tr->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.tr), record);
+        }
+    }
+}
+
+void LFLegaliser::combineVerticalBlanks(Tile *upTile, Tile *downTile){
+    std::vector <Tile *> upNeighbors;
+    findTopNeighbors(upTile, upNeighbors);
+    //TODO: finish combine blanks
+};
+
+
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
         for(auto const &e : vec){
             if(e == c) return true;
         }
         return false;
 }
+

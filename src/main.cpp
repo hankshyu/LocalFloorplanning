@@ -68,11 +68,27 @@ int main(int argc, char const *argv[]) {
     monitor.printPhase("Extracting geographical information to IR");
 
 
-    std::cout << "Performing split ...";
+    std::cout << "2.1 Performing split ...";
     legaliser->splitTesseraeOverlaps();
     std::cout << "done!" << std::endl;
 
+    std::cout << "2.2 Painting All Tesserae to Canvas";
     legaliser->arrangeTesseraetoCanvas();
+    
+    std::cout << "2.3 Start combinable tile search, ";
+    std::vector <std::pair<Tile *, Tile *>> detectMergeTile;
+    legaliser->detectCombinableBlanks(detectMergeTile);
+    std::cout << detectMergeTile.size() << " candidates found" << std::endl << std::endl;
+    for(std::pair<Tile *, Tile *> tp : detectMergeTile){
+
+
+        tp.first->show(std::cout);
+        tp.second->show(std::cout);
+
+        legaliser->visualiseAddMark(tp.first);
+        legaliser->visualiseAddMark(tp.second);
+        std::cout << std::endl;
+    }
 
     // Phase 2 Reports
     std::cout << std::endl;

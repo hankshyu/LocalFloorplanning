@@ -30,7 +30,7 @@ Estimated HPWL: 77447336.00
 
 ------------------------------------------------------
 Phase One Report                                     |
-Time Elapsed: 59.59 (s)                              |
+Time Elapsed: 59.91 (s)                              |
 ------------------------------------------------------
 Estimated HPWL in Global Phase: 76807768.00
 Multiple Tile overlap (>3) count: 0
@@ -71,10 +71,12 @@ DSP: Tiles->1, Overlaps->0
 VIDEO: Tiles->3, Overlaps->2
 MODEM: Tiles->2, Overlaps->1
 ISP: Tiles->1, Overlaps->0
+Start combinable tile search, 0 candidates found
+
 
 ------------------------------------------------------
 Phase Two Report                                     |
-Time Elapsed: 0.00 (s)                               |
+Time Elapsed: 0.02 (s)                               |
 ------------------------------------------------------
 print to file...outputs/cornerStiching.txt
 
@@ -118,3 +120,7 @@ Time Elapsed: 0.00 (s)                               |
 Phase Four: Physical Overlap distribution                                |
 ==========================================================================
 
+------------------------------------------------------
+Phase Four Report                                    |
+Time Elapsed: 0.00 (s)                               |
+------------------------------------------------------

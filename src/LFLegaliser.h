@@ -6,6 +6,7 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
+#include <utility>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
@@ -35,6 +36,8 @@ private:
 
     // This is for marking tiles to show on presentation
     std::vector <Tile *> mMarkedTiles;
+
+    void detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile *>> &candidateTile, Tile &t, std::vector <Cord> &record);
 
 public:
     std::vector <Tessera *> fixedTesserae;
@@ -76,14 +79,18 @@ public:
     // Enumerates all tiles in a given area, each tile is visited only after all the tiles above and to its left does
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
     
-    // pushes 
+
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
 
 
     void visualiseArtpiece(const std::string outputFileName, bool checkBlankTile);
-    void visualiseAddMark(Tile *markTile);
     void visualiseDebug(const std::string outputFileName);
+    void visualiseAddMark(Tile *markTile);
+    void visualiseRemoveAllmark();
+
+    void detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile);
+    void combineVerticalBlanks(Tile *upTile, Tile *downTile);
 
 };
 
