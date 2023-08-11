@@ -30,18 +30,18 @@ Estimated HPWL: 2204704.75
 
 ------------------------------------------------------
 Phase One Report                                     |
-Time Elapsed: 129.09 (s)                             |
+Time Elapsed: 127.08 (s)                             |
 ------------------------------------------------------
 Estimated HPWL in Global Phase: 2065376.00
 Multiple Tile overlap (>3) count: 0
-print to file...outputs/transform_test.txt
+print to file...outputs/phase1.txt
 
 
 ==========================================================================
 Phase Two: Extracting geographical information to IR                     |
 ==========================================================================
-Performing split ...done!
-Painting Fixed Tessera to Canvas:
+2.1 Performing split ...done!
+2.2 Painting All Tesserae to CanvasPainting Fixed Tessera to Canvas:
 PAD0: Tiles->1, Overlaps->0
 PAD1: Tiles->1, Overlaps->0
 PAD2: Tiles->1, Overlaps->0
@@ -85,35 +85,36 @@ M24: Tiles->4, Overlaps->3
 M25: Tiles->4, Overlaps->3
 M26: Tiles->5, Overlaps->3
 M27: Tiles->3, Overlaps->2
-Start combinable tile search, 7 candidates found
+2.3 Start combinable tile search, 7 candidates found
 
+print to file...outputs/phase2_1.txt
+Merging Pair: #7
 Type: BLANK (2429, 397) W=71 H=203
 Type: BLANK (2429, 85) W=71 H=312
-
+Merging Pair: #6
 Type: BLANK (2448, 1181) W=52 H=19
 Type: BLANK (2448, 1152) W=52 H=29
-
+Merging Pair: #5
 Type: BLANK (2373, 1575) W=127 H=225
 Type: BLANK (2373, 1510) W=127 H=65
-
+Merging Pair: #4
 Type: BLANK (2030, 1878) W=430 H=42
 Type: BLANK (2030, 1827) W=430 H=51
-
+Merging Pair: #3
 Type: BLANK (803, 1367) W=35 H=203
 Type: BLANK (803, 1195) W=35 H=172
-
+Merging Pair: #2
 Type: BLANK (1309, 1700) W=22 H=142
 Type: BLANK (1309, 1668) W=22 H=32
-
+Merging Pair: #1
 Type: BLANK (688, 2393) W=15 H=151
 Type: BLANK (688, 2384) W=15 H=9
-
 
 ------------------------------------------------------
 Phase Two Report                                     |
 Time Elapsed: 0.00 (s)                               |
 ------------------------------------------------------
-print to file...outputs/cornerStiching.txt
+print to file...outputs/phase2.txt
 
 
 ==========================================================================
@@ -145,7 +146,7 @@ Type: BLOCK (1036, 1090) W=297 H=26
 Type: BLOCK (2131, 1181) W=317 H=288
 ------8642------[TOP]------------->Type: BLANK (2122, 1469) W=378 H=41
 Type: BLOCK (2056, 1575) W=317 H=252
-------4290------[TOP]------------->Type: BLANK (2030, 1827) W=430 H=51
+------4290------[TOP]------------->Type: BLANK (2030, 1827) W=430 H=93
 Type: BLOCK (2017, 2078) W=317 H=170
 ------1911------[TOP]------------->Type: BLANK (1599, 2248) W=901 H=4
 Type: BLOCK (371, 2393) W=317 H=308
@@ -173,7 +174,7 @@ Type: BLOCK (1333, 1116) W=1096 H=36
 
 ------------------------------------------------------
 Phase Three Report                                   |
-Time Elapsed: 0.00 (s)                               |
+Time Elapsed: 0.02 (s)                               |
 ------------------------------------------------------
 
 

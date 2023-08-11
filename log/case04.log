@@ -30,18 +30,18 @@ Estimated HPWL: 77447336.00
 
 ------------------------------------------------------
 Phase One Report                                     |
-Time Elapsed: 59.91 (s)                              |
+Time Elapsed: 59.08 (s)                              |
 ------------------------------------------------------
 Estimated HPWL in Global Phase: 76807768.00
 Multiple Tile overlap (>3) count: 0
-print to file...outputs/transform_test.txt
+print to file...outputs/phase1.txt
 
 
 ==========================================================================
 Phase Two: Extracting geographical information to IR                     |
 ==========================================================================
-Performing split ...done!
-Painting Fixed Tessera to Canvas:
+2.1 Performing split ...done!
+2.2 Painting All Tesserae to CanvasPainting Fixed Tessera to Canvas:
 PAD0: Tiles->1, Overlaps->0
 PAD1: Tiles->2, Overlaps->1
 PAD2: Tiles->1, Overlaps->0
@@ -71,14 +71,15 @@ DSP: Tiles->1, Overlaps->0
 VIDEO: Tiles->3, Overlaps->2
 MODEM: Tiles->2, Overlaps->1
 ISP: Tiles->1, Overlaps->0
-Start combinable tile search, 0 candidates found
+2.3 Start combinable tile search, 0 candidates found
 
+print to file...outputs/phase2_1.txt
 
 ------------------------------------------------------
 Phase Two Report                                     |
 Time Elapsed: 0.02 (s)                               |
 ------------------------------------------------------
-print to file...outputs/cornerStiching.txt
+print to file...outputs/phase2.txt
 
 
 ==========================================================================

@@ -90,7 +90,7 @@ public:
     void visualiseRemoveAllmark();
 
     void detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile);
-    void combineVerticalBlanks(Tile *upTile, Tile *downTile);
+    void combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile);
 
 };
 

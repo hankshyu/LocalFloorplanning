@@ -59,8 +59,8 @@ int main(int argc, char const *argv[]) {
     monitor.printPhaseReport();
     std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << bestSolution->calcEstimatedHPWL() << std::endl;
     std::cout << "Multiple Tile overlap (>3) count: " << legaliser->has3overlap() << std::endl;
-    bestSolution->currentPosition2txt("outputs/global_test.txt");
-    legaliser->visualiseArtpiece("outputs/transform_test.txt", false);
+    bestSolution->currentPosition2txt("outputs/ppmoduleResult.txt");
+    legaliser->visualiseArtpiece("outputs/phase1.txt", false);
     
 
     /* Phase 2: Processing Corner Stiching */
@@ -80,21 +80,28 @@ int main(int argc, char const *argv[]) {
     legaliser->detectCombinableBlanks(detectMergeTile);
     std::cout << detectMergeTile.size() << " candidates found" << std::endl << std::endl;
     for(std::pair<Tile *, Tile *> tp : detectMergeTile){
-
-
-        tp.first->show(std::cout);
-        tp.second->show(std::cout);
-
         legaliser->visualiseAddMark(tp.first);
         legaliser->visualiseAddMark(tp.second);
-        std::cout << std::endl;
     }
+    legaliser->visualiseArtpiece("outputs/phase2_1.txt", true);
+
+    legaliser->visualiseRemoveAllmark();
+    while(!detectMergeTile.empty()){
+        std::cout << "Merging Pair: #" << detectMergeTile.size() << std::endl;
+        detectMergeTile[0].first->show(std::cout);
+        detectMergeTile[0].second->show(std::cout);
+
+        legaliser->combineVerticalMergeableBlanks(detectMergeTile[0].first, detectMergeTile[0].second);
+        detectMergeTile.clear();
+        legaliser->detectCombinableBlanks(detectMergeTile);
+    }
+
 
     // Phase 2 Reports
     std::cout << std::endl;
     monitor.printPhaseReport();
     
-    legaliser->visualiseArtpiece("outputs/cornerStiching.txt", true);
+    legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
 
     /* Phase 3: Overlap distribution via Network Flow */

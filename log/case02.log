@@ -32,18 +32,18 @@ Estimated HPWL: 24299928.00
 
 ------------------------------------------------------
 Phase One Report                                     |
-Time Elapsed: 45.92 (s)                              |
+Time Elapsed: 45.59 (s)                              |
 ------------------------------------------------------
 Estimated HPWL in Global Phase: 23130234.00
 Multiple Tile overlap (>3) count: 1
-print to file...outputs/transform_test.txt
+print to file...outputs/phase1.txt
 
 
 ==========================================================================
 Phase Two: Extracting geographical information to IR                     |
 ==========================================================================
-Performing split ...done!
-Painting Fixed Tessera to Canvas:
+2.1 Performing split ...done!
+2.2 Painting All Tesserae to CanvasPainting Fixed Tessera to Canvas:
 CPU0: Tiles->5, Overlaps->3
 CPU1: Tiles->1, Overlaps->1
 NPU0: Tiles->3, Overlaps->2
@@ -69,20 +69,21 @@ M12: Tiles->3, Overlaps->3
 M13: Tiles->3, Overlaps->2
 M14: Tiles->5, Overlaps->6
 M15: Tiles->3, Overlaps->3
-Start combinable tile search, 2 candidates found
+2.3 Start combinable tile search, 2 candidates found
 
+print to file...outputs/phase2_1.txt
+Merging Pair: #2
 Type: BLANK (1566, 1702) W=175 H=48
 Type: BLANK (1566, 1637) W=175 H=65
-
+Merging Pair: #1
 Type: BLANK (1756, 1205) W=8 H=6
 Type: BLANK (1756, 1175) W=8 H=30
 
-
 ------------------------------------------------------
 Phase Two Report                                     |
-Time Elapsed: 0.00 (s)                               |
+Time Elapsed: 0.02 (s)                               |
 ------------------------------------------------------
-print to file...outputs/cornerStiching.txt
+print to file...outputs/phase2.txt
 
 
 ==========================================================================
@@ -118,7 +119,7 @@ Type: BLOCK (665, 1702) W=420 H=318
 Type: BLOCK (665, 1702) W=420 H=318
 ------1781------[LEFT]------------->Type: BLANK (0, 1800) W=665 H=220
 Type: BLOCK (1741, 1637) W=370 H=113
-------2985------[LEFT]------------->Type: BLANK (1566, 1637) W=175 H=65
+------2985------[LEFT]------------->Type: BLANK (1566, 1637) W=175 H=113
 Type: BLOCK (1756, 1482) W=355 H=155
 ------6292------[RIGHT]------------->Type: BLANK (2111, 1482) W=189 H=326
 Type: BLOCK (1294, 1205) W=462 H=233
@@ -132,13 +133,13 @@ Type: BLOCK (1086, 830) W=400 H=337
 Type: BLOCK (1086, 830) W=400 H=337
 ------6551------[LEFT]------------->Type: BLANK (997, 1074) W=89 H=93
 Type: BLOCK (1286, 1637) W=280 H=65
-------1904------[RIGHT]------------->Type: BLANK (1566, 1637) W=175 H=65
+------1904------[RIGHT]------------->Type: BLANK (1566, 1637) W=175 H=113
 Type: BLOCK (1141, 1702) W=425 H=318
 ------17808------[LEFT]------------->Type: BLANK (1085, 1702) W=56 H=318
 Type: BLOCK (1141, 1702) W=425 H=318
 ------5466------[RIGHT]------------->Type: BLANK (1566, 1750) W=24 H=254
 Type: BLOCK (1141, 1702) W=425 H=318
-------2041------[RIGHT]------------->Type: BLANK (1566, 1702) W=175 H=48
+------2041------[RIGHT]------------->Type: BLANK (1566, 1637) W=175 H=113
 Type: BLOCK (1072, 640) W=255 H=152
 ------3315------[TOP]------------->Type: BLANK (1072, 792) W=255 H=13
 Type: BLOCK (1100, 520) W=249 H=83

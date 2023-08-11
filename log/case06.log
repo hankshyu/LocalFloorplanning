@@ -30,18 +30,18 @@ Estimated HPWL: 44669824.00
 
 ------------------------------------------------------
 Phase One Report                                     |
-Time Elapsed: 86.05 (s)                              |
+Time Elapsed: 85.36 (s)                              |
 ------------------------------------------------------
 Estimated HPWL in Global Phase: 43605056.00
 Multiple Tile overlap (>3) count: 0
-print to file...outputs/transform_test.txt
+print to file...outputs/phase1.txt
 
 
 ==========================================================================
 Phase Two: Extracting geographical information to IR                     |
 ==========================================================================
-Performing split ...done!
-Painting Fixed Tessera to Canvas:
+2.1 Performing split ...done!
+2.2 Painting All Tesserae to CanvasPainting Fixed Tessera to Canvas:
 PAD0: Tiles->1, Overlaps->0
 PAD1: Tiles->1, Overlaps->1
 PAD2: Tiles->1, Overlaps->1
@@ -77,23 +77,24 @@ TPC5: Tiles->1, Overlaps->0
 CPC0: Tiles->3, Overlaps->2
 CPC1: Tiles->3, Overlaps->2
 CPC2: Tiles->2, Overlaps->1
-Start combinable tile search, 3 candidates found
+2.3 Start combinable tile search, 3 candidates found
 
+print to file...outputs/phase2_1.txt
+Merging Pair: #3
 Type: BLANK (2760, 1235) W=90 H=65
 Type: BLANK (2760, 1138) W=90 H=97
-
+Merging Pair: #2
 Type: BLANK (1302, 2407) W=362 H=112
 Type: BLANK (1302, 2352) W=362 H=55
-
+Merging Pair: #1
 Type: BLANK (1064, 1723) W=193 H=4
 Type: BLANK (1064, 1695) W=193 H=28
-
 
 ------------------------------------------------------
 Phase Two Report                                     |
 Time Elapsed: 0.00 (s)                               |
 ------------------------------------------------------
-print to file...outputs/cornerStiching.txt
+print to file...outputs/phase2.txt
 
 
 ==========================================================================
@@ -121,7 +122,7 @@ Type: BLOCK (1944, 1235) W=816 H=699
 Type: BLOCK (501, 2407) W=231 H=131
 ------2900------[TOP]------------->Type: BLANK (476, 2538) W=488 H=12
 Type: BLOCK (1041, 2352) W=261 H=55
-------2808------[RIGHT]------------->Type: BLANK (1302, 2352) W=362 H=55
+------2808------[RIGHT]------------->Type: BLANK (1302, 2352) W=362 H=167
 Type: BLOCK (964, 2407) W=338 H=271
 ------5159------[TOP]------------->Type: BLANK (950, 2678) W=550 H=22
 Type: BLOCK (726, 1723) W=338 H=310
@@ -129,7 +130,7 @@ Type: BLOCK (726, 1723) W=338 H=310
 
 ------------------------------------------------------
 Phase Three Report                                   |
-Time Elapsed: 0.02 (s)                               |
+Time Elapsed: 0.00 (s)                               |
 ------------------------------------------------------
 
 

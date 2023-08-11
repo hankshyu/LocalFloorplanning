@@ -1519,10 +1519,32 @@ void LFLegaliser::detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile 
     }
 }
 
-void LFLegaliser::combineVerticalBlanks(Tile *upTile, Tile *downTile){
-    std::vector <Tile *> upNeighbors;
-    findTopNeighbors(upTile, upNeighbors);
-    //TODO: finish combine blanks
+void LFLegaliser::combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile){
+    std::vector <Tile *> mergeUpUpNeighbors;
+    findTopNeighbors(upTile, mergeUpUpNeighbors);
+    for(Tile *t : mergeUpUpNeighbors){
+        if(t->lb == upTile) t->lb = downTile;
+    }
+
+    std::vector <Tile *> mergeUpLeftNeighbors;
+    findLeftNeighbors(upTile, mergeUpLeftNeighbors);
+    for(Tile *t : mergeUpLeftNeighbors){
+        if(t->tr == upTile) t->tr = downTile;
+    }
+
+    std::vector <Tile *> mergeUpRightNeighbors;
+    findRightNeighbors(upTile, mergeUpRightNeighbors);
+    for(Tile *t : mergeUpRightNeighbors){
+        if(t->bl == upTile) t->bl = downTile;
+    }
+
+    downTile->rt = upTile->rt;
+    downTile->tr = upTile->tr;
+
+    downTile->setHeight(downTile->getHeight() + upTile->getHeight());
+
+    delete(upTile);
+
 };
 
 
