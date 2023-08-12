@@ -155,6 +155,12 @@ int main(int argc, char const *argv[]) {
     /* Phase 4: Physical Overlap distribution */
     std::cout << std::endl << std::endl;
     monitor.printPhase("Physical Overlap distribution");
+    std::cout << "4.1 Analyse Overlap distribution tiles" << std::endl;
+    legaliser->visualiseRemoveAllmark();
+
+
+
+
 
     // Phase 4 Reports
     std::cout << std::endl;
