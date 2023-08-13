@@ -4,6 +4,8 @@
 #include "LFLegaliser.h"
 #include <vector>
 #include <utility>
+#include <string>
+#include <sstream>
 #include <cstdint>
 
 namespace MFL {
@@ -15,143 +17,213 @@ namespace MFL {
     {
     }
 
+    void MFLTessInfo::initMembers(LFLegaliser* LF, MaxflowLegaliser* MFL){
+        area = 0;
+        std::vector<Tile*> allNeighborsDuplicate;
+        for (Tile* tile: tileList){
+            area += tile->getArea();
+            LF->findAllNeighbors(tile, allNeighborsDuplicate);
+        }
+
+        for (Tile* foundNeighbor: allNeighborsDuplicate){
+            bool found = false;
+            for (Tile* tileInTess: tileList){
+                if (tileInTess == foundNeighbor){
+                    found = true;
+                    break;
+                }
+            }
+            for (Tile* existingNeighbor: allNeighborTiles){
+                if (existingNeighbor == foundNeighbor){
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found){
+                allNeighborTiles.push_back(foundNeighbor);
+            }
+        }
+
+        for (Tile* neighbor: allNeighborTiles){
+            if (neighbor->getType() == tileType::BLOCK){
+                int tessIndex = MFL->mTilePtr2TessInfoIdx[neighbor];
+                tessNeighbors.insert(tessIndex);
+            }
+        }
+    }
 
     void MaxflowLegaliser::initMFL(LFLegaliser* floorplan){
         // find all overlaps and blocks
 
         mLF = floorplan;
         mMaxflowInf = floorplan->getCanvasHeight() * floorplan->getCanvasWidth();
+        mFixedTessNum = floorplan->fixedTesserae.size();
 
         for(int t = 0; t < floorplan->fixedTesserae.size(); t++){
             Tessera* tess = floorplan->fixedTesserae[t];
+            MFLTessInfo newTessInfo;
+            newTessInfo.index = t;
+            newTessInfo.tessName = tess->getName();
+            newTessInfo.type = MFLTessType::FIXED;
 
             for(Tile* tile : tess->TileArr){
-                addTileInfo(tile);
-                mTilePtr2FixedTessIdx.insert(std::pair<Tile*,int>(tile, t));
+                newTessInfo.tileList.push_back(tile);
+                mTilePtr2TessInfoIdx.insert(std::pair<Tile*,int>(tile, t));
             }
 
             for(Tile* overlap : tess->OverlapArr){
-                // for overlap tiles, only push when it's never met
-                if (!checkOverlapDuplicate(overlap)){
-                    addTileInfo(overlap);
-                }
+                addOverlapInfo(overlap, newTessInfo);
             }
+            newTessInfo.overlaps.erase(newTessInfo.index);
+
+            mAllBlocks.push_back(newTessInfo);
         }
 
         for(int t = 0; t < floorplan->softTesserae.size(); t++){
             Tessera* tess = floorplan->softTesserae[t];
+            MFLTessInfo newTessInfo;
+            newTessInfo.index = t + mFixedTessNum;
+            newTessInfo.tessName = tess->getName();
+            newTessInfo.type = MFLTessType::SOFT;
 
             for(Tile* tile : tess->TileArr){
-                addTileInfo(tile);
-                mTilePtr2SoftTessIdx.insert(std::pair<Tile*,int>(tile, t));
+                newTessInfo.tileList.push_back(tile);
+                mTilePtr2TessInfoIdx.insert(std::pair<Tile*,int>(tile, t + mFixedTessNum));
             }
 
             for(Tile* overlap : tess->OverlapArr){
-                if (!checkOverlapDuplicate(overlap)){
-                    addTileInfo(overlap);
-                }
+                addOverlapInfo(overlap, newTessInfo);
             }
+            newTessInfo.overlaps.erase(newTessInfo.index);
+
+            mAllBlocks.push_back(newTessInfo);
         }
 
         // find all blanks
         std::vector <Cord> blankRecord;
         MFLTraverseBlank(floorplan->softTesserae[0]->TileArr[0], blankRecord);
+  
+        // initialize all TessInfo
+        for (MFLTessInfo& tessInfo: mAllOverlaps){
+            tessInfo.initMembers(mLF, this);
+        }
+
+        for (MFLTessInfo& tessInfo: mAllBlocks){
+            tessInfo.initMembers(mLF, this);
+        }
+
+        for (MFLTessInfo& tessInfo: mAllBlanks){
+            tessInfo.initMembers(mLF, this);
+        }
 
         // construct Max flow graph
         mMaxflowManager.addNode(SUPERSOURCE, NodeType::SOURCE);
         mMaxflowManager.addNode(SUPERSINK, NodeType::SINK);
 
         // add nodes
-        for (MFLTileInfo tileInfo: mAllOverlaps){
-            mMaxflowManager.addNode(tileInfo.nodeName, NodeType::NODE);
+        for (MFLTessInfo& tessInfo: mAllOverlaps){
+            mMaxflowManager.addNode(tessInfo.tessName, NodeType::NODE);
         }
 
-        for (MFLTileInfo tileInfo: mAllBlocks){
-            mMaxflowManager.addNode(tileInfo.nodeName, NodeType::NODE);
+        for (MFLTessInfo& tessInfo: mAllBlocks){
+            mMaxflowManager.addNode(tessInfo.tessName, NodeType::NODE);
         }
 
-        for (MFLTileInfo tileInfo: mAllBlanks){
-            mMaxflowManager.addNode(tileInfo.nodeName, NodeType::NODE);
+        for (MFLTessInfo& tessInfo: mAllBlanks){
+            mMaxflowManager.addNode(tessInfo.tessName, NodeType::NODE);
         }
         
+        
         // add edges from supersource to overlaps
-        for (MFLTileInfo tileInfo: mAllOverlaps){
-            mMaxflowManager.addEdge(SUPERSOURCE, tileInfo.nodeName, tileInfo.tile->getArea());
+        for (MFLTessInfo& tessInfo: mAllOverlaps){
+            mMaxflowManager.addEdge(SUPERSOURCE, tessInfo.tessName, tessInfo.area);
         }
 
         // add edges from overlaps to neighboring SOFT tiles 
         // if overlap tile is the overlap of tessera A and tessera B, then only edges to 
-        // neighboring tiles belonging to tessera A or tessera B will be added
-        for (MFLTileInfo& overlapInfo: mAllOverlaps){
-            for (Tile* neighbor: overlapInfo.allNeighbors){
-                if (neighbor->getType() == tileType::BLOCK){
-                    bool overlapsTessera = false;
-                    // if (mTilePtr2FixedTessIdx.count(neighbor) == 1){
-                    //     // neighbor belongs to a fixed tessera
-                    //     // check if overlap covers this tessera
-                    //     int neighborFixedIndex = mTilePtr2FixedTessIdx[neighbor];
-                    //     for (int fixedIndex: overlapInfo.tile->OverlapFixedTesseraeIdx){
-                    //         if (fixedIndex == neighborFixedIndex){
-                    //             overlapsTessera = true;
-                    //             break;
-                    //         }
-                    //     }
-                    // }
-                    // else 
-                    if (mTilePtr2SoftTessIdx.count(neighbor) == 1){
-                        // neighbor belongs to a soft tessera
-                        // check if overlap covers this tessera
-                        int neighborSoftIndex = mTilePtr2SoftTessIdx[neighbor];
-                        for (int softIndex: overlapInfo.tile->OverlapSoftTesseraeIdx){
-                            if (softIndex == neighborSoftIndex){
-                                overlapsTessera = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (overlapsTessera){
-                        mMaxflowManager.addEdge(overlapInfo.nodeName, std::to_string((intptr_t)neighbor), mMaxflowInf);
-                        overlapInfo.validNeighbors.push_back(neighbor);
-                    }
+        // tessera A or tessera B will be added
+        for (MFLTessInfo& overlapInfo: mAllOverlaps){
+            for (int overlapIndex: overlapInfo.overlaps){
+                // is soft blcok
+                if (overlapIndex >= mFixedTessNum){
+                    mMaxflowManager.addEdge(overlapInfo.tessName, mAllBlocks[overlapIndex].tessName, mMaxflowInf);
                 }
             }
         }
 
-        // add edges from tiles to blanks
-        for (MFLTileInfo& tileInfo: mAllBlocks){
-            if (mTilePtr2FixedTessIdx.count(tileInfo.tile) == 1){
-                // don't add connections from fixed blocks to blanks
+        // add edges from tiles to blanks 
+        for (MFLTessInfo& tessInfo: mAllBlocks){
+            if (tessInfo.index < mFixedTessNum){
+                // don't add connections from fixed blocks
                 continue;
             }
-            for (Tile* neighbor: tileInfo.allNeighbors){
+            for (Tile* neighbor: tessInfo.allNeighborTiles){
                 if (neighbor->getType() == tileType::BLANK){
-                    mMaxflowManager.addEdge(tileInfo.nodeName, std::to_string((intptr_t)neighbor), mMaxflowInf);
-                    tileInfo.validNeighbors.push_back(neighbor);
+                    mMaxflowManager.addEdge(tessInfo.tessName, std::to_string((intptr_t)neighbor), mMaxflowInf);
+                }
+            }
+        }
+
+        // add edges from tiles to other soft tiles
+        for (MFLTessInfo& tessInfo: mAllBlocks){
+            if (tessInfo.index < mFixedTessNum){
+                // don't add connections from fixed blocks
+                continue;
+            }
+            for (int tessNeighbor: tessInfo.tessNeighbors){
+                MFLTessInfo& neighborInfo = mAllBlocks[tessNeighbor]; 
+                if (neighborInfo.type == MFLTessType::SOFT) {
+                    mMaxflowManager.addEdge(tessInfo.tessName, neighborInfo.tessName, mMaxflowInf);
                 }
             }
         }
 
         // add edges from blanks to supersinks
-        for (MFLTileInfo& blankInfo: mAllBlanks){
-            mMaxflowManager.addEdge(blankInfo.nodeName, SUPERSINK, blankInfo.tile->getArea());
+        for (MFLTessInfo& blankInfo: mAllBlanks){
+            mMaxflowManager.addEdge(blankInfo.tessName, SUPERSINK, blankInfo.area);
         }
     }
 
-    void MaxflowLegaliser::addTileInfo(Tile* tile){
-        MFLTileInfo tileInfo;
-        tileInfo.tile = tile;
-        mLF->findAllNeighbors(tile, tileInfo.allNeighbors);
-        tileInfo.nodeName = std::to_string((intptr_t)tile);
+    void MaxflowLegaliser::addOverlapInfo(Tile* tile, MFLTessInfo& tess){
+        std::vector<int> allOverlaps;
+        for (int fixedIndex: tile->OverlapFixedTesseraeIdx){
+            allOverlaps.push_back(fixedIndex);
+        }
+        
+        for (int softIndex: tile->OverlapSoftTesseraeIdx){
+            allOverlaps.push_back(softIndex + mFixedTessNum);
+        }
 
-        if (tile->getType() == tileType::OVERLAP){
-            mAllOverlaps.push_back(tileInfo);
+        for (int i = 0; i < allOverlaps.size(); i++){
+            int tessIndex1 = allOverlaps[i];
+            tess.overlaps.insert(tessIndex1);
+
+            for (int j = i+1; j< allOverlaps.size(); j++){
+                int tessIndex2 = allOverlaps[j];
+                addSingleOverlapInfo(tile, tessIndex1, tessIndex2);
+            }
         }
-        else if (tile->getType() == tileType::BLOCK){
-            mAllBlocks.push_back(tileInfo);
+    }
+
+    void MaxflowLegaliser::addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2){
+        bool found = false;
+        for (MFLTessInfo tess: mAllOverlaps){
+            if (tess.overlaps.count(overlapIdx1) == 1 && tess.overlaps.count(overlapIdx2) == 1){
+                tess.tileList.push_back(tile);
+                found = true;
+                break;
+            }
         }
-        else {
-            mAllBlanks.push_back(tileInfo);
+        if (!found){
+            MFLTessInfo newTess;
+            newTess.tessName = toOverlapName(overlapIdx1, overlapIdx2); 
+            newTess.tileList.push_back(tile);
+            newTess.type = MFLTessType::OVERLAP;
+            newTess.index = mAllOverlaps.size();
+            newTess.overlaps.insert(overlapIdx1);
+            newTess.overlaps.insert(overlapIdx2);
+            mAllOverlaps.push_back(newTess);
         }
     }
 
@@ -159,7 +231,12 @@ namespace MFL {
         record.push_back(tile->getLowerLeft());
         
         if(tile->getType() == tileType::BLANK){
-            addTileInfo(tile);
+            MFLTessInfo newBlankInfo;
+            newBlankInfo.type = MFLTessType::BLANK;
+            newBlankInfo.tessName = std::to_string((intptr_t)tile);
+            newBlankInfo.tileList.push_back(tile);
+            newBlankInfo.index = mAllBlanks.size();
+            mAllBlanks.push_back(newBlankInfo);
         }
         //TODO: finish rewirte function
         if(tile->rt != nullptr){        
@@ -189,138 +266,202 @@ namespace MFL {
         return;
     }
 
-    bool MaxflowLegaliser::checkOverlapDuplicate(Tile* overlap){
-        for (MFLTileInfo tileInfo: mAllOverlaps){
-            if (tileInfo.tile == overlap){
-                return true;
-            }
-        }
-        return false;
-    }
-
     void MaxflowLegaliser::legaliseByMaxflow(){
         mMaxflowManager.solve();
 
         // check if all overflows are all resolved
         // ie. supersource->overlap flow amnt == overlap area
-        for (MFLTileInfo& tileInfo: mAllOverlaps){
-            if (mMaxflowManager.edgeFlow(SUPERSOURCE, tileInfo.nodeName) != tileInfo.tile->getArea()){
-                std::string overlapTile1 = "\n\n"; // placeholder string
-                std::string overlapTile2 = "\n\n";
-                for (int fixedIndex: tileInfo.tile->OverlapFixedTesseraeIdx){
-                    if (overlapTile1 == "\n\n"){
-                        overlapTile1 = mLF->fixedTesserae[fixedIndex]->getName();
-                    }
-                    else if (overlapTile2 == "\n\n"){
-                        overlapTile2 = mLF->fixedTesserae[fixedIndex]->getName();
-                    }
-                }
-                for (int softIndex: tileInfo.tile->OverlapSoftTesseraeIdx){
-                    if (overlapTile1 == "\n\n"){
-                        overlapTile1 = mLF->softTesserae[softIndex]->getName();
-                    }
-                    else if (overlapTile2 == "\n\n"){
-                        overlapTile2 = mLF->softTesserae[softIndex]->getName();
-                    }
-                }
-                std::cout << "[MFL] ERROR: overlap not resolved between " << overlapTile1 << " and " << overlapTile2 << " \n";
-                std::cout << "Overlap area: " << tileInfo.tile->getArea() << " Flow Amnt: " << mMaxflowManager.edgeFlow(SUPERSOURCE, tileInfo.nodeName) << '\n';
+        for (MFLTessInfo& tessInfo: mAllOverlaps){
+            if (mMaxflowManager.edgeFlow(SUPERSOURCE, tessInfo.tessName) != tessInfo.area){
+                std::stringstream ss;
+                ss.str(tessInfo.tessName);
+                std::string overlapTile1, overlapTile2, placeholder;
+                ss >> placeholder >> overlapTile1 >> overlapTile2;
+                std::cout << "[MFL] WARNING: overlap not resolved between " << overlapTile1 << " and " << overlapTile2 << " \n";
+                std::cout << "Overlap area: " << tessInfo.area << " Flow Amnt: " << mMaxflowManager.edgeFlow(SUPERSOURCE, tessInfo.tessName) << '\n';
             }
         }
     }
 
-    void MaxflowLegaliser::outputFlows(std::vector<MFLTileFlowInfo>& overlapTileFlows, 
-                                        std::vector<MFLTileFlowInfo>& blockTileFlows,
-                                        std::vector<MFLTileFlowInfo>& blankTileFlows)
+
+    void MaxflowLegaliser::outputFlows(std::vector<MFLFlowTessInfo*>& overlapTessFlows, 
+                                        std::vector<MFLFlowTessInfo*>& blockTessFlows,
+                                        std::vector<MFLFlowTessInfo*>& blankTessFlows)
     {
+        // contruct all vectors
         // overlaps 
-        for (MFLTileInfo tileInfo: mAllOverlaps){
-            MFLTileFlowInfo overlapTileFlowInfo; 
-            overlapTileFlowInfo.tile = tileInfo.tile;
-            for (Tile* validNeighbor: tileInfo.validNeighbors){
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tileInfo.nodeName, std::to_string((intptr_t)validNeighbor));
-                if (maxflowAmnt > 0){
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, tileInfo.tile, validNeighbor, maxflowAmnt);
-                    overlapTileFlowInfo.fromFlows.push_back(flow);
+        for (MFLTessInfo& tessInfo: mAllOverlaps){
+            MFLFlowTessInfo* overlapTileFlowInfo = new MFLFlowTessInfo;
+            overlapTileFlowInfo->tileList = tessInfo.tileList;
+            overlapTileFlowInfo->type = MFLTessType::OVERLAP;
+            for (int tessIdx: tessInfo.overlaps){
+                if (tessIdx < mFixedTessNum){
+                    overlapTileFlowInfo->fixedOverlaps.push_back(tessIdx);
+                }
+                else {
+                    overlapTileFlowInfo->softOverlaps.push_back(tessIdx - mFixedTessNum);
                 }
             }
-            overlapTileFlows.push_back(overlapTileFlowInfo);
+            overlapTessFlows.push_back(overlapTileFlowInfo);
         }
 
         // blocks
-        for (MFLTileInfo tileInfo: mAllBlocks){
-            MFLTileFlowInfo blockTileFlowInfo; 
-            blockTileFlowInfo.tile = tileInfo.tile;
-            for (Tile* validNeighbor: tileInfo.validNeighbors){
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tileInfo.nodeName, std::to_string((intptr_t)validNeighbor));
-                if (maxflowAmnt > 0){
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, tileInfo.tile, validNeighbor, maxflowAmnt);
-                    blockTileFlowInfo.fromFlows.push_back(flow);
-                }
+        for (MFLTessInfo& tessInfo: mAllBlocks){
+            MFLFlowTessInfo* blockTileFlowInfo = new MFLFlowTessInfo;
+            blockTileFlowInfo->tileList = tessInfo.tileList;
+            if (tessInfo.index < mFixedTessNum){
+                blockTileFlowInfo->type = MFLTessType::FIXED;
+                blockTileFlowInfo->tessIndex = tessInfo.index;
             }
-            blockTileFlows.push_back(blockTileFlowInfo);
+            else {
+                blockTileFlowInfo->type = MFLTessType::SOFT;
+                blockTileFlowInfo->tessIndex = tessInfo.index - mFixedTessNum;
+            }
+            blockTessFlows.push_back(blockTileFlowInfo);
+        }
+        
+        // blanks
+        for (MFLTessInfo& tessInfo: mAllBlanks){
+            MFLFlowTessInfo* blankTileFlowInfo = new MFLFlowTessInfo;
+            blankTileFlowInfo->tileList = tessInfo.tileList;
+            blankTileFlowInfo->type = MFLTessType::BLANK;
+            blankTessFlows.push_back(blankTileFlowInfo);
         }
 
-        // blanks
-        for (MFLTileInfo tileInfo: mAllBlanks){
-            MFLTileFlowInfo blankTileFlowInfo; 
-            blankTileFlowInfo.tile = tileInfo.tile;
-            for (Tile* validNeighbor: tileInfo.validNeighbors){
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tileInfo.nodeName, std::to_string((intptr_t)validNeighbor));
+        // find all flows
+
+        // add edges from overlaps to other tiles
+        for (int i = 0; i < overlapTessFlows.size(); i++){
+            MFLTessInfo& tessInfo = mAllOverlaps[i];
+            MFLFlowTessInfo* sourceFlowInfo = overlapTessFlows[i];
+            for (int j = 0; j < overlapTessFlows.size(); j++){
+                MFLTessInfo& overlapInfo = mAllOverlaps[j];
+                MFLFlowTessInfo* destFlowInfo = overlapTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, overlapInfo.tessName);
                 if (maxflowAmnt > 0){
+                    // should not happen
                     MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, tileInfo.tile, validNeighbor, maxflowAmnt);
-                    blankTileFlowInfo.fromFlows.push_back(flow);
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
                 }
             }
-            blankTileFlows.push_back(blankTileFlowInfo);
+
+            for (int j = 0; j < blockTessFlows.size(); j++){
+                MFLTessInfo& blockInfo = mAllBlocks[j];
+                MFLFlowTessInfo* destFlowInfo = blockTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blockInfo.tessName);
+                if (maxflowAmnt > 0){
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
+            
+            for (int j = 0; j < blankTessFlows.size(); j++){
+                MFLTessInfo& blankInfo = mAllBlanks[j];
+                MFLFlowTessInfo* destFlowInfo = blankTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blankInfo.tessName);
+                if (maxflowAmnt > 0){
+                    // should not happen
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
         }
+
+
+        // add edges from blocks to other tiles
+        for (int i = 0; i < blockTessFlows.size(); i++){
+            MFLTessInfo& tessInfo = mAllBlocks[i];
+            MFLFlowTessInfo* sourceFlowInfo = blockTessFlows[i];
+
+            for (int j = 0; j < overlapTessFlows.size(); j++){
+                MFLTessInfo& overlapInfo = mAllOverlaps[j];
+                MFLFlowTessInfo* destFlowInfo = overlapTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, overlapInfo.tessName);
+                if (maxflowAmnt > 0){
+                    // should not happen
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
+
+            for (int j = 0; j < blockTessFlows.size(); j++){
+                MFLTessInfo& blockInfo = mAllBlocks[j];
+                MFLFlowTessInfo* destFlowInfo = blockTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blockInfo.tessName);
+                if (maxflowAmnt > 0){
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
+            
+            for (int j = 0; j < blankTessFlows.size(); j++){
+                MFLTessInfo& blankInfo = mAllBlanks[j];
+                MFLFlowTessInfo* destFlowInfo = blankTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blankInfo.tessName);
+                if (maxflowAmnt > 0){
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
+        }
+
+        // add edges from blanks to other tiles
+        for (int i = 0; i < blankTessFlows.size(); i++){
+            MFLTessInfo& tessInfo = mAllBlanks[i];
+            MFLFlowTessInfo* sourceFlowInfo = blankTessFlows[i];
+            for (int j = 0; j < overlapTessFlows.size(); j++){
+                MFLTessInfo& overlapInfo = mAllOverlaps[j];
+                MFLFlowTessInfo* destFlowInfo = overlapTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, overlapInfo.tessName);
+                if (maxflowAmnt > 0){
+                    // should not happen
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
+
+            for (int j = 0; j < blockTessFlows.size(); j++){
+                MFLTessInfo& blockInfo = mAllBlocks[j];
+                MFLFlowTessInfo* destFlowInfo = blockTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blockInfo.tessName);
+                if (maxflowAmnt > 0){
+                    // should not happen
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
+            
+            for (int j = 0; j < blankTessFlows.size(); j++){
+                MFLTessInfo& blankInfo = mAllBlanks[j];
+                MFLFlowTessInfo* destFlowInfo = blankTessFlows[j];
+                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blankInfo.tessName);
+                if (maxflowAmnt > 0){
+                    // should not happen
+                    MFLSingleFlowInfo flow;
+                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
+                    sourceFlowInfo->fromFlows.push_back(flow);
+                }
+            }
+        }
+
     }   
 
-    void MaxflowLegaliser::makeSingleFlow(MFLSingleFlowInfo& flow, Tile* source, Tile* dest, int flowAmt){
+    void MaxflowLegaliser::makeSingleFlow(MFLSingleFlowInfo& flow, MFLFlowTessInfo* source, MFLFlowTessInfo* dest, int flowAmt){
         flow.sourceTile = source;
         flow.destTile = dest;
         flow.flowAmount = flowAmt;
+    }
 
-        std::vector<Tile*> neighbors;
-        mLF->findTopNeighbors(source,neighbors);
-        for (Tile* topNeighbor: neighbors){
-            if (topNeighbor == dest){
-                flow.direction = DIRECTION::TOP;
-                return;
-            }
-        }
-        neighbors.clear();
-
-        mLF->findRightNeighbors(source,neighbors);
-        for (Tile* rightNeighbor: neighbors){
-            if (rightNeighbor == dest){
-                flow.direction = DIRECTION::RIGHT;
-                return;
-            }
-        }
-        neighbors.clear();
-
-        mLF->findDownNeighbors(source,neighbors);
-        for (Tile* downNeighbor: neighbors){
-            if (downNeighbor == dest){
-                flow.direction = DIRECTION::DOWN;
-                return;
-            }
-        }
-        neighbors.clear();
-
-        mLF->findLeftNeighbors(source,neighbors);
-        for (Tile* leftNeighbor: neighbors){
-            if (leftNeighbor == dest){
-                flow.direction = DIRECTION::LEFT;
-                return;
-            }
-        }
-
-        std::cout << "[MFL] ERROR: MakeSingleFlow neighbor not found\n";
-        return;
+    std::string toOverlapName(int tessIndex1, int tessIndex2){
+        return "OVERLAP " + std::to_string(tessIndex1) + " " + std::to_string(tessIndex2);
     }
 }

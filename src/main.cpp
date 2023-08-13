@@ -65,42 +65,42 @@ int main(int argc, char const *argv[]) {
     MFL::MaxflowLegaliser MFL;
     MFL.initMFL(legaliser);
     MFL.legaliseByMaxflow();
-    std::vector<MFL::MFLTileFlowInfo> overlapTileFlows, blockTileFlows, blankTileFlows;
-    MFL.outputFlows(overlapTileFlows, blockTileFlows, blankTileFlows);
+    std::vector<MFL::MFLFlowTessInfo*> overlapFlows, blockFlows, blankFlows;
+    MFL.outputFlows(overlapFlows, blockFlows, blankFlows);
 
-    std::cout << " ======= MaxFlow Result Report ======= " << std::endl;
-    std::cout << "OverlapTileFlows:" << std::endl;
-    for(MFL::MFLTileFlowInfo tf : blockTileFlows){
-        // tf.tile->show(std::cout);
+    // std::cout << " ======= MaxFlow Result Report ======= " << std::endl;
+    // std::cout << "OverlapTileFlows:" << std::endl;
+    // for(MFL::MFLTileFlowInfo tf : blockTileFlows){
+    //     // tf.tile->show(std::cout);
 
-        for(MFL::MFLSingleFlowInfo s : tf.fromFlows){
+    //     for(MFL::MFLSingleFlowInfo s : tf.fromFlows){
 
-            s.sourceTile->show(std::cout);
-            std::cout << "------" << s.flowAmount << "------";
-            std::cout << "[";
-            switch (s.direction)
-            {
-            case MFL::TOP:
-                std::cout << "TOP";
-                break;
-            case MFL::RIGHT:
-                std::cout << "RIGHT";
-                break;
-            case MFL::DOWN:
-                std::cout << "DOWN";
-                break;
-            case MFL::LEFT:
-                std::cout << "LEFT";
-                break;
-            default:
-                break;
-            }
-            std::cout << "]------------->";
+    //         s.sourceTile->show(std::cout);
+    //         std::cout << "------" << s.flowAmount << "------";
+    //         std::cout << "[";
+    //         switch (s.direction)
+    //         {
+    //         case MFL::TOP:
+    //             std::cout << "TOP";
+    //             break;
+    //         case MFL::RIGHT:
+    //             std::cout << "RIGHT";
+    //             break;
+    //         case MFL::DOWN:
+    //             std::cout << "DOWN";
+    //             break;
+    //         case MFL::LEFT:
+    //             std::cout << "LEFT";
+    //             break;
+    //         default:
+    //             break;
+    //         }
+    //         std::cout << "]------------->";
 
-            s.destTile->show(std::cout);
+    //         s.destTile->show(std::cout);
             
-        }
-    }
+    //     }
+    // }
 
 
 }
