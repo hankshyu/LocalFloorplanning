@@ -12,11 +12,7 @@ debug: lfrun_debug.out
 # LINKFLAGS = -pedantic -Wall -fomit-frame-pointer -funroll-all-loops -O3
 LINKFLAGS = 
 
-<<<<<<< HEAD
 lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o maxflow.o maxflowLegaliser.o rgparser.o rgmodule.o rgsolver.o
-=======
-lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o maxflow.o maxflowLegaliser.o monitor.o
->>>>>>> orange
 	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
