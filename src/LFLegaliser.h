@@ -15,6 +15,7 @@
 #include "Tile.h"
 #include "Tessera.h"
 #include "ppsolver.h"
+#include "rgsolver.h"
 
 namespace gtl = boost::polygon;
 
@@ -30,16 +31,16 @@ class LFLegaliser {
 private:
     len_t mCanvasWidth;
     len_t mCanvasHeight;
-    
+
     bool overlap3;
-    
+
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
     bool checkTileInCanvas(Tile &tile) const;
-    
+
     void traverseBlank(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
     // void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
     void visualiseDebugDFS(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
-    
+
     Tile *getRandomTile() const;
 
     // subRoutine used in enumerateDirectArea
@@ -65,19 +66,20 @@ public:
     len_t getCanvasHeight() const;
 
     void translateGlobalFloorplanning(const PPSolver &solver);
+    void translateGlobalFloorplanning(const RGSolver &solver);
     void detectfloorplanningOverlaps();
     bool has3overlap();
     void splitTesseraeOverlaps();
 
     void arrangeTesseraetoCanvas();
-    
+
 
     /* Functions proposed in the paper */
 
     // Returns the Tile that includes the Cord "key"
     Tile *findPoint(const Cord &key) const;
     Tile *findPoint(const Cord &key, Tile *initTile) const;
-    
+
     // Pushes all neighbors of Tile "centre" to vector "neighbors"
     void findTopNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
     void findDownNeighbors(Tile *centre, std::vector<Tile *> &neighbors) const;
@@ -89,10 +91,10 @@ public:
     bool searchArea(Cord lowerleft, len_t width, len_t height, Tile &target) const;
     // Clone of searchArea, no "target" is returned
     bool searchArea(Cord lowerleft, len_t width, len_t height) const;
-    
+
     // Enumerates all tiles in a given area, each tile is visited only after all the tiles above and to its left does
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
-    
+
     // pushes 
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);

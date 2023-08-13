@@ -1,113 +1,115 @@
-Set push force = 80850.000000
-Estimated HPWL: 180112816.00
-Set push force = 161700.00
-Estimated HPWL: 203906624.00
-Set push force = 242550.00
-Estimated HPWL: 204247296.00
-Set push force = 323400.00
-Estimated HPWL: 191686736.00
-Set push force = 404250.00
-Estimated HPWL: 208192048.00
-Set push force = 485100.00
-Estimated HPWL: 191487248.00
-Set push force = 646800.00
-Estimated HPWL: 184532240.00
-Set push force = 808500.00
-Estimated HPWL: 194703328.00
-3 Modules Intersection: poly ((6727, 3192), (6628, 3192), (6628, 2968), (6727, 2968), (6727, 3192), )
+Estimated HPWL: 183418079.91
+3 Modules Intersection: poly ((7696, 9939), (7593, 9939), (7593, 9830), (7696, 9830), (7696, 9939), )
 
-3 Modules Intersection: poly ((4664, 6078), (4485, 6078), (4485, 5825), (4664, 5825), (4664, 6078), )
+3 Modules Intersection: poly ((7015, 6567), (6908, 6567), (6908, 6458), (7015, 6458), (7015, 6567), )
 
-Estimated HPWL in Global Phase: 180112816.00
+3 Modules Intersection: poly ((5852, 5188), (5747, 5188), (5747, 5143), (5852, 5143), (5852, 5188), )
+
+3 Modules Intersection: poly ((5525, 7982), (5422, 7982), (5422, 7966), (5525, 7966), (5525, 7982), )
+
 has 3 overlapped? 1
 print to file...outputs/transform_test.txt
 Performing split...
 Painting Fixed Tessera to Canvas:
 PAD_D0: Tiles->1, Overlaps->1
 PAD_D1: Tiles->2, Overlaps->1
-PAD_D2: Tiles->1, Overlaps->0
-PAD_D3: Tiles->2, Overlaps->1
-PAD_U0: Tiles->2, Overlaps->1
+PAD_D2: Tiles->1, Overlaps->1
+PAD_D3: Tiles->1, Overlaps->1
+PAD_U0: Tiles->3, Overlaps->4
 print DEBUGS to file...outputs/debug.txt
 Painting Soft Tessera to Canvas:
-COM: Tiles->4, Overlaps->3
-GPU: Tiles->7, Overlaps->6
-CPU: Tiles->6, Overlaps->6
-NPU: Tiles->4, Overlaps->2
-IS0: Tiles->2, Overlaps->4
-IS1: Tiles->2, Overlaps->1
-H0: Tiles->7, Overlaps->5
-H1: Tiles->2, Overlaps->1
-H2: Tiles->3, Overlaps->3
-U0: Tiles->3, Overlaps->5
-D0: Tiles->2, Overlaps->1
-D1: Tiles->3, Overlaps->2
-E0: Tiles->3, Overlaps->5
-A0: Tiles->1, Overlaps->2
+COM: Tiles->5, Overlaps->6
+GPU: Tiles->9, Overlaps->8
+CPU: Tiles->8, Overlaps->5
+NPU: Tiles->3, Overlaps->2
+IS0: Tiles->4, Overlaps->3
+IS1: Tiles->4, Overlaps->3
+H0: Tiles->6, Overlaps->9
+H1: Tiles->4, Overlaps->6
+H2: Tiles->3, Overlaps->5
+U0: Tiles->2, Overlaps->4
+D0: Tiles->2, Overlaps->4
+D1: Tiles->3, Overlaps->3
+E0: Tiles->2, Overlaps->4
+A0: Tiles->3, Overlaps->4
 PW0: Tiles->4, Overlaps->6
 print to file...outputs/cornerStiching.txt
-MaxFlow Solved. Flow = 4861557
-[MFL] ERROR: overlap not resolved between GPU and IS0 
-Overlap area: 22176 Flow Amnt: 0
-[MFL] ERROR: overlap not resolved between CPU and U0 
-Overlap area: 45287 Flow Amnt: 0
-[MFL] ERROR: overlap not resolved between H2 and E0 
-Overlap area: 285324 Flow Amnt: 247646
+MaxFlow Solved. Flow = 3968752
+[MFL] ERROR: overlap not resolved between PAD_U0 and COM 
+Overlap area: 11227 Flow Amnt: 0
+[MFL] ERROR: overlap not resolved between GPU and H0 
+Overlap area: 11663 Flow Amnt: 0
+[MFL] ERROR: overlap not resolved between GPU and H0 
+Overlap area: 2180 Flow Amnt: 0
+[MFL] ERROR: overlap not resolved between H0 and A0 
+Overlap area: 1648 Flow Amnt: 0
+[MFL] ERROR: overlap not resolved between H1 and H2 
+Overlap area: 4725 Flow Amnt: 0
  ======= MaxFlow Result Report ======= 
 OverlapTileFlows:
-Type: BLOCK (5109, 7110) W=1519 H=217
-------191690------[LEFT]------------->Type: BLANK (4841, 7110) W=268 H=2490
-Type: BLOCK (5109, 7327) W=3163 H=2503
-------475630------[LEFT]------------->Type: BLANK (4841, 7110) W=268 H=2490
-Type: BLOCK (5109, 7327) W=3163 H=2503
-------102644------[LEFT]------------->Type: BLANK (4841, 9600) W=268 H=383
-Type: BLOCK (5109, 7327) W=3163 H=2503
-------602850------[RIGHT]------------->Type: BLANK (8272, 9608) W=2995 H=222
-Type: BLOCK (6628, 6631) W=4359 H=189
-------403648------[RIGHT]------------->Type: BLANK (10987, 3300) W=280 H=4027
-Type: BLOCK (6628, 4240) W=4359 H=907
-------103752------[LEFT]------------->Type: BLANK (5832, 4240) W=796 H=907
-Type: BLOCK (6727, 3300) W=4260 H=940
-------112880------[RIGHT]------------->Type: BLANK (10987, 3300) W=280 H=4027
-Type: BLOCK (368, 6078) W=4117 H=1032
-------114862------[LEFT]------------->Type: BLANK (0, 5690) W=368 H=2110
-Type: BLOCK (4664, 5690) W=177 H=135
-------44781------[DOWN]------------->Type: BLANK (4664, 5620) W=752 H=70
-Type: BLOCK (368, 9600) W=4473 H=563
-------453600------[TOP]------------->Type: BLANK (0, 10163) W=6000 H=287
-Type: BLOCK (368, 7110) W=4473 H=690
-------367392------[LEFT]------------->Type: BLANK (0, 5690) W=368 H=2110
-Type: BLOCK (2584, 243) W=3210 H=2670
-------176196------[DOWN]------------->Type: BLANK (2567, 192) W=3458 H=51
-Type: BLOCK (6727, 2913) W=2298 H=55
-------514752------[RIGHT]------------->Type: BLANK (9025, 1500) W=1622 H=1468
-Type: BLOCK (6025, 192) W=3000 H=2721
-------38610------[DOWN]------------->Type: BLANK (2567, 135) W=8700 H=57
-Type: BLOCK (445, 135) W=2122 H=1365
-------132475------[DOWN]------------->Type: BLANK (0, 0) W=11267 H=135
-Type: BLOCK (4219, 4574) W=1613 H=573
-------129352------[LEFT]------------->Type: BLANK (3345, 4574) W=874 H=148
-Type: BLOCK (4219, 4574) W=1613 H=573
-------23136------[LEFT]------------->Type: BLANK (4187, 4722) W=32 H=723
-Type: BLOCK (4219, 4574) W=1613 H=573
-------81135------[RIGHT]------------->Type: BLANK (5832, 4240) W=796 H=907
-Type: BLOCK (4284, 4240) W=1548 H=334
-------100656------[RIGHT]------------->Type: BLANK (5832, 4240) W=796 H=907
-Type: BLOCK (5416, 5620) W=1212 H=205
-------7859------[LEFT]------------->Type: BLANK (4664, 5620) W=752 H=70
-Type: BLOCK (5416, 5620) W=1212 H=205
-------77625------[LEFT]------------->Type: BLANK (4841, 5690) W=575 H=135
-Type: BLOCK (4031, 5620) W=633 H=70
-------163330------[LEFT]------------->Type: BLANK (0, 5617) W=4031 H=73
-Type: BLOCK (4031, 5617) W=188 H=3
-------26832------[LEFT]------------->Type: BLANK (0, 5617) W=4031 H=73
-Type: BLOCK (3292, 5327) W=895 H=118
-------32065------[LEFT]------------->Type: BLANK (0, 5327) W=3292 H=290
-Type: BLOCK (4841, 6631) W=929 H=189
-------162162------[RIGHT]------------->Type: BLANK (5770, 6631) W=858 H=189
-Type: BLOCK (4701, 3453) W=633 H=554
-------50007------[LEFT]------------->Type: BLANK (0, 3453) W=4701 H=226
-Type: BLOCK (5794, 2913) W=231 H=279
-------135072------[DOWN]------------->Type: BLANK (5794, 243) W=231 H=2670
-Type: BLOCK (5400, 3453) W=1228 H=554
-------36564------[LEFT]------------->Type: BLANK (5334, 3453) W=66 H=554
+Type: BLOCK (8700, 9830) W=2056 H=383
+------303318------[TOP]------------->Type: BLANK (8700, 10213) W=2567 H=237
+Type: BLOCK (7593, 7808) W=3054 H=846
+------121128------[LEFT]------------->Type: BLANK (7035, 7158) W=558 H=913
+Type: BLOCK (7593, 7158) W=3163 H=650
+------341604------[LEFT]------------->Type: BLANK (7035, 7158) W=558 H=913
+Type: BLOCK (7696, 9608) W=3060 H=222
+------305636------[RIGHT]------------->Type: BLANK (10756, 9608) W=511 H=605
+Type: BLOCK (6908, 3210) W=3739 H=90
+------44799------[LEFT]------------->Type: BLANK (4475, 3210) W=2433 H=494
+Type: BLOCK (6908, 5188) W=4359 H=746
+------162886------[LEFT]------------->Type: BLANK (6642, 5188) W=266 H=746
+Type: BLOCK (6908, 3300) W=4359 H=404
+------346170------[LEFT]------------->Type: BLANK (4475, 3210) W=2433 H=494
+Type: BLOCK (2, 6568) W=4473 H=882
+------79647------[RIGHT]------------->Type: BLANK (4475, 7349) W=417 H=191
+Type: BLOCK (2, 6568) W=4473 H=882
+------79141------[RIGHT]------------->Type: BLANK (4475, 6568) W=947 H=781
+Type: BLOCK (620, 3210) W=3855 H=90
+------84836------[RIGHT]------------->Type: BLANK (4475, 3210) W=2433 H=494
+Type: BLOCK (2, 3300) W=4473 H=1784
+------8512------[LEFT]------------->Type: BLANK (0, 3300) W=2 H=4256
+Type: BLOCK (2, 3300) W=4473 H=1784
+------125594------[RIGHT]------------->Type: BLANK (4475, 3704) W=1054 H=1380
+Type: BLOCK (620, 7800) W=2837 H=528
+------218566------[RIGHT]------------->Type: BLANK (3457, 7556) W=651 H=772
+Type: BLOCK (457, 9600) W=2897 H=850
+------293400------[LEFT]------------->Type: BLANK (0, 9600) W=457 H=850
+Type: BLOCK (457, 7556) W=3000 H=244
+------111508------[LEFT]------------->Type: BLANK (0, 7556) W=457 H=244
+Type: BLOCK (457, 7556) W=3000 H=244
+------206492------[RIGHT]------------->Type: BLANK (3457, 7556) W=651 H=772
+Type: BLOCK (3457, 9293) W=2019 H=1157
+------104220------[RIGHT]------------->Type: BLANK (5476, 9830) W=524 H=620
+Type: BLOCK (5422, 6568) W=1486 H=590
+------47300------[LEFT]------------->Type: BLANK (4475, 6568) W=947 H=781
+Type: BLOCK (5422, 7158) W=1613 H=191
+------138608------[LEFT]------------->Type: BLANK (4475, 6568) W=947 H=781
+Type: BLOCK (5525, 7349) W=1510 H=617
+------18720------[RIGHT]------------->Type: BLANK (7035, 7158) W=558 H=913
+Type: BLOCK (4475, 5084) W=1054 H=104
+------9810------[DOWN]------------->Type: BLANK (4475, 3704) W=1054 H=1380
+Type: BLOCK (4475, 6038) W=1377 H=420
+------89250------[RIGHT]------------->Type: BLANK (5852, 6038) W=530 H=420
+Type: BLOCK (5529, 3704) W=1379 H=1380
+------19057------[DOWN]------------->Type: BLANK (4475, 3210) W=2433 H=494
+Type: BLOCK (6382, 6038) W=526 H=420
+------97826------[LEFT]------------->Type: BLANK (5852, 6038) W=530 H=420
+Type: BLOCK (5852, 5188) W=790 H=746
+------35550------[RIGHT]------------->Type: BLANK (6642, 5188) W=266 H=746
+Type: BLOCK (4108, 7556) W=784 H=426
+------5872------[LEFT]------------->Type: BLANK (3457, 7556) W=651 H=772
+Type: BLOCK (4108, 7982) W=895 H=346
+------71642------[LEFT]------------->Type: BLANK (3457, 7556) W=651 H=772
+Type: BLOCK (4108, 7982) W=895 H=346
+------24123------[RIGHT]------------->Type: BLANK (5003, 7982) W=365 H=346
+Type: BLOCK (6411, 9293) W=1182 H=537
+------310314------[LEFT]------------->Type: BLANK (5476, 9293) W=935 H=537
+Type: BLOCK (4892, 7349) W=530 H=191
+------49062------[DOWN]------------->Type: BLANK (4475, 6568) W=947 H=781
+Type: BLOCK (5368, 8071) W=1327 H=257
+------101303------[LEFT]------------->Type: BLANK (5003, 7982) W=365 H=346
+Type: BLOCK (5368, 8071) W=1327 H=257
+------11994------[RIGHT]------------->Type: BLANK (6695, 8071) W=898 H=583
+Type: BLOCK (5368, 7982) W=54 H=89
+------864------[LEFT]------------->Type: BLANK (5003, 7982) W=365 H=346
