@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
-#include "LFUnits.h"
 #include <algorithm>
+#include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
 #include "LFLegaliser.h"
@@ -10,11 +10,10 @@
 #include "rgparser.h"
 #include "rgsolver.h"
 #include "maxflowLegaliser.h"
+#include "monitor.h"
 
-void printCord(Cord cord) {
-    std::cout << "(" << cord.x << ", " << cord.y << ")";
-}
 int main(int argc, char const *argv[]) {
+<<<<<<< HEAD
     // * You can still use it if 3 overlaps are too many
     // Parser parser(argv[1]);
     // int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
@@ -56,6 +55,21 @@ int main(int argc, char const *argv[]) {
     RGParser rgparser(argv[1]);
     RGSolver solver;
     solver.readFromParser(rgparser);
+=======
+    
+    MNT::Monitor monitor;
+    monitor.printCopyRight();
+    
+    /* Phase 1: Global Floorplanning */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Global Floorplanning Phase");
+    auto clockCounterbegin = std::chrono::steady_clock::now();
+
+    Parser parser(argv[1]);
+    int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
+    int pushScale = 0;
+    PPSolver *solver, *bestSolution;
+>>>>>>> orange
     LFLegaliser *legaliser;
     int iteration = 6000;
     double lr = 1. / iteration;
@@ -76,21 +90,72 @@ int main(int argc, char const *argv[]) {
     std::cout << std::fixed;
     std::cout << "Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
 
+<<<<<<< HEAD
     legaliser = new LFLegaliser((len_t) rgparser.getDieWidth(), (len_t) rgparser.getDieHeight());
     legaliser->translateGlobalFloorplanning(solver);
     legaliser->detectfloorplanningOverlaps();
 
 
     std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
+=======
+    // Phase 1 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
+    std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << bestSolution->calcEstimatedHPWL() << std::endl;
+    std::cout << "Multiple Tile overlap (>3) count: " << legaliser->has3overlap() << std::endl;
+    bestSolution->currentPosition2txt("outputs/ppmoduleResult.txt");
+    legaliser->visualiseArtpiece("outputs/phase1.txt", false);
+    
+>>>>>>> orange
 
-    // visualiseArtPieceCYY is integratd into visualiseArtpiece fnc + false option.
-    legaliser->visualiseArtpiece("outputs/transform_test.txt", false);
+    /* Phase 2: Processing Corner Stiching */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Extracting geographical information to IR");
 
+<<<<<<< HEAD
     std::cout << "Performing split..." << std::endl;
-    legaliser->splitTesseraeOverlaps();
+=======
 
+    std::cout << "2.1 Performing split ...";
+>>>>>>> orange
+    legaliser->splitTesseraeOverlaps();
+    std::cout << "done!" << std::endl;
+
+    std::cout << "2.2 Painting All Tesserae to Canvas";
     legaliser->arrangeTesseraetoCanvas();
-    legaliser->visualiseArtpiece("outputs/cornerStiching.txt", true);
+    
+    std::cout << "2.3 Start combinable tile search, ";
+    std::vector <std::pair<Tile *, Tile *>> detectMergeTile;
+    legaliser->detectCombinableBlanks(detectMergeTile);
+    std::cout << detectMergeTile.size() << " candidates found" << std::endl << std::endl;
+    for(std::pair<Tile *, Tile *> tp : detectMergeTile){
+        legaliser->visualiseAddMark(tp.first);
+        legaliser->visualiseAddMark(tp.second);
+    }
+    legaliser->visualiseArtpiece("outputs/phase2_1.txt", true);
+
+    legaliser->visualiseRemoveAllmark();
+    while(!detectMergeTile.empty()){
+        std::cout << "Merging Pair: #" << detectMergeTile.size() << std::endl;
+        detectMergeTile[0].first->show(std::cout);
+        detectMergeTile[0].second->show(std::cout);
+
+        legaliser->combineVerticalMergeableBlanks(detectMergeTile[0].first, detectMergeTile[0].second);
+        detectMergeTile.clear();
+        legaliser->detectCombinableBlanks(detectMergeTile);
+    }
+
+
+    // Phase 2 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
+    
+    legaliser->visualiseArtpiece("outputs/phase2.txt", true);
+
+
+    /* Phase 3: Overlap distribution via Network Flow */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Overlap distribution");
 
     MFL::MaxflowLegaliser MFL;
     MFL.initMFL(legaliser);
@@ -130,6 +195,23 @@ int main(int argc, char const *argv[]) {
 
         }
     }
+    
+    // Phase 3 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
 
+    /* Phase 4: Physical Overlap distribution */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Physical Overlap distribution");
+    std::cout << "4.1 Analyse Overlap distribution tiles" << std::endl;
+    legaliser->visualiseRemoveAllmark();
+
+
+
+
+
+    // Phase 4 Reports
+    std::cout << std::endl;
+    monitor.printPhaseReport();
 
 }

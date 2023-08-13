@@ -1,26 +1,49 @@
-Estimated HPWL: 39227436.33
-3 Modules Intersection: poly ((1494, 1551), (1470, 1551), (1470, 1526), (1494, 1526), (1494, 1551), )
+ ___      _     _          _     
+|_ _|_ __(_)___| |    __ _| |__  
+ | || '__| / __| |   / _` | '_ \ 
+ | || |  | \__ \ |__| (_| | |_) |
+|___|_|  |_|___/_____\__,_|_.__/ 
 
-3 Modules Intersection: poly ((2052, 993), (2027, 993), (2027, 966), (2052, 966), (2052, 993), )
+ICCAD Contest 2023
+Problem D: Fixed-Outline Floorplanning with Rectilinear Soft Blocks
 
-3 Modules Intersection: poly ((2309, 993), (2281, 993), (2281, 961), (2309, 961), (2309, 993), )
 
-3 Modules Intersection: poly ((1948, 2004), (1931, 2004), (1931, 1979), (1948, 1979), (1948, 2004), )
+==========================================================================
+Phase One: Global Floorplanning Phase                                    |
+==========================================================================
+Set push force = 37500.000000
+Estimated HPWL: 43605056.00
+Set push force = 75000.00
+Estimated HPWL: 44152228.00
+Set push force = 112500.00
+Estimated HPWL: 44415964.00
+Set push force = 150000.00
+Estimated HPWL: 44460304.00
+Set push force = 187500.00
+Estimated HPWL: 44493232.00
+Set push force = 225000.00
+Estimated HPWL: 44555288.00
+Set push force = 300000.00
+Estimated HPWL: 44629004.00
+Set push force = 375000.00
+Estimated HPWL: 44669824.00
 
-3 Modules Intersection: poly ((399, 1934), (388, 1934), (388, 1909), (399, 1909), (399, 1934), )
+------------------------------------------------------
+Phase One Report                                     |
+Time Elapsed: 86.56 (s)                              |
+------------------------------------------------------
+Estimated HPWL in Global Phase: 43605056.00
+Multiple Tile overlap (>3) count: 0
+print to file...outputs/phase1.txt
 
-3 Modules Intersection: poly ((620, 2337), (609, 2337), (609, 2328), (620, 2328), (620, 2337), )
 
-3 Modules Intersection: poly ((1395, 2378), (1374, 2378), (1374, 2361), (1395, 2361), (1395, 2378), )
-
-3 Modules Intersection: poly ((1394, 2055), (1374, 2055), (1374, 2040), (1394, 2040), (1394, 2055), )
-
-has 3 overlapped? 1
-print to file...outputs/transform_test.txt
-Performing split...
-Painting Fixed Tessera to Canvas:
-PAD0: Tiles->2, Overlaps->1
-PAD1: Tiles->3, Overlaps->2
+==========================================================================
+Phase Two: Extracting geographical information to IR                     |
+==========================================================================
+2.1 Performing split ...done!
+2.2 Painting All Tesserae to CanvasPainting Fixed Tessera to Canvas:
+PAD0: Tiles->1, Overlaps->0
+PAD1: Tiles->1, Overlaps->1
 PAD2: Tiles->1, Overlaps->1
 PAD3: Tiles->2, Overlaps->2
 PAD4: Tiles->1, Overlaps->1
@@ -29,22 +52,93 @@ PAD6: Tiles->1, Overlaps->1
 PAD7: Tiles->1, Overlaps->1
 PAD8: Tiles->1, Overlaps->2
 PAD9: Tiles->1, Overlaps->1
-PAD10: Tiles->2, Overlaps->1
-PAD11: Tiles->2, Overlaps->1
-PAD12: Tiles->1, Overlaps->0
-print DEBUGS to file...outputs/debug.txt
+PAD10: Tiles->1, Overlaps->1
+PAD11: Tiles->1, Overlaps->1
+PAD12: Tiles->2, Overlaps->1
 Painting Soft Tessera to Canvas:
-GPC0: Tiles->4, Overlaps->3
-GPC1: Tiles->3, Overlaps->2
-GPC2: Tiles->4, Overlaps->6
-GPC3: Tiles->4, Overlaps->7
-GPC4: Tiles->3, Overlaps->6
-GPC5: Tiles->2, Overlaps->6
-GPC6: Tiles->6, Overlaps->11
-GPC7: Tiles->4, Overlaps->6
-GPC8: Tiles->4, Overlaps->3
-CA0: Tiles->7, Overlaps->8
-CA1: Tiles->4, Overlaps->8
-CB: Tiles->3, Overlaps->6
-TPC0: Tiles->3, Overlaps->4
-TPC1: Tiles->2, Overlaps->5
+GPC0: Tiles->1, Overlaps->0
+GPC1: Tiles->2, Overlaps->1
+GPC2: Tiles->2, Overlaps->1
+GPC3: Tiles->2, Overlaps->1
+GPC4: Tiles->2, Overlaps->1
+GPC5: Tiles->2, Overlaps->1
+GPC6: Tiles->2, Overlaps->1
+GPC7: Tiles->2, Overlaps->1
+GPC8: Tiles->3, Overlaps->2
+CA0: Tiles->3, Overlaps->2
+CA1: Tiles->3, Overlaps->2
+CB: Tiles->1, Overlaps->0
+TPC0: Tiles->1, Overlaps->0
+TPC1: Tiles->2, Overlaps->1
+TPC2: Tiles->1, Overlaps->0
+TPC3: Tiles->1, Overlaps->0
+TPC4: Tiles->1, Overlaps->0
+TPC5: Tiles->1, Overlaps->0
+CPC0: Tiles->3, Overlaps->2
+CPC1: Tiles->3, Overlaps->2
+CPC2: Tiles->2, Overlaps->1
+2.3 Start combinable tile search, 3 candidates found
+
+print to file...outputs/phase2_1.txt
+Merging Pair: #3
+Type: BLANK (2760, 1235) W=90 H=65
+Type: BLANK (2760, 1138) W=90 H=97
+Merging Pair: #2
+Type: BLANK (1302, 2407) W=362 H=112
+Type: BLANK (1302, 2352) W=362 H=55
+Merging Pair: #1
+Type: BLANK (1064, 1723) W=193 H=4
+Type: BLANK (1064, 1695) W=193 H=28
+
+------------------------------------------------------
+Phase Two Report                                     |
+Time Elapsed: 0.00 (s)                               |
+------------------------------------------------------
+print to file...outputs/phase2.txt
+
+
+==========================================================================
+Phase Three: Overlap distribution                                        |
+==========================================================================
+MaxFlow Solved. Flow = 85503
+ ======= MaxFlow Result Report ======= 
+OverlapTileFlows:
+Type: BLOCK (823, 150) W=585 H=472
+------3051------[TOP]------------->Type: BLANK (772, 622) W=1464 H=28
+Type: BLOCK (2236, 622) W=585 H=455
+------15730------[TOP]------------->Type: BLANK (2181, 1077) W=669 H=61
+Type: BLOCK (1664, 1954) W=585 H=565
+------6100------[TOP]------------->Type: BLANK (1302, 2519) W=983 H=31
+Type: BLOCK (2285, 2300) W=585 H=250
+------9600------[LEFT]------------->Type: BLANK (2249, 1985) W=36 H=534
+Type: BLOCK (173, 1245) W=816 H=450
+------9802------[LEFT]------------->Type: BLANK (150, 907) W=23 H=693
+Type: BLOCK (1944, 1235) W=816 H=699
+------3990------[LEFT]------------->Type: BLANK (1545, 1235) W=399 H=10
+Type: BLOCK (1944, 1235) W=816 H=699
+------3820------[LEFT]------------->Type: BLANK (989, 1245) W=955 H=4
+Type: BLOCK (1944, 1235) W=816 H=699
+------15179------[LEFT]------------->Type: BLANK (1735, 1249) W=209 H=478
+Type: BLOCK (501, 2407) W=231 H=131
+------2900------[TOP]------------->Type: BLANK (476, 2538) W=488 H=12
+Type: BLOCK (1041, 2352) W=261 H=55
+------2808------[RIGHT]------------->Type: BLANK (1302, 2352) W=362 H=167
+Type: BLOCK (964, 2407) W=338 H=271
+------5159------[TOP]------------->Type: BLANK (950, 2678) W=550 H=22
+Type: BLOCK (726, 1723) W=338 H=310
+------7364------[TOP]------------->Type: BLANK (150, 2033) W=918 H=24
+
+------------------------------------------------------
+Phase Three Report                                   |
+Time Elapsed: 0.02 (s)                               |
+------------------------------------------------------
+
+
+==========================================================================
+Phase Four: Physical Overlap distribution                                |
+==========================================================================
+
+------------------------------------------------------
+Phase Four Report                                    |
+Time Elapsed: 0.00 (s)                               |
+------------------------------------------------------

@@ -6,24 +6,13 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
-#include "boost/polygon/polygon.hpp"
-#include "boost/polygon/rectangle_data.hpp"
-#include "boost/geometry.hpp"
-#include "boost/geometry/geometries/box.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
+#include <utility>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
 #include "ppsolver.h"
 #include "rgsolver.h"
 
-namespace gtl = boost::polygon;
-
-typedef gtl::polygon_data<len_t>                 Polygon;
-typedef gtl::rectangle_data<len_t>               Rectangle;
-// typedef gtl::polygon_traits<Polygon>::point_type Point;
-typedef gtl::point_data<len_t> Point;
-typedef std::vector<Polygon>                     PolygonSet;
 
 class PPSolver;
 
@@ -49,10 +38,7 @@ private:
     // This is for marking tiles to show on presentation
     std::vector <Tile *> mMarkedTiles;
 
-    // * These are new added functions for tile manipulation
-    std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
-    std::vector<Tile> mergeTile(Tile tile1, Tile tile2);
-    std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut);
+    void detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile *>> &candidateTile, Tile &t, std::vector <Cord> &record);
 
 public:
     std::vector <Tessera *> fixedTesserae;
@@ -94,15 +80,24 @@ public:
 
     // Enumerates all tiles in a given area, each tile is visited only after all the tiles above and to its left does
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
+<<<<<<< HEAD
 
     // pushes 
+=======
+    
+
+>>>>>>> orange
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
 
 
     void visualiseArtpiece(const std::string outputFileName, bool checkBlankTile);
-    void visualiseAddMark(Tile *markTile);
     void visualiseDebug(const std::string outputFileName);
+    void visualiseAddMark(Tile *markTile);
+    void visualiseRemoveAllmark();
+
+    void detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile);
+    void combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile);
 
 };
 
