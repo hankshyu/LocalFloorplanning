@@ -80,13 +80,8 @@ public:
 
     // Enumerates all tiles in a given area, each tile is visited only after all the tiles above and to its left does
     void enumerateDirectArea(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles) const;
-<<<<<<< HEAD
-
-    // pushes 
-=======
     
 
->>>>>>> orange
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
 

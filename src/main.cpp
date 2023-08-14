@@ -13,51 +13,13 @@
 #include "monitor.h"
 
 int main(int argc, char const *argv[]) {
-<<<<<<< HEAD
-    // * You can still use it if 3 overlaps are too many
-    // Parser parser(argv[1]);
-    // int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
-    // int pushScale = 0;
-    // PPSolver *solver, *bestSolution;
-    // LFLegaliser *legaliser;
-    // float minHPWL = 1e100;
-    // int iteration = 1500;
-    // std::cout << std::fixed;
-    // for ( pushScale = 0; pushScale < 8; pushScale++ ) {
-    //     solver = new PPSolver;
-    //     solver->readFromParser(parser);
-    //     solver->setupPushForce(pushForceList[pushScale]);
-    //     for ( int phase = 1; phase <= 50; phase++ ) {
-    //         solver->setRadiusRatio(phase * 0.02);
-    //         for ( int i = 0; i < iteration; i++ ) {
-    //             solver->calcModuleForce();
-    //             solver->moveModule();
-    //         }
-    //     }
-    //     std::cout << "Estimated HPWL: " << std::setprecision(2) << solver->calcEstimatedHPWL() << std::endl;
-    //     if ( solver->calcEstimatedHPWL() < minHPWL ) {
-    //         minHPWL = solver->calcEstimatedHPWL();
-    //         bestSolution = solver;
-    //     }
-    //     else {
-    //         delete solver;
-    //     }
-    // }
-    // legaliser = new LFLegaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
-    // legaliser->translateGlobalFloorplanning(*bestSolution);
-    // legaliser->detectfloorplanningOverlaps();
-    // std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << bestSolution->calcEstimatedHPWL() << std::endl;
-    // bestSolution->currentPosition2txt("outputs/global_test.txt");
-    // std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
-
 
 
     RGParser rgparser(argv[1]);
     RGSolver solver;
     solver.readFromParser(rgparser);
-=======
     
-    MNT::Monitor monitor;
+    mnt::Monitor monitor;
     monitor.printCopyRight();
     
     /* Phase 1: Global Floorplanning */
@@ -68,8 +30,7 @@ int main(int argc, char const *argv[]) {
     Parser parser(argv[1]);
     int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
     int pushScale = 0;
-    PPSolver *solver, *bestSolution;
->>>>>>> orange
+
     LFLegaliser *legaliser;
     int iteration = 6000;
     double lr = 1. / iteration;
@@ -90,38 +51,29 @@ int main(int argc, char const *argv[]) {
     std::cout << std::fixed;
     std::cout << "Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
 
-<<<<<<< HEAD
     legaliser = new LFLegaliser((len_t) rgparser.getDieWidth(), (len_t) rgparser.getDieHeight());
     legaliser->translateGlobalFloorplanning(solver);
     legaliser->detectfloorplanningOverlaps();
 
-
-    std::cout << "has 3 overlapped? " << legaliser->has3overlap() << std::endl;
-=======
     // Phase 1 Reports
     std::cout << std::endl;
     monitor.printPhaseReport();
-    std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << bestSolution->calcEstimatedHPWL() << std::endl;
+    // std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << solver->calcEstimatedHPWL() << std::endl;
     std::cout << "Multiple Tile overlap (>3) count: " << legaliser->has3overlap() << std::endl;
-    bestSolution->currentPosition2txt("outputs/ppmoduleResult.txt");
+    // solver->currentPosition2txt("outputs/ppmoduleResult.txt");
     legaliser->visualiseArtpiece("outputs/phase1.txt", false);
     
->>>>>>> orange
-
+    
     /* Phase 2: Processing Corner Stiching */
     std::cout << std::endl << std::endl;
     monitor.printPhase("Extracting geographical information to IR");
 
-<<<<<<< HEAD
-    std::cout << "Performing split..." << std::endl;
-=======
 
     std::cout << "2.1 Performing split ...";
->>>>>>> orange
     legaliser->splitTesseraeOverlaps();
     std::cout << "done!" << std::endl;
 
-    std::cout << "2.2 Painting All Tesserae to Canvas";
+    std::cout << "2.2 Painting All Tesserae to Canvas" << std::endl;
     legaliser->arrangeTesseraetoCanvas();
     
     std::cout << "2.3 Start combinable tile search, ";
@@ -213,5 +165,7 @@ int main(int argc, char const *argv[]) {
     // Phase 4 Reports
     std::cout << std::endl;
     monitor.printPhaseReport();
+
+    
 
 }
