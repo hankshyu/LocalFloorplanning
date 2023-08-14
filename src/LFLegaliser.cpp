@@ -82,6 +82,30 @@ void LFLegaliser::translateGlobalFloorplanning(const PPSolver &solver) {
 
 }
 
+void LFLegaliser::translateGlobalFloorplanning(const RGSolver &solver) {
+    // You could define the I/O of this function
+    // To create a soft Tessera:
+    // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
+    // softTesserae.push_back(newTess);
+    // The constructor would automatically create a default tile for you.
+
+    for ( int i = 0; i < solver.moduleNum; i++ ) {
+        RGModule *curModule = solver.modules[i];
+        if ( curModule->fixed ) {
+            Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
+                Cord(curModule->x, curModule->y), curModule->width, curModule->height);
+            fixedTesserae.push_back(newTess);
+        }
+        else {
+            curModule->updateCord(mCanvasWidth, mCanvasHeight, 1.);
+            Tessera *newTess = new Tessera(tesseraType::SOFT, curModule->name, curModule->area,
+                Cord((len_t)curModule->x, (len_t) curModule->y), curModule->width, curModule->height);
+            softTesserae.push_back(newTess);
+        }
+    }
+
+}
+
 bool hasCycle3(std::vector< std::set<len_t> > graph, std::vector<bool> visited, int curr, int parent, int depth, int nodes[3]) {
     if ( depth == 3 ) {
         for ( int neighbor : graph[curr] ) {

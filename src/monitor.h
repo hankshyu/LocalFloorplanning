@@ -6,7 +6,7 @@
 #include <time.h>
 
 
-namespace MNT
+namespace mnt
 {
     const std::string numToTxt [] = {
         "Zero", "One", "Two", "Three", "Four", "Five",
