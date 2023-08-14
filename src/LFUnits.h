@@ -1,6 +1,8 @@
 #ifndef __LFUNITS_H__
 #define __LFUNITS_H__
 
+#include <iostream>
+
 typedef int len_t;
 typedef int area_t;
 
@@ -50,6 +52,13 @@ public:
         return ((x >= comp.x) && (y >= comp.y));
     }
 
+    friend std::ostream &operator << (std::ostream &os, const Cord &c) {
+        os << "(" << c.x << ", " << c.y << ")";
+        return os;
+    }
+
 };
+
+
 
 #endif // __LFUNITS_H__

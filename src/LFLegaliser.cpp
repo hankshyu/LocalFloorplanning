@@ -52,108 +52,6 @@ len_t LFLegaliser::getCanvasHeight() const {
     return this->mCanvasHeight;
 }
 
-std::vector<Tile> LFLegaliser::cutTile(Tile bigTile, Tile smallTile) {
-    using namespace boost::polygon::operators;
-    Rectangle bigRect(bigTile.getLowerLeft().x, bigTile.getLowerLeft().y, bigTile.getUpperRight().x, bigTile.getUpperRight().y);
-    Rectangle smallRect(smallTile.getLowerLeft().x, smallTile.getLowerLeft().y, smallTile.getUpperRight().x, smallTile.getUpperRight().y);
-    PolygonSet cutPoly;
-    cutPoly += bigRect - smallRect;
-
-    std::vector<Tile> cuttedTiles;
-    std::set<len_t> yCord;
-
-    for ( Polygon &poly : cutPoly ) {
-        for ( const Point &point : poly ) {
-            yCord.insert(point.y());
-        }
-        std::vector<len_t> yCordVec(yCord.begin(), yCord.end());
-        std::sort(yCordVec.begin(), yCordVec.end());
-        for ( int i = 0; i < yCordVec.size() - 1; i++ ) {
-            int lowY = yCordVec[i];
-            int highY = yCordVec[i + 1];
-            Rectangle mask(0, lowY, 100000000, highY);
-            PolygonSet maskedPoly;
-            maskedPoly += poly & mask;
-
-            Rectangle maskedRect;
-            gtl::extents(maskedRect, maskedPoly);
-            cuttedTiles.push_back(Tile(tileType::OVERLAP, Cord(gtl::xl(maskedRect), gtl::yl(maskedRect)), gtl::xh(maskedRect) - gtl::xl(maskedRect), gtl::yh(maskedRect) - gtl::yl(maskedRect)));
-        }
-    }
-
-    return cuttedTiles;
-}
-
-std::vector<Tile> LFLegaliser::mergeTile(Tile tile1, Tile tile2) {
-    using namespace boost::polygon::operators;
-    Rectangle rect1(tile1.getLowerLeft().x, tile1.getLowerLeft().y, tile1.getUpperRight().x, tile1.getUpperRight().y);
-    Rectangle rect2(tile2.getLowerLeft().x, tile2.getLowerLeft().y, tile2.getUpperRight().x, tile2.getUpperRight().y);
-    PolygonSet mergePoly;
-    mergePoly += rect1 + rect2;
-
-    std::vector<Tile> mergedTiles;
-    std::set<len_t> yCord;
-
-    for ( Polygon &poly : mergePoly ) {
-        for ( const Point &point : poly ) {
-            yCord.insert(point.y());
-        }
-        std::vector<len_t> yCordVec(yCord.begin(), yCord.end());
-        std::sort(yCordVec.begin(), yCordVec.end());
-        for ( int i = 0; i < yCordVec.size() - 1; i++ ) {
-            int lowY = yCordVec[i];
-            int highY = yCordVec[i + 1];
-            Rectangle mask(0, lowY, 100000000, highY);
-            PolygonSet maskedPoly;
-            maskedPoly += poly & mask;
-
-            Rectangle maskedRect;
-            gtl::extents(maskedRect, maskedPoly);
-            mergedTiles.push_back(Tile(tileType::OVERLAP, Cord(gtl::xl(maskedRect), gtl::yl(maskedRect)), gtl::xh(maskedRect) - gtl::xl(maskedRect), gtl::yh(maskedRect) - gtl::yl(maskedRect)));
-        }
-    }
-
-    return mergedTiles;
-}
-
-std::vector<Tile> LFLegaliser::mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut) {
-    using namespace boost::polygon::operators;
-
-    PolygonSet manipPoly;
-    for ( auto &tile : toMerge ) {
-        Rectangle mergeRect(tile.getLowerLeft().x, tile.getLowerLeft().y, tile.getUpperRight().x, tile.getUpperRight().y);
-        manipPoly += mergeRect;
-    }
-    for ( auto &tile : toCut ) {
-        Rectangle cutRect(tile.getLowerLeft().x, tile.getLowerLeft().y, tile.getUpperRight().x, tile.getUpperRight().y);
-        manipPoly -= cutRect;
-    }
-
-    std::vector<Tile> manipTiles;
-    std::set<len_t> yCord;
-
-    for ( Polygon &poly : manipPoly ) {
-        for ( const Point &point : poly ) {
-            yCord.insert(point.y());
-        }
-        std::vector<len_t> yCordVec(yCord.begin(), yCord.end());
-        std::sort(yCordVec.begin(), yCordVec.end());
-        for ( int i = 0; i < yCordVec.size() - 1; i++ ) {
-            int lowY = yCordVec[i];
-            int highY = yCordVec[i + 1];
-            Rectangle mask(0, lowY, 100000000, highY);
-            PolygonSet maskedPoly;
-            maskedPoly += poly & mask;
-
-            Rectangle maskedRect;
-            gtl::extents(maskedRect, maskedPoly);
-            manipTiles.push_back(Tile(tileType::OVERLAP, Cord(gtl::xl(maskedRect), gtl::yl(maskedRect)), gtl::xh(maskedRect) - gtl::xl(maskedRect), gtl::yh(maskedRect) - gtl::yl(maskedRect)));
-        }
-    }
-
-    return manipTiles;
-}
-
 void LFLegaliser::translateGlobalFloorplanning(const PPSolver &solver) {
     // You could define the I/O of this function
     // To create a soft Tessera:
@@ -178,6 +76,30 @@ void LFLegaliser::translateGlobalFloorplanning(const PPSolver &solver) {
             len_t height = (len_t) std::ceil(std::sqrt(curModule->area));
             Tessera *newTess = new Tessera(tesseraType::SOFT, curModule->name, curModule->area,
                 Cord(curModule->x - (len_t) width / 2, (len_t) curModule->y - height / 2), width, height);
+            softTesserae.push_back(newTess);
+        }
+    }
+
+}
+
+void LFLegaliser::translateGlobalFloorplanning(const RGSolver &solver) {
+    // You could define the I/O of this function
+    // To create a soft Tessera:
+    // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
+    // softTesserae.push_back(newTess);
+    // The constructor would automatically create a default tile for you.
+
+    for ( int i = 0; i < solver.moduleNum; i++ ) {
+        RGModule *curModule = solver.modules[i];
+        if ( curModule->fixed ) {
+            Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
+                Cord(curModule->x, curModule->y), curModule->width, curModule->height);
+            fixedTesserae.push_back(newTess);
+        }
+        else {
+            curModule->updateCord(mCanvasWidth, mCanvasHeight, 1.);
+            Tessera *newTess = new Tessera(tesseraType::SOFT, curModule->name, curModule->area,
+                Cord((len_t)curModule->x, (len_t) curModule->y), curModule->width, curModule->height);
             softTesserae.push_back(newTess);
         }
     }
@@ -210,28 +132,6 @@ bool hasCycle3(std::vector< std::set<len_t> > graph, std::vector<bool> visited, 
     }
     visited[curr] = false;
     return false;
-}
-
-std::ostream &operator << (std::ostream &o, const Point &pt) {
-    o << "(" << gtl::x(pt) << ", " << gtl::y(pt) << ")";
-    return o;
-}
-
-std::ostream &operator << (std::ostream &o, const Polygon &poly) {
-    o << "poly (";
-
-    for ( Point pt : poly ) {
-        o << pt << ", ";
-    }
-    o << ")";
-    return o;
-}
-
-std::ostream &operator << (std::ostream &o, const PolygonSet &polys) {
-    for ( const Polygon &poly : polys ) {
-        o << poly << "\n";
-    }
-    return o;
 }
 
 void LFLegaliser::detectfloorplanningOverlaps() {
@@ -1440,6 +1340,10 @@ void LFLegaliser::visualiseAddMark(Tile * markTile){
     this->mMarkedTiles.push_back(markTile);
 }
 
+void LFLegaliser::visualiseRemoveAllmark(){
+    this->mMarkedTiles.clear();
+}
+
 
 void LFLegaliser::arrangeTesseraetoCanvas(){
 
@@ -1470,7 +1374,7 @@ void LFLegaliser::arrangeTesseraetoCanvas(){
         }
     }
 
-    visualiseDebug("outputs/debug.txt");
+    // visualiseDebug("outputs/debug.txt");
     std::cout << "Painting Soft Tessera to Canvas:" << std::endl;
     Tessera *tess;
     for(int i = 0; i < this->softTesserae.size(); ++i){
@@ -1578,9 +1482,100 @@ void LFLegaliser::visualiseDebugDFS(std::ofstream &ofs, Tile &t, std::vector <Co
     return;
 }
 
+void LFLegaliser::detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile){
+    
+    std::vector <Cord> record;
+
+    if(fixedTesserae.size() !=0 ){
+        if(this->fixedTesserae[0]->TileArr.size() != 0){
+            detectCombinableBlanksDFS(candidateTile, *(this->fixedTesserae[0]->TileArr[0]), record);
+        }else{
+            detectCombinableBlanksDFS(candidateTile, *(this->fixedTesserae[0]->OverlapArr[0]), record);
+        }
+    }else{
+        if(softTesserae.size() != 0){
+            detectCombinableBlanksDFS(candidateTile, *(this->softTesserae[0]->TileArr[0]), record);
+        }else{
+            detectCombinableBlanksDFS(candidateTile, *(this->softTesserae[0]->OverlapArr[0]), record);
+        }
+    }
+
+}
+
+void LFLegaliser::detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile *>> &candidateTile, Tile &t, std::vector <Cord> &record){
+    
+    record.push_back(t.getLowerLeft());
+
+    // if tile & tile.lb are mergable, push in vector and record!
+    if(t.lb != nullptr){
+        bool typeCorrect = (t.getType() == tileType::BLANK) && (t.lb->getType() == tileType::BLANK);
+        bool leftAligned = (t.getLowerLeft().x == t.lb->getLowerLeft().x);
+        bool rightAligned = (t.getWidth() == t.lb->getWidth());
+
+        if(typeCorrect && leftAligned && rightAligned){
+            candidateTile.push_back(std::make_pair(&t, t.lb));
+        }
+    }
+    
+
+    if(t.rt != nullptr){
+        if(!checkVectorInclude(record,t.rt->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.rt), record);
+        }
+    }
+
+    if(t.lb != nullptr){
+        if(!checkVectorInclude(record,t.lb->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.lb), record);
+        }
+    }
+
+    if(t.bl != nullptr){
+        if(!checkVectorInclude(record,t.bl->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.bl), record);
+        }
+    }
+
+    if(t.tr != nullptr){
+        if(!checkVectorInclude(record,t.tr->getLowerLeft())){
+            detectCombinableBlanksDFS(candidateTile, *(t.tr), record);
+        }
+    }
+}
+
+void LFLegaliser::combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile){
+    std::vector <Tile *> mergeUpUpNeighbors;
+    findTopNeighbors(upTile, mergeUpUpNeighbors);
+    for(Tile *t : mergeUpUpNeighbors){
+        if(t->lb == upTile) t->lb = downTile;
+    }
+
+    std::vector <Tile *> mergeUpLeftNeighbors;
+    findLeftNeighbors(upTile, mergeUpLeftNeighbors);
+    for(Tile *t : mergeUpLeftNeighbors){
+        if(t->tr == upTile) t->tr = downTile;
+    }
+
+    std::vector <Tile *> mergeUpRightNeighbors;
+    findRightNeighbors(upTile, mergeUpRightNeighbors);
+    for(Tile *t : mergeUpRightNeighbors){
+        if(t->bl == upTile) t->bl = downTile;
+    }
+
+    downTile->rt = upTile->rt;
+    downTile->tr = upTile->tr;
+
+    downTile->setHeight(downTile->getHeight() + upTile->getHeight());
+
+    delete(upTile);
+
+};
+
+
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
         for(auto const &e : vec){
             if(e == c) return true;
         }
         return false;
 }
+

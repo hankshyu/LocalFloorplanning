@@ -1,5 +1,7 @@
 boost_1_82_0
+outputs/
+log/
 *.tar*
-.vscode
+.vscode/*
 *.o*
 *.out
