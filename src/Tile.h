@@ -2,7 +2,23 @@
 #define __TILE_H__
 
 #include <vector>
+#include "boost/polygon/polygon.hpp"
+#include "boost/polygon/rectangle_data.hpp"
+#include "boost/geometry.hpp"
+#include "boost/geometry/geometries/box.hpp"
+#include "boost/geometry/geometries/point_xy.hpp"
 #include "LFUnits.h"
+
+namespace gtl = boost::polygon;
+
+typedef gtl::polygon_data<len_t>                 Polygon;
+typedef gtl::rectangle_data<len_t>               Rectangle;
+// typedef gtl::polygon_traits<Polygon>::point_type Point;
+typedef gtl::point_data<len_t> Point;
+typedef std::vector<Polygon>                     PolygonSet;
+
+
+
 enum class tileType{
     BLOCK, BLANK, OVERLAP
 };
@@ -57,8 +73,18 @@ public:
     bool cutHeight (len_t cut) const;
 
     void show(std::ostream &os) const;
+    void show(std::ostream &os, bool printNewLine) const;
     void showLink(std::ostream &os) const;
     
 };
+
+    std::ostream &operator << (std::ostream &o, const Point &pt);
+    std::ostream &operator << (std::ostream &o, const Polygon &poly);
+    std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
+    
+    // * These are new added functions for tile manipulation
+    std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
+    std::vector<Tile> mergeTile(Tile tile1, Tile tile2);
+    std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut);
 
 #endif // __TILE_H__
