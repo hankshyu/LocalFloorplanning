@@ -117,32 +117,81 @@ int main(int argc, char const *argv[]) {
 
 
     std::cout << " ======= MaxFlow Result Report ======= " << std::endl;
-    std::cout << "OverlapTileFlows:" << std::endl;
+    // std::cout << "OverlapTileFlows:" << std::endl;
     
-    for(MFL::MFLFlowTessInfo *tf : overlapFlows){
-        if(tf->type == MFL::OVERLAP){
-            std::cout << "OVERLAP" << std::endl;
-        }else if(tf->type == MFL::FIXED){
-            std::cout << "FIXED" << std::endl;
-        }else if(tf->type == MFL::SOFT){
-            std::cout << "SOFT" << std::endl;
-        }else{
-            std::cout << "BLANK" << std::endl;
+    // for(MFL::MFLFlowTessInfo *tf : overlapFlows){
+    //     if(tf->type == MFL::OVERLAP){
+    //         std::cout << "OVERLAP is composed of: " << std::endl;
+    //         for(Tile *t : tf->tileList){
+    //             t->show(std::cout);
+    //         }
+    //         std::cout <<"softOverlaps: ";
+    //         for(int i : tf->softOverlaps){
+    //             std::cout << i << " ";
+    //         }
+    //         std::cout << std::endl << "fixedOverlaps: ";
+    //         for(int i : tf->fixedOverlaps){
+    //             std::cout << i << " ";
+    //         }
+    //         std::cout << std::endl;
+
+    //         std::cout << "toFlows(" << tf->toFlows.size() << "):"<< std::endl;
+
+    //         std::cout << "fromFlows(" << tf->fromFlows.size() << "):"<< std::endl;
+    //         for(MFL::MFLSingleFlowInfo m : tf->fromFlows){
+
+    //             std::cout << ", Destination: ";
+    //             // assert(m.destTile->type == MFL::BLANK);
+                
+    //             for(Tile *t : m.destTile->tileList){
+    //                 t->show(std::cout);
+    //             }
+                
+                
+    //         }
+
+
+    //     }else if(tf->type == MFL::FIXED){
+    //         std::cout << "FIXED" << std::endl;
+    //     }else if(tf->type == MFL::SOFT){
+    //         std::cout << "SOFT" << std::endl;
+    //     }else{
+    //         std::cout << "BLANK" << std::endl;
+    //     }
+    //     std::cout << std::endl << std::endl;
+
+    // }
+
+
+    for(MFL::MFLFlowTessInfo *tf : blankFlows){
+        tf->tileList[0]->show(std::cout, true);
+        std::cout << "toFlows: " << tf->toFlows.size() << ", fromFlows: " << tf->fromFlows.size()  << std::endl;
+        if(!tf->toFlows.empty()){
+            assert(tf->tileList.size() == 1);
+            tf->tileList[0]->show(std::cout);
+            std::cout << tf->type << " " << tf->toFlows.size() << std::endl;
+
         }
     }
+
+
+
+
+
+
 
     // Phase 3 Reports
     std::cout << std::endl;
     monitor.printPhaseReport();
 
     /* Phase 4: Physical Overlap distribution */
-    std::cout << std::endl << std::endl;
-    monitor.printPhase("Physical Overlap distribution");
-    std::cout << "4.1 Analyse Overlap distribution tiles" << std::endl;
-    legaliser->visualiseRemoveAllmark();
+    // std::cout << std::endl << std::endl;
+    // monitor.printPhase("Physical Overlap distribution");
+    // std::cout << "4.1 Analyse Overlap distribution tiles" << std::endl;
+    // legaliser->visualiseRemoveAllmark();
 
-    // Phase 4 Reports
-    std::cout << std::endl;
-    monitor.printPhaseReport();
+    // // Phase 4 Reports
+    // std::cout << std::endl;
+    // monitor.printPhaseReport();
 
 }
