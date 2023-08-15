@@ -78,6 +78,16 @@ void Tile::show(std::ostream &os) const {
     os << "W=" << mWidth <<" H=" << mHeight << std::endl;
 }
 
+void Tile::show(std::ostream &os, bool printNewLine) const {
+    if(this->type == tileType::BLOCK) os <<"Type: BLOCK ";
+    else if(this->type == tileType::BLANK) os <<"Type: BLANK ";
+    else if(this->type == tileType::OVERLAP) os <<"Type: OVERLAP ";
+    
+    os << "(" <<mLowerLeft.x << ", " << mLowerLeft.y << ") ";
+    os << "W=" << mWidth <<" H=" << mHeight;
+    if(printNewLine) os << std::endl;
+}
+
 void Tile::showLink(std::ostream &os) const{
     os << "rt: ";
     if(this->rt == nullptr) os << "nullptr" << std::endl;
@@ -96,6 +106,8 @@ void Tile::showLink(std::ostream &os) const{
     else this->lb->show(os);
     os << std::endl;
 }
+
+
 
 std::ostream &operator << (std::ostream &o, const Point &pt) {
     o << "(" << gtl::x(pt) << ", " << gtl::y(pt) << ")";
