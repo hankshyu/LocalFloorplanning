@@ -73,6 +73,7 @@ public:
     bool cutHeight (len_t cut) const;
 
     void show(std::ostream &os) const;
+    void show(std::ostream &os, bool printNewLine) const;
     void showLink(std::ostream &os) const;
     
 };
