@@ -106,34 +106,6 @@ void LFLegaliser::translateGlobalFloorplanning(const RGSolver &solver) {
 
 }
 
-bool hasCycle3(std::vector< std::set<len_t> > graph, std::vector<bool> visited, int curr, int parent, int depth, int nodes[3]) {
-    if ( depth == 3 ) {
-        for ( int neighbor : graph[curr] ) {
-            // std::cout << parent << " " << curr << " " << neighbor << std::endl;
-            if ( neighbor == parent )
-                continue;
-            if ( visited[neighbor] ) {
-                nodes[2] = curr;
-                return true;
-            }
-        }
-        return false;
-    }
-    visited[curr] = true;
-    for ( int neighbor : graph[curr] ) {
-        if ( neighbor == parent )
-            continue;
-        if ( !visited[neighbor] ) {
-            if ( hasCycle3(graph, visited, neighbor, curr, depth + 1, nodes) ) {
-                nodes[depth - 1] = curr;
-                return true;
-            }
-        }
-    }
-    visited[curr] = false;
-    return false;
-}
-
 void LFLegaliser::detectfloorplanningOverlaps() {
     // If an overlap is detected, You should:
     // 1. Locate the overlap and crate a new Tile marking the overlap, the tile should include the spacing info and the voerlap Tessera idx
@@ -176,53 +148,101 @@ void LFLegaliser::detectfloorplanningOverlaps() {
     //populate the graph with edge data
     ce.extract(graph);
 
-    // 3 overlapped
-    overlap3 = false;
-    std::vector< std::vector<int> > overlap3Vec;
-    std::vector<Tile> overlap3TileVec;
+    struct IntersectionUnit
+    {
+        Rectangle intersection;
+        std::vector<int> overlappedIDs;
+    };
+
+    
+    // 2 overlapped
+    std::vector<IntersectionUnit> overlap2unit;
     for ( int i = 0; i < test_data.size(); i++ ) {
-        std::vector<bool> visited(test_data.size(), 0);
-        int nodes[3] = { -1 };
-        if ( hasCycle3(graph, visited, i, -1, 1, nodes) ) {
-            overlap3 = true;
-            std::vector<int> overlapNodes(3);
-            overlapNodes[0] = nodes[0];
-            overlapNodes[1] = nodes[1];
-            overlapNodes[2] = nodes[2];
-            std::sort(overlapNodes.begin(), overlapNodes.end());
-            bool existed = false;
-            for ( std::vector<int> &o3 : overlap3Vec ) {
-                if ( o3[0] == overlapNodes[0] && o3[1] == overlapNodes[1] && o3[2] == overlapNodes[2] ) {
-                    existed = true;
-                    break;
-                }
+        for ( int n : graph[i] ) {
+            if ( n < i ) {
+                continue;
             }
-            if ( !existed ) {
-                overlap3Vec.push_back(overlapNodes);
+            PolygonSet intersections;
+            intersections += test_data[i] & test_data[n];
+            if ( intersections.empty() ) {
+                continue;
             }
+            Rectangle intersectBox;
+            gtl::extents(intersectBox, intersections);
+            IntersectionUnit iu;
+            iu.intersection = intersectBox;
+            iu.overlappedIDs.push_back(i);
+            iu.overlappedIDs.push_back(n);
+            overlap2unit.push_back(iu);
         }
     }
 
-    for ( std::vector<int> &o3 : overlap3Vec ) {
-        PolygonSet intersection;
-        intersection += test_data[o3[0]] & test_data[o3[1]] & test_data[o3[2]];
-        Rectangle intersectBox;
-        gtl::extents(intersectBox, intersection);
+    // 3 overlapped
+    std::vector<IntersectionUnit> overlap3unit;
+    for ( IntersectionUnit &o2unit: overlap2unit ) {
+        int olID0 = o2unit.overlappedIDs[0], olID1 = o2unit.overlappedIDs[1];
+        for ( int n : graph[olID1] ) {
+            if ( n <= olID1 ) {
+                continue;
+            }
+            PolygonSet intersections;
+            intersections += o2unit.intersection & test_data[n];
+            if ( intersections.empty() ) {
+                continue;
+            }
+            printf("%2d %2d %2d\n", olID0, olID1, n);
+            std::cout << "3 Modules Intersection: " << intersections << std::endl;
+            Rectangle intersectBox;
+            gtl::extents(intersectBox, intersections);
+            IntersectionUnit iu;
+            iu.intersection = intersectBox;
+            iu.overlappedIDs.push_back(olID0);
+            iu.overlappedIDs.push_back(olID1);
+            iu.overlappedIDs.push_back(n);
+            overlap3unit.push_back(iu);
+        }
+    }
+
+    // 4 overlapped
+    std::vector<IntersectionUnit> overlap4unit;
+    for ( IntersectionUnit &o3unit: overlap3unit ) {
+        int olID0 = o3unit.overlappedIDs[0], olID1 = o3unit.overlappedIDs[1], olID2 = o3unit.overlappedIDs[2];
+        for ( int n : graph[olID2] ) {
+            if ( n <= olID2 ) {
+                continue;
+            }
+            PolygonSet intersections;
+            intersections += o3unit.intersection & test_data[n];
+            if ( intersections.empty() ) {
+                continue;
+            }
+            printf("%2d %2d %2d %2d\n", olID0, olID1, olID2, n);
+            std::cout << "4 Modules Intersection: " << intersections << std::endl;
+            Rectangle intersectBox;
+            gtl::extents(intersectBox, intersections);
+            IntersectionUnit iu;
+            iu.intersection = intersectBox;
+            iu.overlappedIDs.push_back(olID0);
+            iu.overlappedIDs.push_back(olID1);
+            iu.overlappedIDs.push_back(olID2);
+            iu.overlappedIDs.push_back(n);
+            overlap4unit.push_back(iu);
+        }
+    }
+
+    // add these tiles
+    std::vector<Tile> overlap4TileVec;
+    for ( IntersectionUnit &o4unit: overlap4unit ) {
+        Rectangle intersectBox = o4unit.intersection;
         len_t x = gtl::xl(intersectBox);
         len_t y = gtl::yl(intersectBox);
         len_t w = gtl::xh(intersectBox) - gtl::xl(intersectBox);
         len_t h = gtl::yh(intersectBox) - gtl::yl(intersectBox);
         Tile overlapTileRef(tileType::OVERLAP, Cord(x, y), w, h);
-        overlap3TileVec.push_back(overlapTileRef);
-
-        if ( intersection.empty() ) {
-            continue;
-        }
-
-        std::cout << "3 Modules Intersection: " << intersection << std::endl;
+        overlap4TileVec.push_back(overlapTileRef);
 
         Tile *overlapTile = new Tile(tileType::OVERLAP, Cord(x, y), w, h);
-        for ( int i : o3 ) {
+        for ( int i : o4unit.overlappedIDs ) {
             bool isSoft = i < softTesserae.size();
             int id = ( isSoft ) ? i : i - softTesserae.size();
             Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
@@ -233,58 +253,59 @@ void LFLegaliser::detectfloorplanningOverlaps() {
         }
     }
 
-    // 2 overlapped
-    for ( int i = 0; i < test_data.size(); i++ ) {
-        bool isCurSoft = i < softTesserae.size();
-        int curId = ( isCurSoft ) ? i : i - softTesserae.size();
-        Tessera *curTess = ( isCurSoft ) ? softTesserae[curId] : fixedTesserae[curId];
-        for ( int n : graph[i] ) {
-            if ( n < i )
-                continue;
-            bool isTarSoft = n < softTesserae.size();
-            int tarId = ( isTarSoft ) ? n : n - softTesserae.size();
-            Tessera *tarTess = ( isTarSoft ) ? softTesserae[tarId] : fixedTesserae[tarId];
-            PolygonSet intersection;
-            intersection += test_data[i] & test_data[n];
-            Rectangle intersectBox;
-            gtl::extents(intersectBox, intersection);
-            len_t x = gtl::xl(intersectBox);
-            len_t y = gtl::yl(intersectBox);
-            len_t w = gtl::xh(intersectBox) - gtl::xl(intersectBox);
-            len_t h = gtl::yh(intersectBox) - gtl::yl(intersectBox);
-            Tile interection2Tile(tileType::OVERLAP, Cord(x, y), w, h);
+    std::vector<Tile> overlap3TileVec;
+    for ( IntersectionUnit &o3unit: overlap3unit ) {
+        Rectangle intersectBox = o3unit.intersection;
+        len_t x = gtl::xl(intersectBox);
+        len_t y = gtl::yl(intersectBox);
+        len_t w = gtl::xh(intersectBox) - gtl::xl(intersectBox);
+        len_t h = gtl::yh(intersectBox) - gtl::yl(intersectBox);
+        Tile overlapTileRef(tileType::OVERLAP, Cord(x, y), w, h);
+        overlap3TileVec.push_back(overlapTileRef);
 
-            std::vector<Tile> interection3TileVec, interection2TileVec;
-            for ( int j = 0; j < overlap3TileVec.size(); ++j ) {
-                std::vector<int> o3 = overlap3Vec[j];
-                if ( o3[0] == i || o3[1] == i || o3[2] == i ) {
-                    interection3TileVec.push_back(overlap3TileVec[j]);
-                }
-            }
-            interection2TileVec.push_back(interection2Tile);
+        std::vector<Tile> interection3TileVec;
+        interection3TileVec.push_back(Tile(tileType::OVERLAP, Cord(x, y), w, h));
+        std::vector<Tile> cuttedTiles = mergeCutTiles(interection3TileVec, overlap4TileVec);
 
-            std::vector<Tile> cuttedTiles;
+        for ( auto &tile : cuttedTiles ) {
+            Tile *overlapTile = new Tile(tileType::OVERLAP, tile.getLowerLeft(), tile.getWidth(), tile.getHeight());
+            for ( int i : o3unit.overlappedIDs ) {
+                bool isSoft = i < softTesserae.size();
+                int id = ( isSoft ) ? i : i - softTesserae.size();
+                Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
 
-            if ( interection3TileVec.empty() ) {
-                cuttedTiles.push_back(interection2Tile);
-            }
-            else {
-                cuttedTiles = mergeCutTiles(interection2TileVec, interection3TileVec);
-            }
-
-            for ( auto &tile : cuttedTiles ) {
-                Tile *overlapTile = new Tile(tileType::OVERLAP, tile.getLowerLeft(), tile.getWidth(), tile.getHeight());
-                ( isCurSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(curId)
-                    : overlapTile->OverlapFixedTesseraeIdx.push_back(curId);
-
-                ( isTarSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(tarId)
-                    : overlapTile->OverlapFixedTesseraeIdx.push_back(tarId);
-
+                ( isSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(id)
+                    : overlapTile->OverlapFixedTesseraeIdx.push_back(id);
                 curTess->insertTiles(overlapTile);
-                tarTess->insertTiles(overlapTile);
             }
         }
     }
+
+    for ( IntersectionUnit &o2unit: overlap2unit ) {
+        Rectangle intersectBox = o2unit.intersection;
+        len_t x = gtl::xl(intersectBox);
+        len_t y = gtl::yl(intersectBox);
+        len_t w = gtl::xh(intersectBox) - gtl::xl(intersectBox);
+        len_t h = gtl::yh(intersectBox) - gtl::yl(intersectBox);
+
+        std::vector<Tile> interection2TileVec;
+        interection2TileVec.push_back(Tile(tileType::OVERLAP, Cord(x, y), w, h));
+        std::vector<Tile> cuttedTiles = mergeCutTiles(interection2TileVec, overlap3TileVec);
+
+        for ( auto &tile : cuttedTiles ) {
+            Tile *overlapTile = new Tile(tileType::OVERLAP, tile.getLowerLeft(), tile.getWidth(), tile.getHeight());
+            for ( int i : o2unit.overlappedIDs ) {
+                bool isSoft = i < softTesserae.size();
+                int id = ( isSoft ) ? i : i - softTesserae.size();
+                Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
+
+                ( isSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(id)
+                    : overlapTile->OverlapFixedTesseraeIdx.push_back(id);
+                curTess->insertTiles(overlapTile);
+            }
+        }
+    }
+
 }
 
 bool LFLegaliser::has3overlap() {
