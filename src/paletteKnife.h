@@ -8,16 +8,18 @@
 class paletteKnife{
 private:
     LFLegaliser *mLegaliser;
-    std::vector <Tile *> overlap2;
-    std::vector <Tile *> overlap3;
-    std::vector <Tile *> overlap4;
+
+    std::vector <Tile *> mPaintClusters[5];
 
 
 public:
     paletteKnife() = delete;
-    paletteKnife(LFLegaliser &legaliser);
+    paletteKnife(LFLegaliser *legaliser);
     
-    bool collectOverlaps();
+    int collectOverlaps();
+    void printpaintClusters();
+
+    void disperseViaMargin();
 
 
 

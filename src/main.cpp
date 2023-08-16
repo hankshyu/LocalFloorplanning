@@ -11,6 +11,7 @@
 #include "rgsolver.h"
 #include "maxflowLegaliser.h"
 #include "monitor.h"
+#include "paletteKnife.h"
 
 int main(int argc, char const *argv[]) {
 
@@ -110,12 +111,30 @@ int main(int argc, char const *argv[]) {
     std::cout << std::endl << std::endl;
     monitor.printPhase("Overlap collection");
 
+    paletteKnife spatula(legaliser);
+    std::cout << std::endl << std::endl << "Initial look: " << std::endl;
+    spatula.collectOverlaps();
+    spatula.printpaintClusters();
+    
+    std::cout << "Before: " << legaliser->softTesserae[6]->getName() << std::endl;
+    for(Tile *t : legaliser->softTesserae[6]->OverlapArr){
+        t->show(std::cout);
+    }
+    
+    spatula.disperseViaMargin();
+    
+    std::cout << "After: " << std::endl;
+    for(Tile *t : legaliser->softTesserae[6]->OverlapArr){
+        t->show(std::cout);
+    }
 
+    std::cout << std::endl << std::endl << "After 1's pass: " << std::endl;
+    spatula.collectOverlaps();
+    spatula.printpaintClusters();
 
 
     // Phase 3 Reports
     std::cout << std::endl;
     monitor.printPhaseReport();
-
 
 }

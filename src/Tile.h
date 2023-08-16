@@ -40,6 +40,7 @@ public:
     Tile();
     Tile(tileType t, Cord LL, len_t w, len_t h);
     
+    void setType(tileType newType);
     tileType getType() const;
 
     Cord getLowerLeft() const;
