@@ -32,11 +32,11 @@ int paletteKnife::collectOverlaps(){
                 record.push_back(ovt->getLowerLeft());
                 int overlapNum = ovt->OverlapFixedTesseraeIdx.size() + ovt->OverlapSoftTesseraeIdx.size();
                 
-                if(overlapNum < 2 || overlapNum >4){
+                if((overlapNum < 2)){
+                    std::cout << "ERROR Caugt!! - <2 or >4";
                     for(Tile *pt : tess->OverlapArr){
                         pt->show(std::cout);
                     }
-                    
                 }
                 assert(overlapNum <= 4);
                 assert(overlapNum >= 2);
@@ -112,14 +112,32 @@ void paletteKnife::disperseViaMargin(){
                         tess->OverlapArr.erase(tess->OverlapArr.begin() + tileIdx);
                         if(overlapNum == 2){
                             tile->setType(tileType::BLOCK);
-                            int loneIdx = tile->OverlapSoftTesseraeIdx[0];
-                            for (int k = 0; k < mLegaliser->softTesserae[loneIdx]->OverlapArr.size(); ++k){
-                                if(mLegaliser->softTesserae[loneIdx]->OverlapArr[k]->getLowerLeft() == tile->getLowerLeft()){
-                                    mLegaliser->softTesserae[loneIdx]->OverlapArr.erase(mLegaliser->softTesserae[loneIdx]->OverlapArr.begin() + k);
-                                    break;
+                            
+                            bool hasChanged = false;
+                            if(!tile->OverlapSoftTesseraeIdx.empty()){
+                                // The last tile belongs to a soft tess
+                                int loneIdx = tile->OverlapSoftTesseraeIdx[0];
+                                for (int k = 0; k < mLegaliser->softTesserae[loneIdx]->OverlapArr.size(); ++k){
+                                    if(mLegaliser->softTesserae[loneIdx]->OverlapArr[k]->getLowerLeft() == tile->getLowerLeft()){
+                                        mLegaliser->softTesserae[loneIdx]->OverlapArr.erase(mLegaliser->softTesserae[loneIdx]->OverlapArr.begin() + k);
+                                        hasChanged = true;
+                                        break;
+                                    }
+                                }
+                            }else{
+                                // The last tile belongs to a hard tess
+                                int loneIdx = tile->OverlapFixedTesseraeIdx[0];
+                                for (int k = 0; k < mLegaliser->fixedTesserae[loneIdx]->OverlapArr.size(); ++k){
+                                    if(mLegaliser->fixedTesserae[loneIdx]->OverlapArr[k]->getLowerLeft() == tile->getLowerLeft()){
+                                        mLegaliser->fixedTesserae[loneIdx]->OverlapArr.erase(mLegaliser->fixedTesserae[loneIdx]->OverlapArr.begin() + k);
+                                        hasChanged = true;
+                                        break;
+                                    }
                                 }
 
                             }
+                            assert(hasChanged);
+
                         }
                         
                     }
