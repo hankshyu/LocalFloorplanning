@@ -32,7 +32,7 @@ int paletteKnife::collectOverlaps(){
                 record.push_back(ovt->getLowerLeft());
                 int overlapNum = ovt->OverlapFixedTesseraeIdx.size() + ovt->OverlapSoftTesseraeIdx.size();
                 
-                if((overlapNum < 2)){
+                if((overlapNum < 2) || (overlapNum > 4)){
                     std::cout << "ERROR Caugt!! - <2 or >4";
                     for(Tile *pt : tess->OverlapArr){
                         pt->show(std::cout);
@@ -80,7 +80,6 @@ void paletteKnife::printpaintClusters(){
 }
 
 void paletteKnife::disperseViaMargin(){
-    std::cout << "Enter disperseViaMargin " << this->mLegaliser->softTesserae.size() << std::endl;
     for(int tessIdx = 0; tessIdx < this->mLegaliser->softTesserae.size(); ++tessIdx){
         Tessera *tess = this->mLegaliser->softTesserae[tessIdx];
         area_t residual = 0;
@@ -93,15 +92,15 @@ void paletteKnife::disperseViaMargin(){
         residual = residual - tess->getLegalArea();
 
         for(int overlapNum = 4; overlapNum >= 2; overlapNum--){
-            if(residual == 0){
-                break;
-            }
+            if(residual == 0) break;
+            
             for(int tileIdx = 0; tileIdx < tess->OverlapArr.size(); ++tileIdx){
                 Tile *tile = tess->OverlapArr[tileIdx];
                 if((tile->OverlapSoftTesseraeIdx.size() + tile->OverlapFixedTesseraeIdx.size()) == overlapNum){
                     if(residual >= tile->getArea()){
-
                         // Residual larger than overlap, we could discard the overlap directly.
+                        std::cout << "[DS]";
+                        tile->show(std::cout, true);
                         residual -= tile->getArea();
                         for(int rmIdx = 0; rmIdx < tile->OverlapSoftTesseraeIdx.size(); ++rmIdx){
                             if(tile->OverlapSoftTesseraeIdx[rmIdx] == tessIdx){
@@ -134,7 +133,6 @@ void paletteKnife::disperseViaMargin(){
                                         break;
                                     }
                                 }
-
                             }
                             assert(hasChanged);
 
