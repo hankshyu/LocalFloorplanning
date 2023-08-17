@@ -39,25 +39,6 @@ len_t Tessera::getBBHeight() const{
     return this->mBBUpperRight.y - this->mBBLowerLeft.y;
 }
 
-int Tessera::insertTiles(Tile *tile){
-    assert(tile->getType() != tileType::BLANK);
-    switch (tile->getType()){
-        case tileType::BLOCK:
-            /* code */
-            TileArr.push_back(tile);
-            break;
-        case tileType::OVERLAP:
-            /* code */
-            OverlapArr.push_back(tile);
-            break;
-        default:
-            break;
-    }
-    calBoundingBox();
-
-    return 1;
-}
-
 void Tessera::calBoundingBox(){
     if(TileArr.empty() && OverlapArr.empty()) return;
 
@@ -96,6 +77,81 @@ void Tessera::calBoundingBox(){
     this->mBBLowerLeft = BBLL;
     this->mBBUpperRight = BBUR;
 }
+
+area_t Tessera::calRealArea(){
+    area_t realArea = 0;
+    for(Tile *t : this->TileArr){
+        realArea += t->getArea();
+    }
+    for(Tile *t : this->OverlapArr){
+        realArea += t->getArea();
+    }
+    return realArea;
+}
+
+area_t Tessera::calAreaMargin() {
+    return calRealArea() - this->mLegalArea;
+}
+
+// TODO: This may need boost lib...
+bool Tessera::checkLegalNoHole(){
+    return true;
+}
+
+// TODO: This may need boost lib...
+bool Tessera::checkLegalNoEnclave(){
+    return true;
+}
+
+bool Tessera::checkLegalEnoughArea(){
+    return (calRealArea() >= this->mLegalArea);
+}
+
+bool Tessera::checkLegalAspectRatio(){
+    calBoundingBox();
+    double aspectRatio = ((double)this->getBBHeight()) / ((double)this->getBBWidth());
+
+    return (aspectRatio <= 2) && (aspectRatio >= 0.5);
+
+}
+
+bool Tessera::checkLegalStuffedRatio(){
+    calBoundingBox();
+    area_t BBArea = (area_t)getBBHeight() * (area_t)getBBWidth();
+    double stuffedRatio = ((double)this->getLegalArea()) / ((double) BBArea);
+    return (stuffedRatio >= 0.8);
+
+}
+
+int Tessera::checkLegal(){
+    if(!checkLegalNoHole()) return 1;
+    if(!checkLegalNoEnclave()) return 2;
+    if(!checkLegalEnoughArea()) return 3;
+    if(!checkLegalAspectRatio()) return 4;
+    if(!checkLegalStuffedRatio()) return 5;
+    return 0;
+}
+
+int Tessera::insertTiles(Tile *tile){
+    assert(tile->getType() != tileType::BLANK);
+    switch (tile->getType()){
+        case tileType::BLOCK:
+            /* code */
+            TileArr.push_back(tile);
+            break;
+        case tileType::OVERLAP:
+            /* code */
+            OverlapArr.push_back(tile);
+            break;
+        default:
+            break;
+    }
+    calBoundingBox();
+
+    return 1;
+}
+
+
 
 /*
     Notes for Ryan Lin...

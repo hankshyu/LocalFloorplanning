@@ -107,26 +107,19 @@ int main(int argc, char const *argv[]) {
     legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
 
-    /* Phase 3: Overlap collection */
+    /* Phase 3: Promitive Overlap Removal */
     std::cout << std::endl << std::endl;
-    monitor.printPhase("Primitive removal of overlap Tiles");
+    monitor.printPhase("Primitive removal/break-down of Overlaps");
 
     paletteKnife spatula(legaliser);
-    std::cout << std::endl << std::endl << "Initial look: " << std::endl;
-    spatula.collectOverlaps();
-    spatula.printpaintClusters();
-    
     
     spatula.disperseViaMargin();
     
-    std::cout << std::endl << std::endl << "After 1's pass: " << std::endl;
-    spatula.collectOverlaps();
-    spatula.printpaintClusters();
-
-
-
     // Phase 3 Reports
     std::cout << std::endl;
+    std::cout << "Overlap Report: " << std::endl;
+    spatula.collectOverlaps();
+    spatula.printpaintClusters();
     monitor.printPhaseReport();
     legaliser->visualiseArtpiece("outputs/phase3.txt", true);
 

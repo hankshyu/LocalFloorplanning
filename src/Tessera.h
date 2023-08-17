@@ -25,8 +25,9 @@ private:
     Cord mBBLowerLeft;
     Cord mBBUpperRight;
 
-    void calBoundingBox();
 
+    void calBoundingBox();
+    area_t calRealArea();
 public:
     std::vector <Tile *> TileArr;
     std::vector <Tile *> OverlapArr;
@@ -36,10 +37,19 @@ public:
 
     std::string getName () const;
     area_t getLegalArea () const;
+    area_t calAreaMargin ();
     Cord getBBLowerLeft () const;
     Cord getBBUpperRight() const;
     len_t getBBWidth () const;
     len_t getBBHeight () const;
+
+    bool checkLegalNoHole();
+    bool checkLegalNoEnclave();
+    bool checkLegalEnoughArea();
+    bool checkLegalAspectRatio();
+    bool checkLegalStuffedRatio();
+
+    int checkLegal();
 
     int insertTiles(Tile *tile);
     void splitRectliearDueToOverlap();
@@ -47,7 +57,5 @@ public:
     void printCorners(std::ostream& fout);
 
 };
-
-
 
 #endif // __TESSERA_H__

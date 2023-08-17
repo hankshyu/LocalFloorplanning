@@ -1,4 +1,5 @@
 #include "paletteKnife.h"
+#include "Tessera.h"
 #include <assert.h>
 #include <algorithm>
 
@@ -70,6 +71,7 @@ void paletteKnife::printpaintClusters(){
                     area += t->getArea();
                 }
                 area -=  mLegaliser->softTesserae[idx]->getLegalArea();
+                assert(area >= 0);
                 std::cout << idx << "(" << area << ") ";
             }
             std::cout << std::endl;
@@ -80,26 +82,42 @@ void paletteKnife::printpaintClusters(){
 }
 
 void paletteKnife::disperseViaMargin(){
-    for(int tessIdx = 0; tessIdx < this->mLegaliser->softTesserae.size(); ++tessIdx){
-        Tessera *tess = this->mLegaliser->softTesserae[tessIdx];
-        area_t residual = 0;
-        for(Tile *tile : tess->TileArr){
-            residual += tile->getArea();
-        }
-        for(Tile *tile : tess->OverlapArr){
-            residual += tile->getArea();
-        }
-        residual = residual - tess->getLegalArea();
-
-        for(int overlapNum = 4; overlapNum >= 2; overlapNum--){
-            if(residual == 0) break;
+    for(int overlapNum = 4; overlapNum >= 2; overlapNum--){
+        
+        for(int tessIdx = 0; tessIdx < this->mLegaliser->softTesserae.size(); ++tessIdx){
+            Tessera *tess = this->mLegaliser->softTesserae[tessIdx];
+            area_t residual = tess->calAreaMargin();
+            if(residual == 0) continue;
             
             for(int tileIdx = 0; tileIdx < tess->OverlapArr.size(); ++tileIdx){
                 Tile *tile = tess->OverlapArr[tileIdx];
                 if((tile->OverlapSoftTesseraeIdx.size() + tile->OverlapFixedTesseraeIdx.size()) == overlapNum){
                     if(residual >= tile->getArea()){
+                        
+                        //check if removing the tile is harmful to the tessera
+                        Tessera afterTess(tesseraType::EMPTY, "TRY", tess->getLegalArea() ,tess->getBBLowerLeft(), 0, 0);
+                        afterTess.TileArr.clear();
+                        for(Tile *t : tess->TileArr){
+                            afterTess.TileArr.push_back(t);
+                        }
+                        for(Tile *t : tess->OverlapArr){
+                            if(t->getLowerLeft() != tile->getLowerLeft()){
+                                afterTess.OverlapArr.push_back(t);
+                            }
+                        }
+                        if(afterTess.checkLegal() != 0){
+                            std::cout <<"Potential Removal: violate rule #" << afterTess.checkLegal();
+                            tile->show(std::cout);
+                            continue;
+                        }
+
                         // Residual larger than overlap, we could discard the overlap directly.
-                        std::cout << "[DS]";
+                        // std::cout << "[Remove Overlap" << ""]";
+                        if(overlapNum == 2){
+                            std::cout << "[Remove Overlap]";
+                        }else{
+                            std::cout <<"[Overlap LV #" << overlapNum << " -> #" <<overlapNum-1 << "]";
+                        }
                         tile->show(std::cout, true);
                         residual -= tile->getArea();
                         for(int rmIdx = 0; rmIdx < tile->OverlapSoftTesseraeIdx.size(); ++rmIdx){
@@ -109,13 +127,16 @@ void paletteKnife::disperseViaMargin(){
                             }
                         }
                         tess->OverlapArr.erase(tess->OverlapArr.begin() + tileIdx);
+                        tileIdx--;
                         if(overlapNum == 2){
                             tile->setType(tileType::BLOCK);
                             
                             bool hasChanged = false;
+                            
                             if(!tile->OverlapSoftTesseraeIdx.empty()){
                                 // The last tile belongs to a soft tess
                                 int loneIdx = tile->OverlapSoftTesseraeIdx[0];
+                                mLegaliser->softTesserae[loneIdx]->TileArr.push_back(tile);
                                 for (int k = 0; k < mLegaliser->softTesserae[loneIdx]->OverlapArr.size(); ++k){
                                     if(mLegaliser->softTesserae[loneIdx]->OverlapArr[k]->getLowerLeft() == tile->getLowerLeft()){
                                         mLegaliser->softTesserae[loneIdx]->OverlapArr.erase(mLegaliser->softTesserae[loneIdx]->OverlapArr.begin() + k);
@@ -126,6 +147,7 @@ void paletteKnife::disperseViaMargin(){
                             }else{
                                 // The last tile belongs to a hard tess
                                 int loneIdx = tile->OverlapFixedTesseraeIdx[0];
+                                mLegaliser->fixedTesserae[loneIdx]->TileArr.push_back(tile);
                                 for (int k = 0; k < mLegaliser->fixedTesserae[loneIdx]->OverlapArr.size(); ++k){
                                     if(mLegaliser->fixedTesserae[loneIdx]->OverlapArr[k]->getLowerLeft() == tile->getLowerLeft()){
                                         mLegaliser->fixedTesserae[loneIdx]->OverlapArr.erase(mLegaliser->fixedTesserae[loneIdx]->OverlapArr.begin() + k);
@@ -141,7 +163,9 @@ void paletteKnife::disperseViaMargin(){
                     }
                 }
             }
+            // std::cout << "DT" << overlapNum << " " << tess->getName() << " " << tess->calAreaMargin() << std::endl;
         }
     }
 
 }
+
