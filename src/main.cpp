@@ -123,6 +123,8 @@ int main(int argc, char const *argv[]) {
     monitor.printPhaseReport();
     legaliser->visualiseArtpiece("outputs/phase3.txt", true);
 
-
-
+    /* Phase 4: Solve 2-Overlaps */
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Solve 2 Overlaps");
+    
 }
