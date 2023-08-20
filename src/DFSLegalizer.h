@@ -30,17 +30,24 @@ private:
     int mOverlapNum;
     int mBlankNum;
     
-    void migrateOverlap(int overlapIndex);
+    bool migrateOverlap(int overlapIndex);
     void dfs(/**/);
     void addOverlapInfo(Tile* tile);
     void addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2);
     std::string toOverlapName(int tessIndex1, int tessIndex2);
-    void MFLTraverseBlank(Tile* tile, std::vector <Cord> &record);
+    void DFSLTraverseBlank(Tile* tile, std::vector <Cord> &record);
+    void findEdge(int fromIndex, int toIndex);
+    void getTessNeighbors(int nodeId, std::set<int> allNeighbors);
+
 public:
+    DFSLegalizer();
+    ~DFSLegalizer();
     void initDFSLegalizer(LFLegaliser* floorplan);
-    void legalize();
+    void legalize(LFLegaliser* floorplan);
     void constructGraph();
 };
+
+static bool compareSegment(Segment a, Segment b);
 
 struct DFSLNode {
     std::vector<Tile*> tileList; 
@@ -51,18 +58,18 @@ struct DFSLNode {
     int index;
 };
 
+struct Segment {
+    Cord segStart;
+    Cord segEnd;
+    // Segment(Cord start, Cord end);
+};
+
 struct DFSLEdge {
     int fromIndex;
     int toIndex; 
     Segment commonEdge;  
     
     DIRECTION direction;
-};
-
-struct Segment {
-    Cord segStart;
-    Cord segEnd;
-    // Segment(Cord start, Cord end);
 };
 
 

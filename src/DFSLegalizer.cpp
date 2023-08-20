@@ -5,8 +5,11 @@
 #include <vector>
 #include <utility>
 #include <cstdint>
+#include <numeric>
 
 namespace DFSL {
+    DFSLNode::DFSLNode(): area(0), index(0) {}
+
     DFSLegalizer::DFSLegalizer(/* args */)
     {
     }
@@ -33,6 +36,7 @@ namespace DFSL {
             newNode->index = mAllNodes.size();
             for(Tile* tile : tess->TileArr){
                 newNode->tileList.push_back(tile); 
+                newNode->area += tile->getArea();
                 mTilePtr2NodeIndex.insert(std::pair<Tile*,int>(tile, t));
             }
             mAllNodes.push_back(newNode);
@@ -46,6 +50,7 @@ namespace DFSL {
             newNode->index = mAllNodes.size();
             for(Tile* tile : tess->TileArr){
                 newNode->tileList.push_back(tile); 
+                newNode->area += tile->getArea();
                 mTilePtr2NodeIndex.insert(std::pair<Tile*,int>(tile, mFixedTessNum + t));
             }
             mAllNodes.push_back(newNode);
@@ -69,16 +74,42 @@ namespace DFSL {
 
         // find all blanks
         std::vector <Cord> blankRecord;
-        MFLTraverseBlank(mLF->softTesserae[0]->TileArr[0], blankRecord);
+        DFSLTraverseBlank(mLF->softTesserae[0]->TileArr[0], blankRecord);
         mBlankNum = mAllNodes.size() - mFixedTessNum - mSoftTessNum - mOverlapNum;
 
 
         // find neighbors
         // overlap and block
+        int overlapStartIndex = mFixedTessNum + mSoftTessNum;
+        int overlapEndIndex = overlapStartIndex + mOverlapNum;
+        for (int from = overlapStartIndex; from < overlapEndIndex; from++){
+            DFSLNode* overlap = mAllNodes[from];
+            for (int to: overlap->overlaps){
+                if (to >= mFixedTessNum){
+                    findEdge(from, to);
+                }
+            }
+        }
 
-        // block and block
-
-        // block and whitespace
+        // block and block, block and whitespace
+        int softStartIndex = mFixedTessNum;
+        int softEndIndex = softStartIndex + mSoftTessNum;
+        int blankStartIndex = mFixedTessNum + mSoftTessNum + mOverlapNum;
+        int blankEndIndex = blankStartIndex + mBlankNum;
+        for (int from = softStartIndex; from < softEndIndex; from++){
+            DFSLNode* block = mAllNodes[from];
+            std::set<int> allNeighbors;
+            getTessNeighbors(from, allNeighbors);
+            for (int to: allNeighbors){
+                if (softStartIndex <= to && to < softEndIndex){
+                    findEdge(from, to);
+                }
+                else if (blankStartIndex <= to && to < blankEndIndex){
+                    findEdge(from, to);
+                }
+            }
+        }
+        // todo: finish find edge thingy
     }
 
     void DFSLegalizer::addOverlapInfo(Tile* tile){
@@ -107,12 +138,14 @@ namespace DFSL {
             DFSLNode* tess = mAllNodes[i];
             if (tess->overlaps.count(overlapIdx1) == 1 && tess->overlaps.count(overlapIdx2) == 1){
                 tess->tileList.push_back(tile);
+                tess->area += tile->getArea();
                 found = true;
                 break;
             }
         }
         if (!found){
             DFSLNode* newNode = new DFSLNode;
+            newNode->area += tile->getArea();
             newNode->tileList.push_back(tile);
             newNode->overlaps.insert(overlapIdx1);
             newNode->overlaps.insert(overlapIdx2);
@@ -129,7 +162,7 @@ namespace DFSL {
         return "OVERLAP " + name1 + " " + name2;
     }
 
-    void DFSLegalizer::MFLTraverseBlank(Tile* tile, std::vector <Cord> &record){
+    void DFSLegalizer::DFSLTraverseBlank(Tile* tile, std::vector <Cord> &record){
         record.push_back(tile->getLowerLeft());
         
         if(tile->getType() == tileType::BLANK){
@@ -138,34 +171,224 @@ namespace DFSL {
             newNode->nodeName = std::to_string((intptr_t)tile);
             newNode->nodeType = MFLTessType::BLANK;
             newNode->index = mAllNodes.size();
+            newNode->area += tile->getArea();
             mAllNodes.push_back(newNode);
         }
         //TODO: finish rewirte function
         if(tile->rt != nullptr){        
             if(!checkVectorInclude(record, tile->rt->getLowerLeft())){
-                MFLTraverseBlank(tile->rt, record);
+                DFSLTraverseBlank(tile->rt, record);
             }
         }
 
         if(tile->lb != nullptr){
             if(!checkVectorInclude(record, tile->lb->getLowerLeft())){
-                MFLTraverseBlank(tile->lb, record);
+                DFSLTraverseBlank(tile->lb, record);
             }
         }
 
         if(tile->bl != nullptr){
             if(!checkVectorInclude(record, tile->bl->getLowerLeft())){
-                MFLTraverseBlank(tile->bl, record);
+                DFSLTraverseBlank(tile->bl, record);
             }
         }
 
         if(tile->tr != nullptr){
             if(!checkVectorInclude(record, tile->tr->getLowerLeft())){
-                MFLTraverseBlank(tile->tr, record);
+                DFSLTraverseBlank(tile->tr, record);
             }
         }
         
         return;
+    }
+
+    void DFSLegalizer::findEdge(int fromIndex, int toIndex){
+        DFSLNode* fromNode = mAllNodes[fromIndex];
+        DFSLNode* toNode = mAllNodes[toIndex];
+
+        int bestLength = 0;
+        int bestDirection = 0;
+        std::vector<Segment> bestTangent;
+        for (int dir = 0; dir < 4; dir++){
+            // find Top, right, bottom, left neighbros
+            std::vector<Segment> currentSegment;
+            for (Tile* tile: fromNode->tileList){
+                std::vector<Tile*> neighbors;
+                switch (dir) {
+                case 0:
+                    mLF->findTopNeighbors(tile, neighbors);
+                    break;
+                case 1:
+                    mLF->findRightNeighbors(tile, neighbors);
+                    break;
+                case 2:
+                    mLF->findDownNeighbors(tile, neighbors);
+                    break;
+                case 3:
+                    mLF->findLeftNeighbors(tile, neighbors);
+                    break;
+                }
+                
+                for (Tile* neighbor: neighbors){
+                    auto itlow = mTilePtr2NodeIndex.lower_bound(neighbor);
+                    auto itup = mTilePtr2NodeIndex.upper_bound(neighbor);
+                    for (auto it = itlow; it != itup; ++it){
+                        int nodeIndex = it->second;
+                        if (nodeIndex == toIndex){
+                            // find tangent
+                            Segment tangent;
+                            Cord fromStart, fromEnd, toStart, toEnd;
+                            if (dir == 0){
+                                // neighbor on top of fromNode 
+                                fromStart = tile->getUpperLeft();
+                                fromEnd = tile->getUpperRight();
+                                toStart = neighbor->getLowerLeft(); 
+                                toEnd = neighbor->getLowerRight();
+                            }
+                            else if (dir == 1){
+                                // neighbor is right of fromNode 
+                                fromStart = tile->getLowerRight();
+                                fromEnd = tile->getUpperRight();
+                                toStart = neighbor->getLowerLeft(); 
+                                toEnd = neighbor->getUpperLeft();
+                            }
+                            else if (dir == 2){
+                                // neighbor is bottom of fromNode 
+                                fromStart = tile->getLowerLeft();
+                                fromEnd = tile->getLowerRight();
+                                toStart = neighbor->getUpperLeft(); 
+                                toEnd = neighbor->getUpperRight();
+                            }
+                            else {
+                                // neighbor is left of fromNode 
+                                fromStart = tile->getLowerLeft();
+                                fromEnd = tile->getUpperLeft();
+                                toStart = neighbor->getLowerRight(); 
+                                toEnd = neighbor->getUpperRight();
+                            }
+                            tangent.segStart = fromStart <= toStart ? toStart : fromStart;
+                            tangent.segEnd = fromEnd <= toEnd ? fromEnd : toEnd;
+                            currentSegment.push_back(tangent);
+                        }
+                    }
+                }
+            }
+            
+            // check segment, splice segments together to one large segment
+            int segLength = 0;
+            std::vector<Segment> splicedSegments;
+            if (currentSegment.size() > 0){
+                std::sort(currentSegment.begin(), currentSegment.end(), compareSegment);
+                Cord segBegin = currentSegment[0].segStart;
+                for (int j = 1; j < currentSegment.size(); j++){
+                    if (currentSegment[j].segStart != currentSegment[j-1].segEnd){
+                        Cord segEnd = currentSegment[j-1].segEnd;
+                        Segment splicedSegment;
+                        splicedSegment.segStart = segBegin;
+                        splicedSegment.segEnd = segEnd;
+                        splicedSegments.push_back(splicedSegment);
+                        segLength += (segEnd.x - segBegin.x) + (segEnd.y - segBegin.y);  
+
+                        segBegin = currentSegment[j].segStart;
+                    }
+                }
+                Cord segEnd = currentSegment.end()->segEnd;
+                Segment splicedSegment;
+                splicedSegment.segStart = segBegin;
+                splicedSegment.segEnd = segEnd;
+                splicedSegments.push_back(splicedSegment);
+                segLength += (segEnd.x - segBegin.x) + (segEnd.y - segBegin.y);  
+            }
+
+            if (segLength > bestLength){
+                bestDirection = dir;
+                bestTangent = splicedSegments;
+                bestLength = segLength;
+            }
+        }
+
+        // construct edge in graph
+        DFSLEdge newEdge;
+        newEdge.commonEdge = bestTangent[0];
+        if (bestDirection == 0){
+            newEdge.direction = DIRECTION::TOP;
+        } 
+        else if (bestDirection == 1){
+            newEdge.direction = DIRECTION::RIGHT;
+        }
+        else if (bestDirection == 2){
+            newEdge.direction = DIRECTION::DOWN;
+        }
+        else {
+            newEdge.direction = DIRECTION::LEFT;
+        }
+        newEdge.fromIndex = fromIndex;
+        newEdge.toIndex = toIndex; 
+        mAllNodes[fromIndex]->edgeList.push_back(newEdge);
+    }
+
+    void DFSLegalizer::getTessNeighbors(int nodeId, std::set<int> allNeighbors){
+        DFSLNode* node = mAllNodes[nodeId];
+        std::vector<Tile*> allNeighborTiles;
+        for (Tile* tile : node->tileList){
+            mLF->findAllNeighbors(tile, allNeighborTiles);
+        }
+
+        for (Tile* tile : allNeighborTiles){
+            auto itlow = mTilePtr2NodeIndex.lower_bound(tile);
+            auto itup = mTilePtr2NodeIndex.upper_bound(tile);
+            for (auto it = itlow; it != itup; ++it){
+                int nodeIndex = it->second;
+                if (nodeIndex != nodeId){
+                    allNeighbors.insert(nodeIndex);
+                }
+            }
+        }
+    }
+
+    void DFSLegalizer::legalize(LFLegaliser* floorplan){
+        initDFSLegalizer(floorplan);
+
+        // std::vector<int> overlapIndexes;
+        // overlapIndexes.resize(mOverlapNum);
+        // int overlapStart = mFixedTessNum + mSoftTessNum;
+        // std::iota(overlapIndexes.begin(), overlapIndexes.end(), 
+        //             [this](int a, int b){ return this->mAllNodes[a]->area < this->mAllNodes[b]->area });
+
+        while (1) {
+            // for (int i = 0; i < overlapIndexes.size(); i++){
+            //     bool resolved = false;
+            //     resolved = migrateOverlap(overlapIndexes[i]);
+            //     if (resolved)
+            // }
+            int overlapStart = mFixedTessNum + mSoftTessNum;
+            int overlapEnd = overlapStart + mOverlapNum;
+            int maxOverlapArea = 0;
+            int maxOverlapIndex = -1;
+            for (int i = overlapStart; i < overlapEnd; i++){
+                DFSLNode* currentOverlap = mAllNodes[i];
+                if (currentOverlap->area > maxOverlapArea){
+                    maxOverlapArea = currentOverlap->area;
+                    maxOverlapIndex = i;
+                }
+            }
+            if (maxOverlapIndex == -1){
+                break;
+            }
+            else {
+                migrateOverlap(maxOverlapIndex);
+                constructGraph();
+            }
+        }
+
+    }
+
+    bool DFSLegalizer::migrateOverlap(int overlapIndex){
+
+    }
+
+    static bool compareSegment(Segment a, Segment b){
+        return (a.segStart.x < b.segStart.x || a.segStart.y < b.segStart.y);
     }
 
     // void DFSLegalizer::initMFL(LFLegaliser* floorplan){
