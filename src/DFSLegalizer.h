@@ -50,11 +50,13 @@ public:
 static bool compareSegment(Segment a, Segment b);
 
 struct DFSLNode {
+    DFSLNode();
     std::vector<Tile*> tileList; 
     std::vector<DFSLEdge> edgeList;
     std::set<int> overlaps;
     std::string nodeName;
     MFLTessType nodeType;
+    int area;
     int index;
 };
 
