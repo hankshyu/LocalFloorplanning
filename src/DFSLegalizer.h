@@ -9,17 +9,23 @@
 
 namespace DFSL {
 
+#define UTIL_RULE 0.8
+#define ASPECT_RATIO_RULE 2 
+
 struct DFSLNode;
 struct DFSLEdge;
 struct Segment;
+struct LegalInfo;
 
 enum class MFLTessType : unsigned char { OVERLAP, FIXED, SOFT, BLANK };
 
 enum class DIRECTION : unsigned char { TOP, RIGHT, DOWN, LEFT };
 
+enum class RESULT : unsigned char { SUCCESS, OVERLAP_NOT_RESOLVED, CONSTRAINT_FAIL };
+
 class DFSLegalizer{
 private:
-    std::vector<DFSLNode*> mAllNodes;
+    std::vector<DFSLNode> mAllNodes;
     std::vector<int> mBestPath;
     std::vector<int> mCurrentPath;
     std::multimap<Tile*, int> mTilePtr2NodeIndex;
@@ -38,13 +44,16 @@ private:
     void DFSLTraverseBlank(Tile* tile, std::vector <Cord> &record);
     void findEdge(int fromIndex, int toIndex);
     void getTessNeighbors(int nodeId, std::set<int> allNeighbors);
+    LegalInfo getNodeLegalInfo(int index); 
+    void addBlockNode(Tessera* tess);
 
 public:
     DFSLegalizer();
     ~DFSLegalizer();
     void initDFSLegalizer(LFLegaliser* floorplan);
-    void legalize(LFLegaliser* floorplan);
+    RESULT legalize(LFLegaliser* floorplan);
     void constructGraph();
+    void setParam();
 };
 
 static bool compareSegment(Segment a, Segment b);
@@ -74,6 +83,18 @@ struct DFSLEdge {
     DIRECTION direction;
 };
 
+struct LegalInfo {
+    // bounding box related
+    Cord BL;
+    int width;
+    int height;
+    int bbArea;
+    double aspectRatio;
+
+    // utilization
+    int actualArea;
+    double util;
+};
 
 // class DFSLegalizer{
 // private:
