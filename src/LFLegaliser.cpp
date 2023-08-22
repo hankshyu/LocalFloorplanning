@@ -1592,6 +1592,37 @@ void LFLegaliser::combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile){
 
 };
 
+Tessera *LFLegaliser::searchTileInTessera(Tile *tile) const {
+    assert(tile->getType() == tileType::OVERLAP || tile->getType() == tileType::BLOCK);
+    Tessera *answer = nullptr;
+    for(Tessera *tess : this->softTesserae){
+        if(tile->getType() == tileType::OVERLAP){
+            for(Tile *t : tess->OverlapArr){
+                if((*tile) == (*t)) return tess;
+            }
+        }else{ //tileType::block
+            for(Tile *t : tess->TileArr){
+                if((*tile) == (*t)) return tess;
+            }
+        }
+    }
+
+    for(Tessera *tess : this->fixedTesserae){
+        if(tile->getType() == tileType::OVERLAP){
+            for(Tile *t : tess->OverlapArr){
+                if((*tile) == (*t)) return tess;
+            }
+        }else{ //tileType::block
+            for(Tile *t : tess->TileArr){
+                if((*tile) == (*t)) return tess;
+            }
+        }
+    }
+    assert(answer != nullptr);
+    return answer;
+    
+}
+
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
         for(auto const &e : vec){
@@ -1599,4 +1630,5 @@ bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
         }
         return false;
 }
+
 

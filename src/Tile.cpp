@@ -60,6 +60,10 @@ area_t Tile::getArea() const {
     return this->mWidth * this->mHeight;
 };
 
+bool Tile::operator == (const Tile &comp) const{
+    return ((type == comp.getType()) && (mLowerLeft == comp.getLowerLeft()) && (mWidth == comp.getWidth()) && (mHeight == comp.getHeight()));
+}
+
 bool Tile::checkTRLLTouch(Tile *right) const{
     Cord rightLL = right->getLowerLeft();
     

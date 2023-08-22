@@ -24,15 +24,21 @@ private:
     LFLegaliser *mLegaliser;
     Tile *mOverlap;
     std::vector <Tessera *> mMothers;
+    int mOverlapLevel;
 
+    void findBlanksAroundTessera(Tessera *tessera, std::vector <Tile *> neighbors);
+    
 public:
-    std::vector <crust> surroundings[4];
+
+    std::vector <crust *> surroundings;
 
     cake() = delete;
-    cake(LFLegaliser *legaliser, Tile *overlap, std::vector<Tessera *> moms);
+    cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV);
+    ~cake();
 
     void collectCrusts();
-
 };
+
+
 
 #endif // __CAKE_H__

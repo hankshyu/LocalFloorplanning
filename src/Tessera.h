@@ -6,6 +6,7 @@
 
 #include "LFUnits.h"
 #include "Tile.h"
+#include <vector>
 
 enum class tesseraType{
     EMPTY ,SOFT, HARD

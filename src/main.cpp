@@ -126,5 +126,7 @@ int main(int argc, char const *argv[]) {
     /* Phase 4: Solve 2-Overlaps */
     std::cout << std::endl << std::endl;
     monitor.printPhase("Solve 2 Overlaps");
+    spatula.bakeCakesLevel2();
+    spatula.eatCakesLevel2();
     
 }

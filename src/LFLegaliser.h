@@ -94,6 +94,8 @@ public:
     void detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile);
     void combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile);
 
+    Tessera *searchTileInTessera(Tile *tile) const;
+
 };
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c);

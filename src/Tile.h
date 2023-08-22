@@ -58,6 +58,8 @@ public:
     
     float getAspectRatio() const;
     area_t getArea() const;
+    
+    bool operator == (const Tile &comp) const;
 
     inline bool checkXCordInTile(const Cord &point) const{
         return (point.x >= this->mLowerLeft.x) && (point.x < this->mLowerLeft.x + this->mWidth);
@@ -76,6 +78,7 @@ public:
     void show(std::ostream &os) const;
     void show(std::ostream &os, bool printNewLine) const;
     void showLink(std::ostream &os) const;
+
     
 };
 

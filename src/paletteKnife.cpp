@@ -8,6 +8,29 @@ paletteKnife::paletteKnife(LFLegaliser *legaliser){
 
 }
 
+paletteKnife::~paletteKnife(){
+
+    // free mPaintClusters memories
+    for(int i = 0; i < 5; ++i){
+        for(int j = 0; j < mPaintClusters[i].size(); ++j){
+            delete(mPaintClusters[i][j]);
+        }
+    }
+
+    //free all pastry level memories
+    for(cake *c : pastriesLevel2){
+        delete(c);
+    }
+    for(cake *c : pastriesLevel3){
+        delete(c);
+    }
+    for(cake *c : pastriesLevel4){
+        delete(c);
+    }
+
+
+}
+
 int paletteKnife::collectOverlaps(){
     std::vector <Cord> record;
     for(int i = 0; i < 5; ++i){
@@ -169,3 +192,16 @@ void paletteKnife::disperseViaMargin(){
 
 }
 
+void paletteKnife::bakeCakesLevel2(){
+    for(int i = 0; i < mPaintClusters[2].size(); ++i){
+        cake *ck = new cake(this->mLegaliser, this->mPaintClusters[2][i], 2);
+        this->pastriesLevel2.push_back(ck);
+    }
+    for(cake* cak : pastriesLevel2){
+        cak->collectCrusts();
+    }
+}
+
+void paletteKnife::eatCakesLevel2(){
+    return;
+}
