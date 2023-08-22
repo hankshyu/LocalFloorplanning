@@ -79,7 +79,7 @@ namespace DFSL {
         int overlapStartIndex = mFixedTessNum + mSoftTessNum;
         int overlapEndIndex = overlapStartIndex + mOverlapNum;
         for (int from = overlapStartIndex; from < overlapEndIndex; from++){
-            DFSLNode overlap = mAllNodes[from];
+            DFSLNode& overlap = mAllNodes[from];
             for (int to: overlap.overlaps){
                 if (to >= mFixedTessNum){
                     findEdge(from, to);
@@ -130,12 +130,20 @@ namespace DFSL {
     void DFSLegalizer::addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2){
         bool found = false;
         for (int i = mFixedTessNum + mSoftTessNum; i < mAllNodes.size(); i++){
-            DFSLNode tess = mAllNodes[i];
+            DFSLNode& tess = mAllNodes[i];
             if (tess.overlaps.count(overlapIdx1) == 1 && tess.overlaps.count(overlapIdx2) == 1){
-                tess.tileList.push_back(tile);
-                tess.area += tile->getArea();
-                mTilePtr2NodeIndex.insert(std::pair<Tile*,int>(tile, i));
-                found = true;
+                for (Tile* existingTile: tess.tileList){
+                    if (existingTile == tile){
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found){
+                    tess.tileList.push_back(tile);
+                    tess.area += tile->getArea();
+                    mTilePtr2NodeIndex.insert(std::pair<Tile*,int>(tile, i));
+                    found = true;
+                }
                 break;
             }
         }
@@ -201,8 +209,8 @@ namespace DFSL {
     }
 
     void DFSLegalizer::findEdge(int fromIndex, int toIndex){
-        DFSLNode fromNode = mAllNodes[fromIndex];
-        DFSLNode toNode = mAllNodes[toIndex];
+        DFSLNode& fromNode = mAllNodes[fromIndex];
+        DFSLNode& toNode = mAllNodes[toIndex];
 
         int bestLength = 0;
         int bestDirection = 0;
@@ -277,7 +285,7 @@ namespace DFSL {
             std::vector<Segment> splicedSegments;
             if (currentSegment.size() > 0){
                 std::sort(currentSegment.begin(), currentSegment.end(), compareSegment);
-                Cord segBegin = currentSegment[0].segStart;
+                Cord segBegin = currentSegment.front().segStart;
                 for (int j = 1; j < currentSegment.size(); j++){
                     if (currentSegment[j].segStart != currentSegment[j-1].segEnd){
                         Cord segEnd = currentSegment[j-1].segEnd;
@@ -290,7 +298,7 @@ namespace DFSL {
                         segBegin = currentSegment[j].segStart;
                     }
                 }
-                Cord segEnd = currentSegment.end()->segEnd;
+                Cord segEnd = currentSegment.back().segEnd;
                 Segment splicedSegment;
                 splicedSegment.segStart = segBegin;
                 splicedSegment.segEnd = segEnd;
@@ -326,7 +334,7 @@ namespace DFSL {
     }
 
     void DFSLegalizer::getTessNeighbors(int nodeId, std::set<int> allNeighbors){
-        DFSLNode node = mAllNodes[nodeId];
+        DFSLNode& node = mAllNodes[nodeId];
         std::vector<Tile*> allNeighborTiles;
         for (Tile* tile : node.tileList){
             mLF->findAllNeighbors(tile, allNeighborTiles);
@@ -364,7 +372,7 @@ namespace DFSL {
                 int maxOverlapArea = 0;
                 int maxOverlapIndex = -1;
                 for (int i = overlapStart; i < overlapEnd; i++){
-                    DFSLNode currentOverlap = mAllNodes[i];
+                    DFSLNode& currentOverlap = mAllNodes[i];
                     if (currentOverlap.area > maxOverlapArea && solveable[i]){
                         maxOverlapArea = currentOverlap.area;
                         maxOverlapIndex = i;
@@ -388,7 +396,7 @@ namespace DFSL {
         int nodeStart = 0;
         int nodeEnd = mFixedTessNum + mSoftTessNum;
         for (int i = nodeStart; i < nodeEnd; i++){
-            DFSLNode node = mAllNodes[i];
+            DFSLNode& node = mAllNodes[i];
             LegalInfo legal = getNodeLegalInfo(i);
             if (legal.util < UTIL_RULE){
                 // todo: finish warning messages
@@ -406,7 +414,40 @@ namespace DFSL {
 
     bool DFSLegalizer::migrateOverlap(int overlapIndex){
         // THIS SHIT !!!!
+        return true;
     }
+
+    LegalInfo DFSLegalizer::getNodeLegalInfo(int index){
+        LegalInfo legal;
+        int min_x, max_x, min_y, max_y;
+        min_x = min_y = INT_MAX;
+        max_x = max_y = -INT_MAX;
+        legal.actualArea = 0;
+        for (Tile* tile: mAllNodes[index].tileList){
+            if (tile->getLowerLeft().x < min_x){
+                min_x = tile->getLowerLeft().x;
+            }            
+            if (tile->getLowerLeft().y < min_y){
+                min_y = tile->getLowerLeft().y;
+            }            
+            if (tile->getUpperRight().x > max_x){
+                max_x = tile->getUpperRight().x;
+            }            
+            if (tile->getUpperRight().y < max_y){
+                max_y = tile->getUpperRight().y;
+            }
+            legal.actualArea += tile->getArea();   
+        }
+        legal.width = max_x - min_x;
+        legal.height = max_y - min_y;
+
+        legal.bbArea = legal.width * legal.height; 
+        legal.BL = Cord(min_x, min_y);  
+        legal.aspectRatio = (double) legal.width / (double) legal.height;
+        legal.util = (double) legal.actualArea / (double) legal.bbArea;
+
+        return legal;
+    } 
 
     static bool compareSegment(Segment a, Segment b){
         return (a.segStart.x < b.segStart.x || a.segStart.y < b.segStart.y);

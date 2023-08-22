@@ -89,7 +89,7 @@ struct LegalInfo {
     int width;
     int height;
     int bbArea;
-    double aspectRatio;
+    double aspectRatio; // w/h
 
     // utilization
     int actualArea;

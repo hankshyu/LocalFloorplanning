@@ -9,7 +9,7 @@
 #include "ppsolver.h"
 #include "rgparser.h"
 #include "rgsolver.h"
-#include "maxflowLegaliser.h"
+#include "DFSLegalizer.h"
 #include "monitor.h"
 
 int main(int argc, char const *argv[]) {
@@ -108,77 +108,9 @@ int main(int argc, char const *argv[]) {
     std::cout << std::endl << std::endl;
     monitor.printPhase("Overlap distribution");
 
-    MFL::MaxflowLegaliser MFL;
-    MFL.initMFL(legaliser);
-    MFL.legaliseByMaxflow();
-    
-    std::vector<MFL::MFLFlowTessInfo*> overlapFlows, blockFlows, blankFlows;
-    MFL.outputFlows(overlapFlows, blockFlows, blankFlows);
-
-
-    std::cout << " ======= MaxFlow Result Report ======= " << std::endl;
-    // std::cout << "OverlapTileFlows:" << std::endl;
-    
-    // for(MFL::MFLFlowTessInfo *tf : overlapFlows){
-    //     if(tf->type == MFL::OVERLAP){
-    //         std::cout << "OVERLAP is composed of: " << std::endl;
-    //         for(Tile *t : tf->tileList){
-    //             t->show(std::cout);
-    //         }
-    //         std::cout <<"softOverlaps: ";
-    //         for(int i : tf->softOverlaps){
-    //             std::cout << i << " ";
-    //         }
-    //         std::cout << std::endl << "fixedOverlaps: ";
-    //         for(int i : tf->fixedOverlaps){
-    //             std::cout << i << " ";
-    //         }
-    //         std::cout << std::endl;
-
-    //         std::cout << "toFlows(" << tf->toFlows.size() << "):"<< std::endl;
-
-    //         std::cout << "fromFlows(" << tf->fromFlows.size() << "):"<< std::endl;
-    //         for(MFL::MFLSingleFlowInfo m : tf->fromFlows){
-
-    //             std::cout << ", Destination: ";
-    //             // assert(m.destTile->type == MFL::BLANK);
-                
-    //             for(Tile *t : m.destTile->tileList){
-    //                 t->show(std::cout);
-    //             }
-                
-                
-    //         }
-
-
-    //     }else if(tf->type == MFL::FIXED){
-    //         std::cout << "FIXED" << std::endl;
-    //     }else if(tf->type == MFL::SOFT){
-    //         std::cout << "SOFT" << std::endl;
-    //     }else{
-    //         std::cout << "BLANK" << std::endl;
-    //     }
-    //     std::cout << std::endl << std::endl;
-
-    // }
-
-
-    for(MFL::MFLFlowTessInfo *tf : blankFlows){
-        tf->tileList[0]->show(std::cout, true);
-        std::cout << "toFlows: " << tf->toFlows.size() << ", fromFlows: " << tf->fromFlows.size()  << std::endl;
-        if(!tf->toFlows.empty()){
-            assert(tf->tileList.size() == 1);
-            tf->tileList[0]->show(std::cout);
-            std::cout << tf->type << " " << tf->toFlows.size() << std::endl;
-
-        }
-    }
-
-
-
-
-
-
+    DFSL::DFSLegalizer dfsl;
+    // dfsl.legalize(legaliser);
+    dfsl.initDFSLegalizer(legaliser);
 
     // Phase 3 Reports
     std::cout << std::endl;
