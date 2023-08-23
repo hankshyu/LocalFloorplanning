@@ -6,17 +6,18 @@
 #include "Tessera.h"
 #include "LFLegaliser.h"
 
-enum class cakeDirection{
-    UP, DOWN, LEFT, RIGHT
-};
 
 struct crust{
+public:
     Tile *tile;
-    cakeDirection direction;
-    int crowdIdx;
+    double direction;
+    double crowdIdx;
     
     crust() = delete;
-    crust(Tile *t, cakeDirection d): tile(t), direction(d) {};
+    crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY);
+private:
+    double calDirection(double tessCentreX, double tessCentreY);
+    double calCrowdIdx(LFLegaliser *legaliser);
 };
 
 class cake{
@@ -27,14 +28,17 @@ private:
     int mOverlapLevel;
 
     void findBlanksAroundTessera(Tessera *tessera, std::vector <Tile *> neighbors);
-    
+
 public:
 
-    std::vector <crust *> surroundings;
+    //Index tis the same with mMothers
+    std::vector <crust *> surroundings[4];
 
     cake() = delete;
     cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV);
     ~cake();
+
+    void showCake();
 
     void collectCrusts();
 };

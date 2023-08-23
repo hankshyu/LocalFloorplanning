@@ -200,7 +200,14 @@ void paletteKnife::bakeCakesLevel2(){
     for(cake* cak : pastriesLevel2){
         cak->collectCrusts();
     }
+
+    // for visualisation
+    for(cake *cak : pastriesLevel2){
+        cak->showCake();
+    }
 }
+
+
 
 void paletteKnife::eatCakesLevel2(){
     return;

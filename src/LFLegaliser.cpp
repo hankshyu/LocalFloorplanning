@@ -1592,17 +1592,24 @@ void LFLegaliser::combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile){
 
 };
 
-Tessera *LFLegaliser::searchTileInTessera(Tile *tile) const {
-    assert(tile->getType() == tileType::OVERLAP || tile->getType() == tileType::BLOCK);
-    Tessera *answer = nullptr;
+bool LFLegaliser::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &inTessera) const {
+    if(tile->getType() == tileType::BLANK) return false;
+    bool answer = false;
+    
     for(Tessera *tess : this->softTesserae){
         if(tile->getType() == tileType::OVERLAP){
             for(Tile *t : tess->OverlapArr){
-                if((*tile) == (*t)) return tess;
+                if((*tile) == (*t)){
+                    inTessera.push_back(tess);
+                    answer = true;
+                }
             }
         }else{ //tileType::block
             for(Tile *t : tess->TileArr){
-                if((*tile) == (*t)) return tess;
+                if((*tile) == (*t)){
+                    inTessera.push_back(tess);
+                    answer = true;
+                }
             }
         }
     }
@@ -1610,25 +1617,36 @@ Tessera *LFLegaliser::searchTileInTessera(Tile *tile) const {
     for(Tessera *tess : this->fixedTesserae){
         if(tile->getType() == tileType::OVERLAP){
             for(Tile *t : tess->OverlapArr){
-                if((*tile) == (*t)) return tess;
+                if((*tile) == (*t)){
+                    inTessera.push_back(tess);
+                    answer = true;
+                }
             }
         }else{ //tileType::block
             for(Tile *t : tess->TileArr){
-                if((*tile) == (*t)) return tess;
+                if((*tile) == (*t)){
+                    inTessera.push_back(tess);
+                    answer = true;
+                }
             }
         }
     }
-    assert(answer != nullptr);
-    return answer;
-    
+    assert(answer);
+    return answer;  
 }
 
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
-        for(auto const &e : vec){
-            if(e == c) return true;
-        }
-        return false;
+    for(auto const &e : vec){
+        if(e == c) return true;
+    }
+    return false;
+}
+
+bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess){
+    for(Tessera *inside : vec){
+        
+    }
 }
 
 

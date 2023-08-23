@@ -26,16 +26,20 @@ area_t Tessera::getLegalArea () const{
     return this->mLegalArea;
 }
 
-Cord Tessera::getBBLowerLeft() const{
+Cord Tessera::getBBLowerLeft(){
+    calBoundingBox();
     return this->mBBLowerLeft;
 }
-Cord Tessera::getBBUpperRight() const{
+Cord Tessera::getBBUpperRight(){
+    calBoundingBox();
     return this->mBBUpperRight;
 }
-len_t Tessera::getBBWidth() const{
+len_t Tessera::getBBWidth(){
+    calBoundingBox();
     return this->mBBUpperRight.x - this->mBBLowerLeft.x;
 }
-len_t Tessera::getBBHeight() const{
+len_t Tessera::getBBHeight(){
+    calBoundingBox();
     return this->mBBUpperRight.y - this->mBBLowerLeft.y;
 }
 
@@ -410,3 +414,17 @@ void Tessera::printCorners(std::ostream& fout){
     }
 }
 
+bool Tessera::operator ==(const Tessera &tess) const{
+    
+    if(mType != tess.mType) return false;
+    if(mName != tess.getName()) return false;
+    if(mLegalArea != tess.mLegalArea) return false;
+    if(mInitLowerLeft != tess.mInitLowerLeft) return false;
+    if((mInitWidth != tess.mInitWidth) || (mInitHeight != tess.mInitHeight)) return false;
+
+    if(TileArr.size() != tess.TileArr.size()) return false;
+    for(int i = 0; i < TileArr.size(); ++i){
+        if()
+    }
+
+}

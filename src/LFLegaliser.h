@@ -94,10 +94,10 @@ public:
     void detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile);
     void combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile);
 
-    Tessera *searchTileInTessera(Tile *tile) const;
-
+    bool searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &inTessera) const;
 };
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c);
+bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess);
 
 #endif // __LFLEGALISER_H__

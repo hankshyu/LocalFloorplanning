@@ -12,6 +12,7 @@
 #include "maxflowLegaliser.h"
 #include "monitor.h"
 #include "paletteKnife.h"
+#include "tensor.h"
 
 int main(int argc, char const *argv[]) {
 
@@ -128,5 +129,4 @@ int main(int argc, char const *argv[]) {
     monitor.printPhase("Solve 2 Overlaps");
     spatula.bakeCakesLevel2();
     spatula.eatCakesLevel2();
-    
 }

@@ -39,10 +39,10 @@ public:
     std::string getName () const;
     area_t getLegalArea () const;
     area_t calAreaMargin ();
-    Cord getBBLowerLeft () const;
-    Cord getBBUpperRight() const;
-    len_t getBBWidth () const;
-    len_t getBBHeight () const;
+    Cord getBBLowerLeft ();
+    Cord getBBUpperRight();
+    len_t getBBWidth ();
+    len_t getBBHeight ();
 
     bool checkLegalNoHole();
     bool checkLegalNoEnclave();
@@ -57,6 +57,9 @@ public:
 
     void printCorners(std::ostream& fout);
 
+    bool operator ==(const Tessera &tess) const;
+    
 };
+
 
 #endif // __TESSERA_H__
