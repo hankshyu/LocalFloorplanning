@@ -27,8 +27,6 @@ private:
     std::vector <Tessera *> mMothers;
     int mOverlapLevel;
 
-    void findBlanksAroundTessera(Tessera *tessera, std::vector <Tile *> neighbors);
-
 public:
 
     //Index tis the same with mMothers
@@ -40,7 +38,7 @@ public:
 
     void showCake();
 
-    void collectCrusts();
+    void collectCrusts(LFLegaliser *legaliser);
 };
 
 

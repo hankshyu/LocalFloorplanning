@@ -1644,9 +1644,10 @@ bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
 }
 
 bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess){
-    for(Tessera *inside : vec){
-        
+    for(Tessera *t: vec){
+        if((*t) == (*tess) ) return true;
     }
+    return false;
 }
 
 

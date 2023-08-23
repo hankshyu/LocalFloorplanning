@@ -38,6 +38,10 @@ public:
 
     std::string getName () const;
     area_t getLegalArea () const;
+    tesseraType getType() const;
+    Cord getInitLowerLeft () const;
+    len_t  getInitWidth () const;
+    len_t getInitHeight () const;
     area_t calAreaMargin ();
     Cord getBBLowerLeft ();
     Cord getBBUpperRight();

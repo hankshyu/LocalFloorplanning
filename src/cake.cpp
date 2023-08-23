@@ -16,12 +16,31 @@ double crust::calDirection(double tessCentreX, double tessCentreY){
 };
 
 double crust::calCrowdIdx(LFLegaliser *legaliser){
+    double NeighborsOverlapArea = 0;
+
     std::vector <Tile *> neighbors;
     legaliser->findAllNeighbors(this->tile, neighbors);
     
     std::vector <Tessera *> surroundingTess;
+    for(Tile *nb : neighbors){
+        if(nb->getType() != tileType::BLANK){
+            std::vector<Tessera *> inTess;
+            legaliser->searchTesseraeIncludeTile(nb, inTess);
+            for(Tessera* t : inTess){
+                if(!checkVectorInclude(surroundingTess, t)){
+                    surroundingTess.push_back(t);
+                }
+            }
+        }
+    }
 
+    for(Tessera *nbTess : surroundingTess){
+        for(Tile *t : nbTess->OverlapArr){
+            NeighborsOverlapArea += (double)(t->getArea());
+        }
+    }
 
+    return NeighborsOverlapArea / (double)(this->tile->getArea());
 
 };
 
@@ -47,7 +66,7 @@ cake::~cake(){
     }
 }
 
-void cake::collectCrusts(){
+void cake::collectCrusts(LFLegaliser *legaliser){
     
     // there could be optimisation here: by preknowing the linkings, we may prioritize some blank tiles
     
@@ -67,7 +86,7 @@ void cake::collectCrusts(){
                 bool seenBefore = checkVectorInclude(record, t->getLowerLeft());
                 if((t->getType() == tileType::BLANK) && (!seenBefore)){
                     record.push_back(t->getLowerLeft());
-                    crust *cr = new crust(t, tessCentreX, tessCentreY);
+                    crust *cr = new crust(legaliser, t, tessCentreX, tessCentreY);
                     this->surroundings[i].push_back(cr);
                 }
             }
@@ -80,7 +99,7 @@ void cake::collectCrusts(){
                 bool seenBefore = checkVectorInclude(record, t->getLowerLeft());
                 if((t->getType() == tileType::BLANK) && (!seenBefore)){
                     record.push_back(t->getLowerLeft());
-                    crust *cr = new crust(t, tessCentreX, tessCentreY);
+                    crust *cr = new crust(legaliser, t, tessCentreX, tessCentreY);
                     this->surroundings[i].push_back(cr);
                 }
             }
@@ -95,23 +114,19 @@ void cake::showCake(){
     mOverlap->show(std::cout, true);
     std::cout <<"Mothers:" << std::endl;
     for(Tessera *tess : mMothers){
-        std::cout << tess->getName() << " " << tess->getBBLowerLeft() << " " << tess->getBBUpperRight();
+        std::cout << tess->getName() << " " << tess->getBBLowerLeft() << " " << tess->getBBUpperRight() << std::endl;
     }
     
-    std::cout << std::endl << "Surroundings:" << "not yet done... " << std::endl;
+    std::cout << std::endl << "Surroundings:" << std::endl;
+    for(int i = 0; i <mMothers.size(); ++i){
+        std::cout << "Mothers #" << i << std::endl;
+        for(crust *c : surroundings[i]){
+            std::cout << "(cr)";
+            c->tile->show(std::cout, false);
+            std::cout << ", Direction: " << c->direction << ", crowdIdx: " << c->crowdIdx << std::endl;
+        }
+    }
 }
 
-// void cake::findBlanksAroundTessera(Tessera *tessera, std::vector <Tile *> neighbors){
-//     for(Tile *t : tessera->TileArr){
-//         std::vector <Tile *> topNeighbors;
-//         mLegaliser->findTopNeighbors(t, topNeighbors);
-//         for(Tile *potNeighbor : topNeighbors){
-//             if(potNeighbor->getType() == tileType::BLANK){
-//                 if()
-//             }
-//         }
 
-
-//     }
-// }
 

@@ -26,6 +26,22 @@ area_t Tessera::getLegalArea () const{
     return this->mLegalArea;
 }
 
+tesseraType Tessera::getType () const{
+    return this->mType;
+}
+
+Cord Tessera::getInitLowerLeft () const{
+    return this->mInitLowerLeft;
+}
+
+len_t Tessera::getInitWidth() const{
+    return this->mInitWidth;
+}
+
+len_t Tessera::getInitHeight() const{
+    return this->mInitHeight;
+}
+
 Cord Tessera::getBBLowerLeft(){
     calBoundingBox();
     return this->mBBLowerLeft;
@@ -416,15 +432,21 @@ void Tessera::printCorners(std::ostream& fout){
 
 bool Tessera::operator ==(const Tessera &tess) const{
     
-    if(mType != tess.mType) return false;
+    if(mType != tess.getType()) return false;
     if(mName != tess.getName()) return false;
-    if(mLegalArea != tess.mLegalArea) return false;
-    if(mInitLowerLeft != tess.mInitLowerLeft) return false;
-    if((mInitWidth != tess.mInitWidth) || (mInitHeight != tess.mInitHeight)) return false;
+    if(mLegalArea != tess.getLegalArea()) return false;
+    if(mInitLowerLeft != tess.getInitLowerLeft()) return false;
+    if((mInitWidth != tess.getInitWidth()) || (mInitHeight != tess.getInitHeight())) return false;
 
     if(TileArr.size() != tess.TileArr.size()) return false;
     for(int i = 0; i < TileArr.size(); ++i){
-        if()
+        if(TileArr[i] != tess.TileArr[i]) return false;
     }
 
+    if(OverlapArr.size() != tess.OverlapArr.size()) return false;
+    for(int i = 0; i < OverlapArr.size(); ++i){
+        if(OverlapArr[i] != tess.OverlapArr[i]) return false;
+    }
+
+    return true;
 }

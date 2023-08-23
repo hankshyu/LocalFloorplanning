@@ -198,7 +198,7 @@ void paletteKnife::bakeCakesLevel2(){
         this->pastriesLevel2.push_back(ck);
     }
     for(cake* cak : pastriesLevel2){
-        cak->collectCrusts();
+        cak->collectCrusts(mLegaliser);
     }
 
     // for visualisation
