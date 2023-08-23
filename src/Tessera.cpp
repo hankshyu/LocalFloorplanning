@@ -354,3 +354,48 @@ void Tessera::printCorners(std::ostream& fout){
     }
 }
 
+bool Tessera::isLegal() {
+    typedef gtl::polygon_90_with_holes_data<len_t> PolygonHole;
+    typedef std::vector<PolygonHole>               PolygonHoleSet;
+    using namespace gtl::operators;
+    PolygonHoleSet curTessSet;
+
+    for ( auto &tile : this->TileArr ) {
+        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
+        curTessSet += box;
+    }
+
+    // check whether this Tessera is connected or not
+    if ( curTessSet.size() > 1 ) {
+        return false;
+    }
+
+    // check whether this Tessera has holes or not
+    PolygonHole curTess = curTessSet[0];
+    if ( curTess.begin_holes() != curTess.end_holes() ) {
+        return false;
+    }
+
+    // check whether this Tessera violates area constraint or not
+    if ( gtl::area(curTess) < this->mLegalArea ) {
+        return false;
+    }
+
+    // check whether this Tessera violates aspect ratio or not
+    Rectangle boundingBox;
+    gtl::extents(boundingBox, curTessSet);
+    len_t width = gtl::xh(boundingBox) - gtl::xl(boundingBox);
+    len_t height = gtl::yh(boundingBox) - gtl::yh(boundingBox);
+    double aspectRatio = (double) width / height;
+    if ( aspectRatio > 2. || aspectRatio < 0.5 ) {
+        return false;
+    }
+
+    // check whether this Tessera violates rectangle ratio or not
+    double rectRatio = (double) gtl::area(curTess) / gtl::area(boundingBox);
+    if ( rectRatio < 0.8 ) {
+        return false;
+    }
+
+    return true;
+}
