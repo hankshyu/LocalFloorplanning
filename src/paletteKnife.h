@@ -4,18 +4,25 @@
 #include "LFLegaliser.h"
 #include "Tile.h"
 #include "cake.h"
+#include "parser.h"
 #include <vector>
+#include <map>
 
 class paletteKnife{
 private:
     LFLegaliser *mLegaliser;
-
+    
     std::vector <Tile *> mPaintClusters[5];
+    std::map <std::string, double> mTessFavorDirection;
 
+    
+    // this fills mTessFavorDirection with input connectionList
+    void calAllTessFavorDirection(std::vector <ConnStruct> *connectionList);
+    void calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList);
 
 public:
     paletteKnife() = delete;
-    paletteKnife(LFLegaliser *legaliser);
+    paletteKnife(LFLegaliser *legaliser, std::vector <ConnStruct> *connectionList);
     ~paletteKnife();
     
     std::vector <cake *> pastriesLevel2;
@@ -32,8 +39,6 @@ public:
 
     void bakeCakesLevel2();
     void eatCakesLevel2();
-
-    
 
 };
 

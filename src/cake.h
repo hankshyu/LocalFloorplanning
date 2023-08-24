@@ -25,11 +25,13 @@ private:
     LFLegaliser *mLegaliser;
     Tile *mOverlap;
     std::vector <Tessera *> mMothers;
+    std::vector <double> mMothersFavorDirection;
     int mOverlapLevel;
+    double cakeFavorDirection;
 
 public:
 
-    //Index tis the same with mMothers
+    //Index is the same with mMothers
     std::vector <crust *> surroundings[4];
 
     cake() = delete;

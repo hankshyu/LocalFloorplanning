@@ -3,9 +3,27 @@
 #include <assert.h>
 #include <algorithm>
 
-paletteKnife::paletteKnife(LFLegaliser *legaliser){
+paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <ConnStruct> *connectionList){
     this->mLegaliser = legaliser;
+    calAllTessFavorDirection(connectionList);
 
+}
+
+void paletteKnife::calAllTessFavorDirection(std::vector <ConnStruct> *connectionList){
+    for(Tessera *tess : mLegaliser->fixedTesserae){
+        double favor = calTessFavorDirection(tess, connectionList);
+        mTessFavorDirection[tess->getName()] = favor;
+
+    }
+    for(Tessera *tess : mLegaliser->softTesserae){
+        double favor = calTessFavorDirection(tess, connectionList);
+        mTessFavorDirection[tess->getName()] = favor;
+
+    }
+}
+
+double paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList){
+    //TODO: use tess* to cal
 }
 
 paletteKnife::~paletteKnife(){

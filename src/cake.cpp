@@ -44,13 +44,11 @@ double crust::calCrowdIdx(LFLegaliser *legaliser){
 
 };
 
-cake::cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV){
-    this->mLegaliser = legaliser;
-    this->mOverlap = overlap;
-    this->mOverlapLevel = overlapLV;
+cake::cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV, double favorDirection): 
+        mLegaliser(legaliser), mOverlap(overlap), mOverlapLevel(overlapLV), cakeFavorDirection(favorDirection) {
 
-    assert(overlapLV >= 2);
-    assert(overlapLV <= 4);
+    assert(this->mOverlapLevel >= 2);
+    assert(this->mOverlapLevel <= 4);
     
     mLegaliser->searchTesseraeIncludeTile(this->mOverlap, this->mMothers);
 
