@@ -18,7 +18,7 @@ private:
     
     // this fills mTessFavorDirection with input connectionList
     void calAllTessFavorDirection(std::vector <ConnStruct> *connectionList);
-    void calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList);
+    bool calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList, double &direction);
 
 public:
     paletteKnife() = delete;

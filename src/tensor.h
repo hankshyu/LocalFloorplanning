@@ -1,4 +1,5 @@
 #include <math.h>
+#define _USE_MATH_DEFINES
 
 namespace tns{
     // returns the angle between the vector and the y-axis  <--PI -- {Y-axis} -- +PI -->

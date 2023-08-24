@@ -44,8 +44,8 @@ double crust::calCrowdIdx(LFLegaliser *legaliser){
 
 };
 
-cake::cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV, double favorDirection): 
-        mLegaliser(legaliser), mOverlap(overlap), mOverlapLevel(overlapLV), cakeFavorDirection(favorDirection) {
+cake::cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV): 
+        mLegaliser(legaliser), mOverlap(overlap), mOverlapLevel(overlapLV) {
 
     assert(this->mOverlapLevel >= 2);
     assert(this->mOverlapLevel <= 4);

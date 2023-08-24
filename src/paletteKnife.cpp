@@ -1,5 +1,6 @@
 #include "paletteKnife.h"
 #include "Tessera.h"
+#include "tensor.h"
 #include <assert.h>
 #include <algorithm>
 
@@ -11,19 +12,93 @@ paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <ConnStruct> *con
 
 void paletteKnife::calAllTessFavorDirection(std::vector <ConnStruct> *connectionList){
     for(Tessera *tess : mLegaliser->fixedTesserae){
+        //this did not process when direction is absent!
         double favor = calTessFavorDirection(tess, connectionList);
         mTessFavorDirection[tess->getName()] = favor;
 
     }
     for(Tessera *tess : mLegaliser->softTesserae){
+        //this did not process when direction is absent!
         double favor = calTessFavorDirection(tess, connectionList);
         mTessFavorDirection[tess->getName()] = favor;
 
     }
 }
 
-double paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList){
-    //TODO: use tess* to cal
+bool paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList, double &direction){
+    bool metConnections = false;
+    double cumulateWeights = 0;
+    double favorDirection;
+
+    for(ConnStruct cs : (*connectionList)){
+        double fromX, fromY;
+        double toX, toY;
+
+        tessera->calBBCentre(fromX, fromY);
+        
+        Tessera *toT = nullptr;
+        bool foundToT = false;
+
+        if(cs.m0 == tessera->getName()){
+            for(Tessera *t : mLegaliser->fixedTesserae){
+                if(t->getName() == cs.m1){
+                    toT = t;
+                    foundToT = true;
+                    break;
+                }
+            }
+            if(!foundToT){
+                for(Tessera *t : mLegaliser->softTesserae){
+                    if(t->getName() == cs.m1){
+                        toT = t;
+                        foundToT = true;
+                        break;
+                    }
+                }
+            }
+            assert(foundToT);
+
+        }else if(cs.m1 == tessera->getName()){
+            for(Tessera *t : mLegaliser->fixedTesserae){
+                if(t->getName() == cs.m0){
+                    toT = t;
+                    foundToT = true;
+                    break;
+                }
+            }
+            if(!foundToT){
+                for(Tessera *t : mLegaliser->softTesserae){
+                    if(t->getName() == cs.m0){
+                        toT = t;
+                        foundToT = true;
+                        break;
+                    }
+                }
+            }
+            assert(foundToT);
+        }
+        if(foundToT){
+            if(!metConnections){
+                //first connection
+                metConnections = true;
+                toT->calBBCentre(toX, toY);
+                double angle = tns::calVectorAngle(fromX, fromY, toX, toY);
+                favorDirection = angle;
+                cumulateWeights = (double)cs.value;
+            }else{
+                toT->calBBCentre(toX, toY);
+                double angle = tns::calVectorAngle(fromX, fromY, toX, toY);
+                double tmpcumulateWeights = (double)cs.value + cumulateWeights;
+                assert(tmpcumulateWeights >= 0);
+                favorDirection = (angle * (cs.value/tmpcumulateWeights)) + (favorDirection * (cumulateWeights/tmpcumulateWeights));
+                cumulateWeights = tmpcumulateWeights;
+            }
+        }
+
+    }
+
+    direction = favorDirection;
+    return metConnections;
 }
 
 paletteKnife::~paletteKnife(){
@@ -228,5 +303,6 @@ void paletteKnife::bakeCakesLevel2(){
 
 
 void paletteKnife::eatCakesLevel2(){
+    //TODO true solution stage
     return;
 }

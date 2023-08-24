@@ -47,6 +47,7 @@ public:
     Cord getBBUpperRight();
     len_t getBBWidth ();
     len_t getBBHeight ();
+    void calBBCentre(double &CentreX, double &CentreY);
 
     bool checkLegalNoHole();
     bool checkLegalNoEnclave();
