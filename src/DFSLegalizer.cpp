@@ -20,7 +20,9 @@ namespace DFSL {
 
     void DFSLegalizer::initDFSLegalizer(LFLegaliser* floorplan){
         mLF = floorplan;
+        mTransientOverlapArea.clear();
         constructGraph();
+        setDefaultConfig();
     }
     
     void DFSLegalizer::addBlockNode(Tessera* tess){
@@ -104,7 +106,9 @@ namespace DFSL {
                 }
             }
         }
-        // todo: finish find edge thingy
+        
+        // todo: finish transient overlap area thing
+
     }
 
     void DFSLegalizer::addOverlapInfo(Tile* tile){
@@ -352,8 +356,7 @@ namespace DFSL {
         }
     }
 
-    RESULT DFSLegalizer::legalize(LFLegaliser* floorplan){
-        initDFSLegalizer(floorplan);
+    RESULT DFSLegalizer::legalize(){
         // todo: create backup (deep copy)
         RESULT result;
 
@@ -413,8 +416,65 @@ namespace DFSL {
     }
 
     bool DFSLegalizer::migrateOverlap(int overlapIndex){
-        // THIS SHIT !!!!
+        mBestPath.clear();
+        mCurrentPath.clear();
+        mBestCost = INT_MAX;
+
+        mCurrentPath.push_back(overlapIndex);
+        for (DFSLEdge edge: mAllNodes[overlapIndex].edgeList){
+            dfs(edge, 0);
+        }
+
+        // transient overlap area
+
         return true;
+    }
+
+    void DFSLegalizer::dfs(DFSLEdge edge, int currentCost){
+        int toIndex = edge.toIndex;
+        int edgeCost = getEdgeCost(edge);
+        currentCost += edgeCost;
+        mCurrentPath.push_back(toIndex);
+        int blankStart = mFixedTessNum + mSoftTessNum + mOverlapNum;
+        int blankEnd = blankStart + mBlankNum;
+        if (blankStart <= toIndex && toIndex < blankEnd){
+            if (currentCost < mBestCost){
+                mBestPath = mCurrentPath;
+                mBestCost = currentCost;
+            }
+        }
+
+        if (currentCost < config.maxCostCutoff){
+            for (DFSLEdge edge: mAllNodes[toIndex].edgeList){
+                if (!inVector(edge.toIndex, mCurrentPath)){
+                    dfs(edge, currentCost);
+                }
+            }
+        }
+
+        mCurrentPath.pop_back();
+    }
+
+    int DFSLegalizer::getEdgeCost(DFSLEdge edge){
+
+    }
+
+    inline bool inVector(int a, std::vector<int>& vec){
+        for (int b: vec){
+            if (b == a) {
+                return true;
+            }
+        }
+        return false;
+    } 
+
+    void DFSLegalizer::setDefaultConfig(){
+        this->config.maxCostCutoff = 100000.0;
+        this->config.OBAreaWeight = 1000;
+        this->config.OBUtilWeight = 100;
+        this->config.BWUtilWeight = 100;
+        this->config.BBFlatCost = 10000;
+        this->config.WWFlatCost = 10000;
     }
 
     LegalInfo DFSLegalizer::getNodeLegalInfo(int index){

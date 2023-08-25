@@ -16,6 +16,8 @@ struct DFSLNode;
 struct DFSLEdge;
 struct Segment;
 struct LegalInfo;
+struct OverlapArea;
+struct Config;
 
 enum class MFLTessType : unsigned char { OVERLAP, FIXED, SOFT, BLANK };
 
@@ -26,10 +28,11 @@ enum class RESULT : unsigned char { SUCCESS, OVERLAP_NOT_RESOLVED, CONSTRAINT_FA
 class DFSLegalizer{
 private:
     std::vector<DFSLNode> mAllNodes;
+    int mBestCost;
     std::vector<int> mBestPath;
     std::vector<int> mCurrentPath;
     std::multimap<Tile*, int> mTilePtr2NodeIndex;
-    int startingNode;
+    std::vector<OverlapArea> mTransientOverlapArea;
     LFLegaliser* mLF;
     int mFixedTessNum;
     int mSoftTessNum;
@@ -37,7 +40,8 @@ private:
     int mBlankNum;
     
     bool migrateOverlap(int overlapIndex);
-    void dfs(/**/);
+    void dfs(DFSLEdge edge, int currentCost);
+    int getEdgeCost(DFSLEdge edge);
     void addOverlapInfo(Tile* tile);
     void addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2);
     std::string toOverlapName(int tessIndex1, int tessIndex2);
@@ -46,15 +50,17 @@ private:
     void getTessNeighbors(int nodeId, std::set<int> allNeighbors);
     LegalInfo getNodeLegalInfo(int index); 
     void addBlockNode(Tessera* tess);
-
+    void setDefaultConfig();
 public:
     DFSLegalizer();
     ~DFSLegalizer();
     void initDFSLegalizer(LFLegaliser* floorplan);
-    RESULT legalize(LFLegaliser* floorplan);
+    RESULT legalize();
     void constructGraph();
-    void setParam();
+    Config config;
 };
+
+inline bool inVector(int a, std::vector<int>& vec);
 
 static bool compareSegment(Segment a, Segment b);
 
@@ -94,6 +100,21 @@ struct LegalInfo {
     // utilization
     int actualArea;
     double util;
+};
+
+struct OverlapArea {
+    int index1;
+    int index2;
+    int area;
+};
+
+struct Config {
+    double maxCostCutoff;
+    double OBAreaWeight;
+    double OBUtilWeight;
+    double BWUtilWeight;
+    double BBFlatCost;
+    double WWFlatCost;  
 };
 
 // class DFSLegalizer{
