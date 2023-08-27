@@ -22,13 +22,12 @@ namespace DFSL {
         mLF = floorplan;
         mTransientOverlapArea.clear();
         constructGraph();
-        setDefaultConfig();
     }
     
     void DFSLegalizer::addBlockNode(Tessera* tess){
         DFSLNode newNode;
         newNode.nodeName = tess->getName();
-        newNode.nodeType = MFLTessType::FIXED;
+        newNode.nodeType = DFSLTessType::FIXED;
         newNode.index = mAllNodes.size();
         for(Tile* tile : tess->TileArr){
             newNode.tileList.push_back(tile); 
@@ -107,8 +106,14 @@ namespace DFSL {
             }
         }
         
-        // todo: finish transient overlap area thing
-
+        for (OverlapArea& tempArea: mTransientOverlapArea){
+            for (int from = overlapStartIndex; from < overlapEndIndex; from++){
+                DFSLNode& overlap = mAllNodes[from];
+                if (overlap.overlaps.count(tempArea.index1) == 1 && overlap.overlaps.count(tempArea.index2) == 1){
+                    overlap.area = tempArea.area;
+                }
+            }
+        }
     }
 
     void DFSLegalizer::addOverlapInfo(Tile* tile){
@@ -158,7 +163,7 @@ namespace DFSL {
             newNode.overlaps.insert(overlapIdx1);
             newNode.overlaps.insert(overlapIdx2);
             newNode.nodeName = toOverlapName(overlapIdx1, overlapIdx2); 
-            newNode.nodeType = MFLTessType::OVERLAP;
+            newNode.nodeType = DFSLTessType::OVERLAP;
             newNode.index = mAllNodes.size();
             mTilePtr2NodeIndex.insert(std::pair<Tile*,int>(tile, mAllNodes.size()));
             mAllNodes.push_back(newNode);
@@ -178,7 +183,7 @@ namespace DFSL {
             DFSLNode newNode;
             newNode.tileList.push_back(tile);
             newNode.nodeName = std::to_string((intptr_t)tile);
-            newNode.nodeType = MFLTessType::BLANK;
+            newNode.nodeType = DFSLTessType::BLANK;
             newNode.index = mAllNodes.size();
             newNode.area += tile->getArea();
             mTilePtr2NodeIndex.insert(std::pair<Tile*,int>(tile, mAllNodes.size()));
@@ -382,7 +387,7 @@ namespace DFSL {
                     }
                 }
                 if (maxOverlapIndex == -1){
-                    std::cout << "[DFSL] WARNING: Overlap not resolved\n";
+                    std::cout << "[DFSL] ERROR: Overlaps unable to resolve\n";
                     result = RESULT::OVERLAP_NOT_RESOLVED;
                     return result;
                 }
@@ -400,7 +405,7 @@ namespace DFSL {
         int nodeEnd = mFixedTessNum + mSoftTessNum;
         for (int i = nodeStart; i < nodeEnd; i++){
             DFSLNode& node = mAllNodes[i];
-            LegalInfo legal = getNodeLegalInfo(i);
+            LegalInfo legal = getLegalInfo(node.tileList);
             if (legal.util < UTIL_RULE){
                 // todo: finish warning messages
                 std::cout << "[DFSL] Warning: util for \n";
@@ -419,22 +424,160 @@ namespace DFSL {
         mBestPath.clear();
         mCurrentPath.clear();
         mBestCost = INT_MAX;
+        mMigratingArea = mAllNodes[overlapIndex].area;
 
-        mCurrentPath.push_back(overlapIndex);
         for (DFSLEdge edge: mAllNodes[overlapIndex].edgeList){
             dfs(edge, 0);
         }
 
-        // transient overlap area
+        if (mBestPath.size() == 0){
+            return false;
+        }
+
+        // start changing physical layout
+        int resolvableArea = 0;
+        for (int i = mBestPath.size() - 1; i >= 0; i--){
+            DFSLEdge edge = mBestPath[i];
+            DFSLNode& fromNode = mAllNodes[edge.fromIndex];
+            DFSLNode& toNode = mAllNodes[edge.toIndex];
+
+            if (fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT){
+                if (resolvableArea < mMigratingArea){
+                    // create transient overlap area
+                    OverlapArea tempArea;
+                    tempArea.index1 = edge.fromIndex;
+                    tempArea.index2 = edge.toIndex;
+                    tempArea.area = mMigratingArea - resolvableArea;
+
+                    mTransientOverlapArea.push_back(tempArea);
+                }
+                else {
+                    int indexToRemove = edge.toIndex; // should be soft index
+                    for (Tile* overlapTile: fromNode.tileList){
+                        int fixedOverlapNum = overlapTile->OverlapFixedTesseraeIdx.size();
+                        int softOverlapNum = overlapTile->OverlapSoftTesseraeIdx.size();
+                        if (fixedOverlapNum + softOverlapNum == 2){
+                            // remove from overlaparr of other tess, add to tilearr
+                            int otherIndex;
+                            for (int index: overlapTile->OverlapFixedTesseraeIdx){
+                                if (index != indexToRemove){
+                                    otherIndex = index;
+                                }
+                            }
+                            for (int index: overlapTile->OverlapSoftTesseraeIdx){
+                                if (index + mFixedTessNum != indexToRemove){
+                                    otherIndex = index + mFixedTessNum;
+                                }
+                            }
+
+                            overlapTile->OverlapFixedTesseraeIdx.clear();
+                            overlapTile->OverlapSoftTesseraeIdx.clear();
+                            overlapTile->setType(tileType::BLOCK);
+
+                            Tessera* otherTess = otherIndex < mFixedTessNum ? mLF->fixedTesserae[otherIndex] : mLF->softTesserae[otherIndex - mFixedTessNum];
+                            bool success;
+                            success = removeFromVector(overlapTile, otherTess->OverlapArr);
+                            otherTess->TileArr.push_back(overlapTile);
+                        }
+                        else {
+                            if (indexToRemove < mFixedTessNum){
+                                // should not happen
+                                std::cout << "[DFSL] ERROR: Migrating overlap to fixed block: " << mLF->fixedTesserae[indexToRemove]->getName() << '\n';
+                            }
+                            else {
+                                removeFromVector(overlapTile, mLF->softTesserae[indexToRemove - mFixedTessNum]->OverlapArr);
+
+                            }
+                        }
+                        Tessera* orignalTess = indexToRemove < mFixedTessNum ? mLF->fixedTesserae[indexToRemove] : mLF->softTesserae[indexToRemove - mFixedTessNum];
+                        bool success;
+                        success = removeFromVector(overlapTile, orignalTess->OverlapArr);
+                    }
+                }
+            }
+                // todo: deal with block -> block
+            else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::BLANK){
+                Cord BL;
+                int width;
+                int height;
+                if (edge.direction == DIRECTION::TOP){
+                    width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
+                    int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                    int height = toNode.tileList[0]->getHeight();
+                    height = height > requiredHeight ? requiredHeight : height;
+                    BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
+                    BL.y = edge.commonEdge.segStart.y;
+                }
+                else if (edge.direction == DIRECTION::RIGHT){
+                    height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
+                    int requiredWidth = ceil((double) mMigratingArea / (double) width);
+                    int width = toNode.tileList[0]->getWidth();
+                    width = width > requiredWidth ? requiredWidth : width;
+                    BL.x = edge.commonEdge.segStart.x;
+                    BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
+                }
+                else if (edge.direction == DIRECTION::DOWN){
+                    width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
+                    int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                    int height = toNode.tileList[0]->getHeight();
+                    height = height > requiredHeight ? requiredHeight : height;
+                    BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
+                    BL.y = edge.commonEdge.segStart.y - height;
+                }
+                else {
+                    height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
+                    int requiredWidth = ceil((double) mMigratingArea / (double) width);
+                    int width = toNode.tileList[0]->getWidth();
+                    width = width > requiredWidth ? requiredWidth : width;
+                    BL.x = edge.commonEdge.segStart.x - width;
+                    BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
+                }
+
+                resolvableArea = width * height;
+                Tile* newTile = new Tile(tileType::BLOCK, BL, width, height);
+
+                // add to tess, place in physical layout
+                Tessera* blockTess = mLF->softTesserae[fromNode.index - mFixedTessNum]; 
+                blockTess->TileArr.push_back(newTile);
+
+                mLF->insertTile(*newTile);
+
+            }
+                // todo: deal with white -> white
+            else {
+                std::cout << "[DFSL] Warning: Doing nothing for migrating path: " << fromNode.nodeName << " -> " << toNode.nodeName << '\n';
+            }
+        }
 
         return true;
+    }
+
+    // todo: turn into template function
+    bool removeFromVector(int a, std::vector<int>& vec){
+        for (std::vector<int>::iterator it = vec.begin() ; it != vec.end(); ++it){
+            if (*it == a){
+                vec.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool removeFromVector(Tile* a, std::vector<Tile*>& vec){
+        for (std::vector<Tile*>::iterator it = vec.begin() ; it != vec.end(); ++it){
+            if (*it == a){
+                vec.erase(it);
+                return true;
+            }
+        }
+        return false;
     }
 
     void DFSLegalizer::dfs(DFSLEdge edge, int currentCost){
         int toIndex = edge.toIndex;
         int edgeCost = getEdgeCost(edge);
         currentCost += edgeCost;
-        mCurrentPath.push_back(toIndex);
+        mCurrentPath.push_back(edge);
         int blankStart = mFixedTessNum + mSoftTessNum + mOverlapNum;
         int blankEnd = blankStart + mBlankNum;
         if (blankStart <= toIndex && toIndex < blankEnd){
@@ -456,34 +599,215 @@ namespace DFSL {
     }
 
     int DFSLegalizer::getEdgeCost(DFSLEdge edge){
+        enum class EDGETYPE : unsigned char { OB, BB, BW, WW, BAD_EDGE };
+        EDGETYPE edgeType; 
 
+        if (mAllNodes[edge.fromIndex].nodeType == DFSLTessType::OVERLAP && mAllNodes[edge.toIndex].nodeType == DFSLTessType::SOFT){
+            edgeType = EDGETYPE::OB;
+        }
+        else if (mAllNodes[edge.fromIndex].nodeType == DFSLTessType::SOFT && mAllNodes[edge.toIndex].nodeType == DFSLTessType::SOFT){
+            edgeType = EDGETYPE::BB;
+        } 
+        else if (mAllNodes[edge.fromIndex].nodeType == DFSLTessType::SOFT && mAllNodes[edge.toIndex].nodeType == DFSLTessType::BLANK){
+            edgeType = EDGETYPE::BW;
+        }
+        else if (mAllNodes[edge.fromIndex].nodeType == DFSLTessType::BLANK && mAllNodes[edge.toIndex].nodeType == DFSLTessType::BLANK){
+            edgeType = EDGETYPE::WW;
+        }
+        else {
+            std::cout << "[DFSL] Warning: Edge shouldn't exist\n";
+            edgeType = EDGETYPE::BAD_EDGE;
+        }
+
+        DFSLNode& fromNode = mAllNodes[edge.fromIndex];
+        DFSLNode& toNode = mAllNodes[edge.toIndex];
+        double edgeCost = 0.0;
+        
+        switch (edgeType)
+        {
+        case EDGETYPE::OB:
+        {
+            Tessera* toTess = mLF->softTesserae[edge.toIndex - mFixedTessNum];
+            std::set<Tile*> overlap;
+            std::set<Tile*> withoutOverlap;
+            std::set<Tile*> withOverlap;
+
+            for (Tile* tile: toTess->TileArr){
+                withoutOverlap.insert(tile); 
+                withOverlap.insert(tile);
+            }
+            for (Tile* tile: toTess->OverlapArr){
+                withoutOverlap.insert(tile); 
+                withOverlap.insert(tile);
+            }
+            
+            for (Tile* tile: fromNode.tileList){
+                overlap.insert(tile);
+                withoutOverlap.erase(tile);
+            }
+
+            LegalInfo overlapInfo = getLegalInfo(overlap);
+            LegalInfo withOverlapInfo = getLegalInfo(withOverlap);
+            LegalInfo withoutOverlapInfo = getLegalInfo(withoutOverlap);
+
+            // get area
+            double overlapArea = overlapInfo.actualArea;
+            double blockArea = withoutOverlapInfo.actualArea;
+
+            // get util
+            double withOverlapUtil = withOverlapInfo.util;
+            double withoutOverlapUtil = withoutOverlapInfo.util;
+
+            // get aspect ratio without overlap
+            double aspectRatio = withoutOverlapInfo.aspectRatio;
+
+            edgeCost += (overlapArea / blockArea) * config.OBAreaWeight + 
+                        (withOverlapUtil - withoutOverlapUtil) * config.OBUtilWeight +
+                        abs(aspectRatio - 1.0) * config.OBAspWeight; 
+
+            break;
+        }
+
+        case EDGETYPE::BB:
+            edgeCost += config.BBFlatCost;
+            break;
+
+        case EDGETYPE::BW:
+        {
+            std::set<Tile*> oldBlock;
+            std::set<Tile*> newBlock;
+
+            for (Tile* tile: fromNode.tileList){
+                oldBlock.insert(tile);
+                newBlock.erase(tile);
+            }
+
+            // predict new tile
+            Cord BL;
+            int width;
+            int height;
+            if (edge.direction == DIRECTION::TOP){
+                width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
+                int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                int height = toNode.tileList[0]->getHeight();
+                height = height > requiredHeight ? requiredHeight : height;
+                BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
+                BL.y = edge.commonEdge.segStart.y;
+            }
+            else if (edge.direction == DIRECTION::RIGHT){
+                height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
+                int requiredWidth = ceil((double) mMigratingArea / (double) width);
+                int width = toNode.tileList[0]->getWidth();
+                width = width > requiredWidth ? requiredWidth : width;
+                BL.x = edge.commonEdge.segStart.x;
+                BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
+            }
+            else if (edge.direction == DIRECTION::DOWN){
+                width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
+                int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                int height = toNode.tileList[0]->getHeight();
+                height = height > requiredHeight ? requiredHeight : height;
+                BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
+                BL.y = edge.commonEdge.segStart.y - height;
+            }
+            else {
+                height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
+                int requiredWidth = ceil((double) mMigratingArea / (double) width);
+                int width = toNode.tileList[0]->getWidth();
+                width = width > requiredWidth ? requiredWidth : width;
+                BL.x = edge.commonEdge.segStart.x - width;
+                BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
+            }
+
+            Tile newTile(tileType::BLOCK, BL, width, height);
+            newBlock.insert(&newTile);
+
+            LegalInfo oldBlockInfo = getLegalInfo(oldBlock);
+            LegalInfo newBlockInfo = getLegalInfo(newBlock);
+
+            // get util
+            double oldBlockUtil = oldBlockInfo.util;
+            double newBlockUtil = newBlockInfo.util;
+
+            // get aspect ratio with new area
+            double aspectRatio = newBlockInfo.aspectRatio;
+
+            edgeCost += (oldBlockUtil - newBlockUtil) * config.OBUtilWeight +
+                        abs(aspectRatio - 1.0) * config.OBAspWeight; 
+
+            break;
+        }
+
+        case EDGETYPE::WW:
+            edgeCost += config.WWFlatCost;
+            break;
+
+        default:
+            edgeCost += config.maxCostCutoff * 100;
+            break;
+        }
+
+        return edgeCost;
     }
 
-    inline bool inVector(int a, std::vector<int>& vec){
-        for (int b: vec){
-            if (b == a) {
+
+    inline bool inVector(int a, std::vector<DFSLEdge>& vec){
+        for (DFSLEdge& edge: vec){
+            if (edge.fromIndex == a || edge.toIndex == a) {
                 return true;
             }
         }
         return false;
     } 
 
-    void DFSLegalizer::setDefaultConfig(){
-        this->config.maxCostCutoff = 100000.0;
-        this->config.OBAreaWeight = 1000;
-        this->config.OBUtilWeight = 100;
-        this->config.BWUtilWeight = 100;
-        this->config.BBFlatCost = 10000;
-        this->config.WWFlatCost = 10000;
-    }
+    Config::Config(): maxCostCutoff(1000000.0),
+                        OBAreaWeight(1000.0),
+                        OBUtilWeight(500.0),
+                        OBAspWeight(100.0),
+                        BWUtilWeight(1000.0),
+                        BWAspWeight(100.0),
+                        BBFlatCost(1000.0),
+                        WWFlatCost(1000.0) { ; }
 
-    LegalInfo DFSLegalizer::getNodeLegalInfo(int index){
+    LegalInfo DFSLegalizer::getLegalInfo(std::vector<Tile*>& tiles){
         LegalInfo legal;
         int min_x, max_x, min_y, max_y;
         min_x = min_y = INT_MAX;
         max_x = max_y = -INT_MAX;
         legal.actualArea = 0;
-        for (Tile* tile: mAllNodes[index].tileList){
+        for (Tile* tile: tiles){
+            if (tile->getLowerLeft().x < min_x){
+                min_x = tile->getLowerLeft().x;
+            }            
+            if (tile->getLowerLeft().y < min_y){
+                min_y = tile->getLowerLeft().y;
+            }            
+            if (tile->getUpperRight().x > max_x){
+                max_x = tile->getUpperRight().x;
+            }            
+            if (tile->getUpperRight().y < max_y){
+                max_y = tile->getUpperRight().y;
+            }
+            legal.actualArea += tile->getArea();   
+        }
+        legal.width = max_x - min_x;
+        legal.height = max_y - min_y;
+
+        legal.bbArea = legal.width * legal.height; 
+        legal.BL = Cord(min_x, min_y);  
+        legal.aspectRatio = (double) legal.width / (double) legal.height;
+        legal.util = (double) legal.actualArea / (double) legal.bbArea;
+
+        return legal;
+    } 
+
+    LegalInfo DFSLegalizer::getLegalInfo(std::set<Tile*>& tiles){
+        LegalInfo legal;
+        int min_x, max_x, min_y, max_y;
+        min_x = min_y = INT_MAX;
+        max_x = max_y = -INT_MAX;
+        legal.actualArea = 0;
+        for (Tile* tile: tiles){
             if (tile->getLowerLeft().x < min_x){
                 min_x = tile->getLowerLeft().x;
             }            

@@ -110,7 +110,8 @@ int main(int argc, char const *argv[]) {
 
     DFSL::DFSLegalizer dfsl;
     // dfsl.legalize(legaliser);
-    dfsl.initDFSLegalizer(legaliser);
+    // dfsl.initDFSLegalizer(legaliser);
+    // dfsl.legalize();
 
     // Phase 3 Reports
     std::cout << std::endl;
