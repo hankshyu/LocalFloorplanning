@@ -33,13 +33,15 @@ int main(int argc, char const *argv[]) {
     LFLegaliser *legaliser;
     int iteration = 6000;
     double lr = 1. / iteration;
+    
 
     // ! These parameters can be modified to meet your needs
     solver.setPunishment(0.03);
-    solver.setOverlapTolaranceLen(( rgparser.getDieWidth() + rgparser.getDieHeight() ) / 200);
+    double tolaranceLen = ( rgparser.getDieWidth() + rgparser.getDieHeight() ) / 200;
 
     for ( int phase = 1; phase <= 50; phase++ ) {
         solver.setSizeScalar(phase * 0.02);
+        solver.setOverlapTolaranceLen(tolaranceLen * phase * 0.02);
         for ( int i = 0; i < iteration; i++ ) {
             solver.calcGradient();
             solver.gradientDescent(lr);

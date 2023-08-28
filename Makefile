@@ -8,6 +8,7 @@ BOOSTPATH = boost_1_82_0
 
 all: lfrun.out
 debug: lfrun_debug.out
+verify: ./utils/verify.out
 
 # LINKFLAGS = -pedantic -Wall -fomit-frame-pointer -funroll-all-loops -O3
 LINKFLAGS = 
@@ -37,3 +38,8 @@ main_db.o: $(SRCPATH)/main.cpp
 
 clean:
 	rm -rf *.o *.gch *.out
+
+
+
+./utils/verify.out: $(SRCPATH)/verifier.cpp
+	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@

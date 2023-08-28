@@ -44,7 +44,10 @@ public:
     int insertTiles(Tile *tile);
     void splitRectliearDueToOverlap();
 
-    void printCorners(std::ostream& fout);
+    void printCorners(std::ostream &fout);
+
+    // * added by cyuyang
+    bool isLegal();
 
 };
 
