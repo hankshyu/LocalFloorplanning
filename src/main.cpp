@@ -5,7 +5,7 @@
 #include "Tile.h"
 #include "Tessera.h"
 #include "LFLegaliser.h"
-#include "parser.h"
+// #include "parser.h"
 #include "ppsolver.h"
 #include "rgparser.h"
 #include "rgsolver.h"
@@ -28,7 +28,7 @@ int main(int argc, char const *argv[]) {
     monitor.printPhase("Global Floorplanning Phase");
     auto clockCounterbegin = std::chrono::steady_clock::now();
 
-    Parser parser(argv[1]);
+    // Parser parser(argv[1]);
     int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
     int pushScale = 0;
 
@@ -112,7 +112,8 @@ int main(int argc, char const *argv[]) {
     std::cout << std::endl << std::endl;
     monitor.printPhase("Primitive removal/break-down of Overlaps");
 
-    paletteKnife spatula(legaliser);
+    std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
+    paletteKnife spatula(legaliser, &connectionList);
     
     spatula.disperseViaMargin();
     

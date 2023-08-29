@@ -44,15 +44,17 @@ double crust::calCrowdIdx(LFLegaliser *legaliser){
 
 };
 
-cake::cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV): 
+cake::cake(LFLegaliser *legaliser, std::map <std::string, double> mTessFavorDirection, Tile *overlap, int overlapLV): 
         mLegaliser(legaliser), mOverlap(overlap), mOverlapLevel(overlapLV) {
 
     assert(this->mOverlapLevel >= 2);
     assert(this->mOverlapLevel <= 4);
     
     mLegaliser->searchTesseraeIncludeTile(this->mOverlap, this->mMothers);
-
     assert(this->mMothers.size() == this->mOverlapLevel);
+    for(int i = 0; i < mMothers.size(); ++i){
+        mMothersFavorDirection.push_back(mTessFavorDirection[mMothers[i]->getName()]);
+    }
 
 }
 
@@ -111,8 +113,11 @@ void cake::showCake(){
     std::cout << "[C]";
     mOverlap->show(std::cout, true);
     std::cout <<"Mothers:" << std::endl;
-    for(Tessera *tess : mMothers){
-        std::cout << tess->getName() << " " << tess->getBBLowerLeft() << " " << tess->getBBUpperRight() << std::endl;
+    for(int i = 0; i < mMothers.size(); ++i){
+        Tessera *tess = mMothers[i];
+        double fvd = mMothersFavorDirection[i];
+        std::cout << tess->getName() << " " << tess->getBBLowerLeft() << " " << tess->getBBUpperRight() << "FVD = " << fvd << std::endl;
+
     }
     
     std::cout << std::endl << "Surroundings:" << std::endl;

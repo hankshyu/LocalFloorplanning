@@ -92,3 +92,7 @@ PPModule Parser::getModule(int index) {
 ConnStruct Parser::getConnection(int index) {
     return connectionList[index];
 }
+
+std::vector<ConnStruct> Parser::getConnectionList() const{
+    return this->connectionList;
+}

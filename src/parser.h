@@ -38,6 +38,7 @@ public:
     int getConnectionNum();
     PPModule getModule(int index);
     ConnStruct getConnection(int index);
+    std::vector<ConnStruct> getConnectionList() const;
 };
 
 #endif

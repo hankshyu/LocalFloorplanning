@@ -89,3 +89,7 @@ RGModule RGParser::getModule(int index) {
 RGConnStruct RGParser::getConnection(int index) {
     return connectionList[index];
 }
+
+std::vector<RGConnStruct> RGParser::getConnectionList() const{
+    return this->connectionList;
+}

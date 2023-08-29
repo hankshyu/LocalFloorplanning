@@ -4,33 +4,34 @@
 #include <assert.h>
 #include <algorithm>
 
-paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <ConnStruct> *connectionList){
+paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <RGConnStruct> *connectionList){
     this->mLegaliser = legaliser;
     calAllTessFavorDirection(connectionList);
 
 }
 
-void paletteKnife::calAllTessFavorDirection(std::vector <ConnStruct> *connectionList){
+void paletteKnife::calAllTessFavorDirection(std::vector <RGConnStruct> *connectionList){
     for(Tessera *tess : mLegaliser->fixedTesserae){
         //this did not process when direction is absent!
-        double favor = calTessFavorDirection(tess, connectionList);
+        double favor;
+        calTessFavorDirection(tess, connectionList, favor);
         mTessFavorDirection[tess->getName()] = favor;
 
     }
     for(Tessera *tess : mLegaliser->softTesserae){
         //this did not process when direction is absent!
-        double favor = calTessFavorDirection(tess, connectionList);
+        double favor;
         mTessFavorDirection[tess->getName()] = favor;
 
     }
 }
 
-bool paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList, double &direction){
+bool paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <RGConnStruct> *connectionList, double &direction){
     bool metConnections = false;
     double cumulateWeights = 0;
     double favorDirection;
 
-    for(ConnStruct cs : (*connectionList)){
+    for(RGConnStruct cs : (*connectionList)){
         double fromX, fromY;
         double toX, toY;
 
@@ -97,7 +98,8 @@ bool paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <ConnStru
 
     }
 
-    direction = favorDirection;
+    direction = (metConnections)? favorDirection : 127;
+
     return metConnections;
 }
 
@@ -287,16 +289,21 @@ void paletteKnife::disperseViaMargin(){
 
 void paletteKnife::bakeCakesLevel2(){
     for(int i = 0; i < mPaintClusters[2].size(); ++i){
-        cake *ck = new cake(this->mLegaliser, this->mPaintClusters[2][i], 2);
+        cake *ck = new cake(this->mLegaliser, this->mTessFavorDirection, this->mPaintClusters[2][i], 2);
         this->pastriesLevel2.push_back(ck);
     }
     for(cake* cak : pastriesLevel2){
         cak->collectCrusts(mLegaliser);
     }
 
+    //interate through map
+    for(auto item : this->mTessFavorDirection){
+        std::cout << item.first << " --> " << item.second << std::endl;
+    }
     // for visualisation
     for(cake *cak : pastriesLevel2){
         cak->showCake();
+        std::cout << "--------------------------------" << std::endl << std::endl;
     }
 }
 

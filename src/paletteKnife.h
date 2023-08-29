@@ -13,16 +13,17 @@ private:
     LFLegaliser *mLegaliser;
     
     std::vector <Tile *> mPaintClusters[5];
+    // maps the Tessera's favor direction, range from -PI ~ PI, if == 127, no connection is present.
     std::map <std::string, double> mTessFavorDirection;
 
     
     // this fills mTessFavorDirection with input connectionList
-    void calAllTessFavorDirection(std::vector <ConnStruct> *connectionList);
-    bool calTessFavorDirection(Tessera *tessera, std::vector <ConnStruct> *connectionList, double &direction);
+    void calAllTessFavorDirection(std::vector <RGConnStruct> *connectionList);
+    bool calTessFavorDirection(Tessera *tessera, std::vector <RGConnStruct> *connectionList, double &direction);
 
 public:
     paletteKnife() = delete;
-    paletteKnife(LFLegaliser *legaliser, std::vector <ConnStruct> *connectionList);
+    paletteKnife(LFLegaliser *legaliser, std::vector <RGConnStruct> *connectionList);
     ~paletteKnife();
     
     std::vector <cake *> pastriesLevel2;

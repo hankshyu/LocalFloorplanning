@@ -38,6 +38,8 @@ public:
     int getConnectionNum();
     RGModule getModule(int index);
     RGConnStruct getConnection(int index);
+    std::vector<RGConnStruct> getConnectionList() const;
+
 };
 
 #endif

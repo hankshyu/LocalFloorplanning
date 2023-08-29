@@ -1,10 +1,11 @@
 #ifndef __CAKE_H__
 #define __CAKE_H__
 
-#include <vector>
 #include "Tile.h"
 #include "Tessera.h"
 #include "LFLegaliser.h"
+#include <vector>
+#include <map>
 
 
 struct crust{
@@ -35,7 +36,7 @@ public:
     std::vector <crust *> surroundings[4];
 
     cake() = delete;
-    cake(LFLegaliser *legaliser, Tile *overlap, int overlapLV);
+    cake(LFLegaliser *legaliser, std::map <std::string, double> mTessFavorDirection, Tile *overlap, int overlapLV);
     ~cake();
 
     void showCake();
