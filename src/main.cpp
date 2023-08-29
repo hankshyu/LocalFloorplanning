@@ -106,18 +106,20 @@ int main(int argc, char const *argv[]) {
     legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
 
-    /* Phase 3: Overlap distribution via Network Flow */
+    /* Phase 3: Overlap distribution via DFS */
     std::cout << std::endl << std::endl;
     monitor.printPhase("Overlap distribution");
 
     DFSL::DFSLegalizer dfsl;
-    // dfsl.legalize(legaliser);
-    // dfsl.initDFSLegalizer(legaliser);
-    // dfsl.legalize();
+    dfsl.initDFSLegalizer(legaliser);
+    dfsl.legalize();
+    std::cout << "DSFL DONE\n";
+
+    legaliser->visualiseArtpiece("outputs/legal.txt", true);
 
     // Phase 3 Reports
-    std::cout << std::endl;
-    monitor.printPhaseReport();
+    // std::cout << std::endl;
+    // monitor.printPhaseReport();
 
     /* Phase 4: Physical Overlap distribution */
     // std::cout << std::endl << std::endl;

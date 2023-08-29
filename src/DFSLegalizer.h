@@ -10,7 +10,7 @@
 namespace DFSL {
 
 #define UTIL_RULE 0.8
-#define ASPECT_RATIO_RULE 2 
+#define ASPECT_RATIO_RULE 2.0 
 
 struct DFSLNode;
 struct DFSLEdge;
@@ -41,7 +41,7 @@ struct Config {
 class DFSLegalizer{
 private:
     std::vector<DFSLNode> mAllNodes;
-    int mBestCost;
+    double mBestCost;
     int mMigratingArea;
     std::vector<DFSLEdge> mBestPath;
     std::vector<DFSLEdge> mCurrentPath;
@@ -54,17 +54,17 @@ private:
     int mBlankNum;
     
     bool migrateOverlap(int overlapIndex);
-    void dfs(DFSLEdge edge, int currentCost);
-    int getEdgeCost(DFSLEdge edge);
+    void dfs(DFSLEdge edge, double currentCost);
+    double getEdgeCost(DFSLEdge edge);
     void addOverlapInfo(Tile* tile);
     void addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2);
     std::string toOverlapName(int tessIndex1, int tessIndex2);
     void DFSLTraverseBlank(Tile* tile, std::vector <Cord> &record);
     void findEdge(int fromIndex, int toIndex);
-    void getTessNeighbors(int nodeId, std::set<int> allNeighbors);
+    void getTessNeighbors(int nodeId, std::set<int>& allNeighbors);
     LegalInfo getLegalInfo(std::vector<Tile*>& tiles); 
     LegalInfo getLegalInfo(std::set<Tile*>& tiles); 
-    void addBlockNode(Tessera* tess);
+    void addBlockNode(Tessera* tess, bool isFixed);
 public:
     DFSLegalizer();
     ~DFSLegalizer();
