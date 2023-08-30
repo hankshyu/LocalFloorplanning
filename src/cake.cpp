@@ -2,9 +2,9 @@
 #include "cake.h"
 #include "tensor.h"
 
-crust::crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY): tile(t), ratingIdx(-1) {
+crust::crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY): tile(t), crowdIdx(-1), ratingIdx(-1) {
     this->direction = calDirection(tessCentreX, tessCentreY);
-    this->crowdIdx = calRawCrowdIdx(legaliser);
+    // this->crowdIdx = calRawCrowdIdx(legaliser);
 };
 
 double crust::calDirection(double tessCentreX, double tessCentreY){
@@ -15,34 +15,34 @@ double crust::calDirection(double tessCentreX, double tessCentreY){
     return tns::calVectorAngle(tessCentreX, tessCentreY, tileCentreX, tileCentreY);
 };
 
-double crust::calRawCrowdIdx(LFLegaliser *legaliser){
-    double NeighborsOverlapArea = 0;
+// double crust::calRawCrowdIdx(LFLegaliser *legaliser){
+//     double NeighborsOverlapArea = 0;
 
-    std::vector <Tile *> neighbors;
-    legaliser->findAllNeighbors(this->tile, neighbors);
+//     std::vector <Tile *> neighbors;
+//     legaliser->findAllNeighbors(this->tile, neighbors);
     
-    std::vector <Tessera *> surroundingTess;
-    for(Tile *nb : neighbors){
-        if(nb->getType() != tileType::BLANK){
-            std::vector<Tessera *> inTess;
-            legaliser->searchTesseraeIncludeTile(nb, inTess);
-            for(Tessera* t : inTess){
-                if(!checkVectorInclude(surroundingTess, t)){
-                    surroundingTess.push_back(t);
-                }
-            }
-        }
-    }
+//     std::vector <Tessera *> surroundingTess;
+//     for(Tile *nb : neighbors){
+//         if(nb->getType() != tileType::BLANK){
+//             std::vector<Tessera *> inTess;
+//             legaliser->searchTesseraeIncludeTile(nb, inTess);
+//             for(Tessera* t : inTess){
+//                 if(!checkVectorInclude(surroundingTess, t)){
+//                     surroundingTess.push_back(t);
+//                 }
+//             }
+//         }
+//     }
 
-    for(Tessera *nbTess : surroundingTess){
-        for(Tile *t : nbTess->OverlapArr){
-            NeighborsOverlapArea += (double)(t->getArea());
-        }
-    }
+//     for(Tessera *nbTess : surroundingTess){
+//         for(Tile *t : nbTess->OverlapArr){
+//             NeighborsOverlapArea += (double)(t->getArea());
+//         }
+//     }
 
-    return NeighborsOverlapArea;
+//     return NeighborsOverlapArea;
 
-};
+// };
 
 cake::cake(LFLegaliser *legaliser, std::map <std::string, double> mTessFavorDirection, Tile *overlap, int overlapLV): 
         mLegaliser(legaliser), mOverlap(overlap), mOverlapLevel(overlapLV), mDifficultyIdx(-1) {

@@ -329,6 +329,36 @@ void paletteKnife::eatCakesLevel2(){
             if(onPlate->mMothers[i]->getType() == tesseraType::SOFT){
                 for(crust *cand : onPlate->surroundings[i]){
                     double realAngle = tns::calIncludeAngle(onPlate->mMothersFavorDirection[i], cand->direction);
+
+                    // calculate CrowdIdx for each crust
+                    double NeighborsOverlapArea = 0;
+
+                    std::vector <Tile *> neighbors;
+                    mLegaliser->findAllNeighbors(cand->tile, neighbors);
+                    
+                    std::vector <Tessera *> surroundingTess;
+                    for(Tile *nb : neighbors){
+                        if(nb->getType() != tileType::BLANK){
+                            std::vector<Tessera *> inTess;
+                            mLegaliser->searchTesseraeIncludeTile(nb, inTess);
+                            for(Tessera* t : inTess){
+                                if(!checkVectorInclude(surroundingTess, t)){
+                                    surroundingTess.push_back(t);
+                                }
+                            }
+                        }
+                    }
+
+                    for(Tessera *nbTess : surroundingTess){
+                        for(Tile *t : nbTess->OverlapArr){
+                            if((*t) == (*(cand->tile))){
+                                continue;
+                            }
+                            NeighborsOverlapArea += (double)(t->getArea());
+                        }
+                    }
+                    cand->crowdIdx = NeighborsOverlapArea / (double) (cand->tile->getArea());
+
                     cand->ratingIdx = (DIRECTION_COEFF * realAngle) + (CROWD_COEFF * cand->crowdIdx);
                     priorityCrust.push_back(cand);
                 }
