@@ -16,6 +16,7 @@ public:
     double direction;
     double crowdIdx;
     double ratingIdx;
+    Tessera *assignedTessera;
     
     crust() = delete;
     crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY);

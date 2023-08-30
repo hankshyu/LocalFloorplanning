@@ -322,12 +322,39 @@ void paletteKnife::eatCakesLevel2(){
             continue;
         }
 
-        // update the ratign of each crust and sort them
-        std::vector<crust *> priorityCrust;
+        // Find the soft tesseras that would interact in the below distribution process
+        std::vector <int> availTessIndexes;
         for(int i = 0; i < onPlate->mMothers.size(); ++i){
-            assert(onPlate->mMothers[i]->getType() != tesseraType::EMPTY);
             if(onPlate->mMothers[i]->getType() == tesseraType::SOFT){
+                availTessIndexes.push_back(i);
+            }
+        }
+        // apply insertion sort to availtessIndexes
+        if(availTessIndexes.size() > 1){
+            int key, j;
+            for(int i = 1; i < availTessIndexes.size(); ++i){
+                key = availTessIndexes[i];
+                j = i - 1;
+                
+                while((j >= 0) && (onPlate->mMothers[availTessIndexes[i]]->getLegalArea() < onPlate->mMothers[availTessIndexes[j]]->getLegalArea())){
+                    availTessIndexes[j+1] = availTessIndexes[j];
+                    j--;
+                }
+                availTessIndexes[j+1] = key;
+            }
+        }
+
+        std::cout << "showTessIndexes: " << std::endl;
+        for(int i = 0; i < availTessIndexes.size(); ++i){
+            std::cout << "Index = " << availTessIndexes[i] << ", Area = " << onPlate->mMothers[availTessIndexes[i]]->getLegalArea() << std::endl;
+        }
+
+        for(int rounds = 0; rounds < availTessIndexes.size(); ++rounds){
+            //each round would unlock
+            std::vector <crust *> priorityCrust;
+            for(int i = rounds; i >=0; --i){
                 for(crust *cand : onPlate->surroundings[i]){
+
                     double realAngle = tns::calIncludeAngle(onPlate->mMothersFavorDirection[i], cand->direction);
 
                     // calculate CrowdIdx for each crust
@@ -360,21 +387,24 @@ void paletteKnife::eatCakesLevel2(){
                     cand->crowdIdx = NeighborsOverlapArea / (double) (cand->tile->getArea());
 
                     cand->ratingIdx = (DIRECTION_COEFF * realAngle) + (CROWD_COEFF * cand->crowdIdx);
+
+                    cand->assignedTessera = onPlate->mMothers[availTessIndexes[i]];
                     priorityCrust.push_back(cand);
                 }
             }
-        }
 
-        std::sort(priorityCrust.begin(), priorityCrust.end(), compareCrusts);
-        std::cout << std::endl << "Printing Priority crust:" << std::endl;
-        for(int i = 0; i < priorityCrust.size(); ++i){
-            crust *c = priorityCrust[i];
-            std::cout << "(cr)";
-            c->tile->show(std::cout, false);
-            std::cout << ", Direction: " << c->direction << ", crowdIdx: " << c->crowdIdx << ", rating = " << c->ratingIdx <<std::endl;
+            std::sort(priorityCrust.begin(), priorityCrust.end(), compareCrusts);
+            // from now on the priority Crust includes all crusts available in this
+            
+            std::cout << std::endl << "Printing Priority crust:" << std::endl;
+            for(int i = 0; i < priorityCrust.size(); ++i){
+                crust *c = priorityCrust[i];
+                std::cout << "(cr)";
+                c->tile->show(std::cout, false);
+                std::cout << ", Direction: " << c->direction << ", crowdIdx: " << c->crowdIdx << ", rating = " << c->ratingIdx;
+                std::cout << ", assignedTess: " << c->assignedTessera->getName() << std::endl;
+            }
         }
-
-        break;
 
     }
     

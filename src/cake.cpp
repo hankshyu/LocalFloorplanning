@@ -2,7 +2,7 @@
 #include "cake.h"
 #include "tensor.h"
 
-crust::crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY): tile(t), crowdIdx(-1), ratingIdx(-1) {
+crust::crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY): tile(t), crowdIdx(-1), ratingIdx(-1), assignedTessera(nullptr) {
     this->direction = calDirection(tessCentreX, tessCentreY);
     // this->crowdIdx = calRawCrowdIdx(legaliser);
 };
