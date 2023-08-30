@@ -21,7 +21,7 @@ public:
     crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY);
 private:
     double calDirection(double tessCentreX, double tessCentreY);
-    double calCrowdIdx(LFLegaliser *legaliser);
+    // double calRawCrowdIdx(LFLegaliser *legaliser);
 };
 
 class cake{

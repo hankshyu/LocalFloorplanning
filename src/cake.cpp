@@ -4,7 +4,7 @@
 
 crust::crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY): tile(t), ratingIdx(-1) {
     this->direction = calDirection(tessCentreX, tessCentreY);
-    this->crowdIdx = calCrowdIdx(legaliser);
+    this->crowdIdx = calRawCrowdIdx(legaliser);
 };
 
 double crust::calDirection(double tessCentreX, double tessCentreY){
@@ -15,7 +15,7 @@ double crust::calDirection(double tessCentreX, double tessCentreY){
     return tns::calVectorAngle(tessCentreX, tessCentreY, tileCentreX, tileCentreY);
 };
 
-double crust::calCrowdIdx(LFLegaliser *legaliser){
+double crust::calRawCrowdIdx(LFLegaliser *legaliser){
     double NeighborsOverlapArea = 0;
 
     std::vector <Tile *> neighbors;
@@ -40,7 +40,7 @@ double crust::calCrowdIdx(LFLegaliser *legaliser){
         }
     }
 
-    return NeighborsOverlapArea / (double)(this->tile->getArea());
+    return NeighborsOverlapArea;
 
 };
 
