@@ -325,18 +325,27 @@ namespace DFSL {
 
         // construct edge in graph
         DFSLEdge newEdge;
-        newEdge.commonEdge = bestTangent[0];
-        if (bestDirection == 0){
-            newEdge.direction = DIRECTION::TOP;
-        } 
-        else if (bestDirection == 1){
-            newEdge.direction = DIRECTION::RIGHT;
-        }
-        else if (bestDirection == 2){
-            newEdge.direction = DIRECTION::DOWN;
+        if (bestTangent.size() == 0){
+            Segment dummySeg;
+            dummySeg.segStart = Cord(-1,-1);
+            dummySeg.segEnd = Cord(-1,-1);
+            newEdge.commonEdge = dummySeg;
+            newEdge.direction = DIRECTION::NONE;
         }
         else {
-            newEdge.direction = DIRECTION::LEFT;
+            newEdge.commonEdge = bestTangent[0];
+            if (bestDirection == 0){
+                newEdge.direction = DIRECTION::TOP;
+            } 
+            else if (bestDirection == 1){
+                newEdge.direction = DIRECTION::RIGHT;
+            }
+            else if (bestDirection == 2){
+                newEdge.direction = DIRECTION::DOWN;
+            }
+            else {
+                newEdge.direction = DIRECTION::LEFT;
+            }
         }
         newEdge.fromIndex = fromIndex;
         newEdge.toIndex = toIndex; 
@@ -454,8 +463,11 @@ namespace DFSL {
                 case DIRECTION::DOWN:
                     direction = "below";
                     break;
-                default:
+                case DIRECTION::LEFT:
                     direction = "left of";
+                    break;
+                default:
+                    direction = "error";
                     break;
                 }
                 std::cout << "-> Whitespace " << direction << ' ' << mAllNodes[edge.fromIndex].nodeName 
@@ -555,12 +567,16 @@ namespace DFSL {
                     BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
                     BL.y = edge.commonEdge.segStart.y - height;
                 }
-                else {
+                else if (edge.direction == DIRECTION::LEFT){
                     height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
                     int requiredWidth = ceil((double) mMigratingArea / (double) height);
                     width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
                     BL.x = edge.commonEdge.segStart.x - width;
                     BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
+                }
+                else {
+                    std::cout << "[DFSL] ERROR: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
+                    return false;
                 }
 
                 resolvableArea = width * height;
@@ -741,12 +757,16 @@ namespace DFSL {
                 BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
                 BL.y = edge.commonEdge.segStart.y - height;
             }
-            else {
+            else if (edge.direction == DIRECTION::LEFT) {
                 height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
                 int requiredWidth = ceil((double) mMigratingArea / (double) height);
                 width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
                 BL.x = edge.commonEdge.segStart.x - width;
                 BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
+            }
+            else {
+                std::cout << "[DFSL] ERROR: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
+                return (double) INT_MAX;
             }
 
             Tile newTile(tileType::BLOCK, BL, width, height);

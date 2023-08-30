@@ -21,7 +21,7 @@ struct Config;
 
 enum class DFSLTessType : unsigned char { OVERLAP, FIXED, SOFT, BLANK };
 
-enum class DIRECTION : unsigned char { TOP, RIGHT, DOWN, LEFT };
+enum class DIRECTION : unsigned char { TOP, RIGHT, DOWN, LEFT, NONE };
 
 enum class RESULT : unsigned char { SUCCESS, OVERLAP_NOT_RESOLVED, CONSTRAINT_FAIL };
 
