@@ -38,9 +38,11 @@ public:
     // primitive tile reduction via margin of circle to square. shall be called only once.
     void disperseViaMargin();
 
-    void bakeCakesLevel2();
     void eatCakesLevel2();
 
 };
 
 #endif // __PALETTEKNIFE_H__
+
+bool compareCakes(cake *c1, cake *c2);
+bool compareCrusts(crust *c1, crust *c2);

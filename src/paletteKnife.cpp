@@ -1,8 +1,9 @@
+#include <assert.h>
+#include <algorithm>
+#include <string>
 #include "paletteKnife.h"
 #include "Tessera.h"
 #include "tensor.h"
-#include <assert.h>
-#include <algorithm>
 
 paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <RGConnStruct> *connectionList){
     this->mLegaliser = legaliser;
@@ -21,6 +22,7 @@ void paletteKnife::calAllTessFavorDirection(std::vector <RGConnStruct> *connecti
     for(Tessera *tess : mLegaliser->softTesserae){
         //this did not process when direction is absent!
         double favor;
+        calTessFavorDirection(tess, connectionList, favor);
         mTessFavorDirection[tess->getName()] = favor;
 
     }
@@ -287,29 +289,73 @@ void paletteKnife::disperseViaMargin(){
 
 }
 
-void paletteKnife::bakeCakesLevel2(){
-    for(int i = 0; i < mPaintClusters[2].size(); ++i){
-        cake *ck = new cake(this->mLegaliser, this->mTessFavorDirection, this->mPaintClusters[2][i], 2);
-        this->pastriesLevel2.push_back(ck);
-    }
-    for(cake* cak : pastriesLevel2){
-        cak->collectCrusts(mLegaliser);
-    }
+void paletteKnife::eatCakesLevel2(){
+    std::vector <Cord> burntCake;
+    while(burntCake.size() != mPaintClusters[2].size()){
+        bool swallowCake = false;
+        for(int i = 0; i < mPaintClusters[2].size(); ++i){
+            cake *ck = new cake(this->mLegaliser, this->mTessFavorDirection, this->mPaintClusters[2][i], 2);
+            this->pastriesLevel2.push_back(ck);
+        }
+        for(cake* cak : pastriesLevel2){
+            cak->collectCrusts(mLegaliser);
+        }
+        std::sort(pastriesLevel2.begin(), pastriesLevel2.end(), compareCakes);
+        // for visualisation
+        // for(cake *cak : pastriesLevel2){
+        //     cak->showCake();
+        //     std::cout << "--------------------------------" << std::endl << std::endl;
+        // }
+        
+        int plateIdx = 0;
+        cake *onPlate = pastriesLevel2[plateIdx];
+        while(checkVectorInclude(burntCake, onPlate->getOverlapTile()->getLowerLeft())){
+            plateIdx++;
+            onPlate = pastriesLevel2[plateIdx];
+        }
+        // cake onPlate is the target for us to solve this round, either eat it, or put into burntCake
+        onPlate->showCake();
+        if(onPlate->getDifficultyIdx() < 1.0){
+            // this is unsolvable, put into burntCake directly and start next cycle
+            burntCake.push_back(onPlate->getOverlapTile()->getLowerLeft());
+            std::cout << "Put into burntCake..." << std::endl;
+            continue;
+        }
 
-    //interate through map
-    for(auto item : this->mTessFavorDirection){
-        std::cout << item.first << " --> " << item.second << std::endl;
+        // update the ratign of each crust and sort them
+        std::vector<crust *> priorityCrust;
+        for(int i = 0; i < onPlate->mMothers.size(); ++i){
+            assert(onPlate->mMothers[i]->getType() != tesseraType::EMPTY);
+            if(onPlate->mMothers[i]->getType() == tesseraType::SOFT){
+                for(crust *cand : onPlate->surroundings[i]){
+                    double realAngle = tns::calIncludeAngle(onPlate->mMothersFavorDirection[i], cand->direction);
+                    cand->ratingIdx = (DIRECTION_COEFF * realAngle) + (CROWD_COEFF * cand->crowdIdx);
+                    priorityCrust.push_back(cand);
+                }
+            }
+        }
+
+        std::sort(priorityCrust.begin(), priorityCrust.end(), compareCrusts);
+        std::cout << std::endl << "Printing Priority crust:" << std::endl;
+        for(int i = 0; i < priorityCrust.size(); ++i){
+            crust *c = priorityCrust[i];
+            std::cout << "(cr)";
+            c->tile->show(std::cout, false);
+            std::cout << ", Direction: " << c->direction << ", crowdIdx: " << c->crowdIdx << ", rating = " << c->ratingIdx <<std::endl;
+        }
+
+        break;
+
     }
-    // for visualisation
-    for(cake *cak : pastriesLevel2){
-        cak->showCake();
-        std::cout << "--------------------------------" << std::endl << std::endl;
-    }
+    
+
+
 }
 
+bool compareCakes(cake *c1, cake *c2){
+    return c1->getDifficultyIdx() < c2->getDifficultyIdx();
+}
 
-
-void paletteKnife::eatCakesLevel2(){
-    //TODO true solution stage
-    return;
+bool compareCrusts(crust *c1, crust *c2){
+    return c1->ratingIdx < c2->ratingIdx;
 }

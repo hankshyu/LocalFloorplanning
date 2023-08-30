@@ -7,12 +7,15 @@
 #include <vector>
 #include <map>
 
+const double DIRECTION_COEFF = 2/M_PI;
+const double CROWD_COEFF = 1.0/3.0;
 
 struct crust{
 public:
     Tile *tile;
     double direction;
     double crowdIdx;
+    double ratingIdx;
     
     crust() = delete;
     crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY);
@@ -25,19 +28,24 @@ class cake{
 private:
     LFLegaliser *mLegaliser;
     Tile *mOverlap;
-    std::vector <Tessera *> mMothers;
-    std::vector <double> mMothersFavorDirection;
+
     int mOverlapLevel;
-    double cakeFavorDirection;
+
+    // spare Area/ overlap
+    double mDifficultyIdx;
 
 public:
-
+    std::vector <Tessera *> mMothers;
+    std::vector <double> mMothersFavorDirection;
     //Index is the same with mMothers
     std::vector <crust *> surroundings[4];
 
     cake() = delete;
     cake(LFLegaliser *legaliser, std::map <std::string, double> mTessFavorDirection, Tile *overlap, int overlapLV);
     ~cake();
+
+    double getDifficultyIdx() const;
+    Tile *getOverlapTile() const;
 
     void showCake();
 

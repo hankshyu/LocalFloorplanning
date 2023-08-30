@@ -2,7 +2,7 @@
 #include "cake.h"
 #include "tensor.h"
 
-crust::crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY): tile(t) {
+crust::crust(LFLegaliser *legaliser, Tile *t, double tessCentreX, double tessCentreY): tile(t), ratingIdx(-1) {
     this->direction = calDirection(tessCentreX, tessCentreY);
     this->crowdIdx = calCrowdIdx(legaliser);
 };
@@ -45,7 +45,7 @@ double crust::calCrowdIdx(LFLegaliser *legaliser){
 };
 
 cake::cake(LFLegaliser *legaliser, std::map <std::string, double> mTessFavorDirection, Tile *overlap, int overlapLV): 
-        mLegaliser(legaliser), mOverlap(overlap), mOverlapLevel(overlapLV) {
+        mLegaliser(legaliser), mOverlap(overlap), mOverlapLevel(overlapLV), mDifficultyIdx(-1) {
 
     assert(this->mOverlapLevel >= 2);
     assert(this->mOverlapLevel <= 4);
@@ -64,6 +64,14 @@ cake::~cake(){
             delete(c);
         }
     }
+}
+
+double cake::getDifficultyIdx() const{
+    return this->mDifficultyIdx;
+}
+
+Tile *cake::getOverlapTile() const{
+    return this->mOverlap;
 }
 
 void cake::collectCrusts(LFLegaliser *legaliser){
@@ -107,16 +115,33 @@ void cake::collectCrusts(LFLegaliser *legaliser){
         }
     }
 
+    // update the mDifficultyIdx for each cake
+    double availBlanks = 0;
+    for(int i = 0; i < mMothers.size(); ++i){
+        
+        Tessera *tess = mMothers[i];
+        // fixed blocks could not be distributed
+        if(tess->getType() == tesseraType::SOFT){
+            for(crust *cst : surroundings[i]){
+                availBlanks += cst->tile->getArea();
+            }
+        }
+    }
+    this->mDifficultyIdx = availBlanks / this->mOverlap->getArea();
+
+
 }
 
 void cake::showCake(){
     std::cout << "[C]";
-    mOverlap->show(std::cout, true);
+    mOverlap->show(std::cout, false);
+    std::cout << ", Difficulty = " << mDifficultyIdx << std::endl;
     std::cout <<"Mothers:" << std::endl;
     for(int i = 0; i < mMothers.size(); ++i){
         Tessera *tess = mMothers[i];
         double fvd = mMothersFavorDirection[i];
-        std::cout << tess->getName() << " " << tess->getBBLowerLeft() << " " << tess->getBBUpperRight() << "FVD = " << fvd << std::endl;
+        std::cout << tess->getName() << " " << tess->getBBLowerLeft() << " " << tess->getBBUpperRight();
+        std::cout << ", FVD = " << fvd << std::endl;
 
     }
     
@@ -126,7 +151,7 @@ void cake::showCake(){
         for(crust *c : surroundings[i]){
             std::cout << "(cr)";
             c->tile->show(std::cout, false);
-            std::cout << ", Direction: " << c->direction << ", crowdIdx: " << c->crowdIdx << std::endl;
+            std::cout << ", Direction: " << c->direction << ", crowdIdx: " << c->crowdIdx << ", rating = " << c->ratingIdx <<std::endl;
         }
     }
 }
