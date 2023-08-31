@@ -394,7 +394,7 @@ void paletteKnife::eatCakesLevel2(){
             }
 
             std::sort(priorityCrust.begin(), priorityCrust.end(), compareCrusts);
-            // from now on the priority Crust includes all crusts available in this
+            // from now on the priority Crust includes all crusts available in this 
             
             std::cout << std::endl << "Printing Priority crust:" << std::endl;
             for(int i = 0; i < priorityCrust.size(); ++i){
@@ -404,12 +404,227 @@ void paletteKnife::eatCakesLevel2(){
                 std::cout << ", Direction: " << c->direction << ", crowdIdx: " << c->crowdIdx << ", rating = " << c->ratingIdx;
                 std::cout << ", assignedTess: " << c->assignedTessera->getName() << std::endl;
             }
+
+            //Start by using Water-Jar strategy
+            area_t leftToDistributeArea = onPlate->getOverlapTile()->getArea();
+            std::vector <Tessera *> jarcheckLegal;
+            std::vector <Tile *> jarcheckLegalTiles;
+            for(int crustIdx = 0; crustIdx < priorityCrust.size(); ++crustIdx){
+                if(priorityCrust[crustIdx]->tile->getArea() < leftToDistributeArea){
+                    // We need the entire tile
+                    Tessera *verifyTess;
+                    int verifyTessIdx = findVectorIncludebyName(jarcheckLegal, priorityCrust[crustIdx]->assignedTessera);
+                    if(verifyTessIdx != -1){
+                        // already exist the tessera
+                        verifyTess = jarcheckLegal[verifyTessIdx];
+
+                    }else{
+                        Tessera *newTess = new Tessera(*(priorityCrust[crustIdx]->assignedTessera));
+                        //remove the overlap tile
+                        int rmIdx;
+                        for(int i = 0; i < newTess->OverlapArr.size(); ++i){
+                            if(newTess->OverlapArr[i]->getLowerLeft() == onPlate->getOverlapTile()->getLowerLeft()){
+                                rmIdx = i;
+                                break;
+                            }
+                        }
+                        newTess->OverlapArr.erase(newTess->OverlapArr.begin() + rmIdx);
+                        jarcheckLegal.push_back(newTess);
+                        verifyTess = newTess;
+                    }
+                    Tile *distributedTile = new Tile(tileType::BLOCK, priorityCrust[crustIdx]->tile->getLowerLeft(), 
+                                                priorityCrust[crustIdx]->tile->getWidth(), priorityCrust[crustIdx]->tile->getHeight());
+                    jarcheckLegalTiles.push_back(distributedTile);
+                    verifyTess->TileArr.push_back(distributedTile);
+                }else{
+                    // This one single Tile could do the job
+                    
+                    // check the direction of the cake
+                    Tile *connectedTile;
+                    Cord fitcord;
+                    len_t leftDownFitBorder, rightTopFitBorder;
+
+                    int location = locateTileTesseraDirection(priorityCrust[crustIdx]->assignedTessera ,priorityCrust[crustIdx]->tile
+                                                                , connectedTile, leftDownFitBorder, rightTopFitBorder, fitcord);
+                    assert((location >= 1) && (location <= 4));
+
+                    len_t fittestBase = (rightTopFitBorder - leftDownFitBorder);
+
+                    Tile *distributedTile;
+
+                    switch (location){
+                        case 1: // up
+                            bool useFittest = ((fittestBase * priorityCrust[crustIdx]->tile->getWidth()) >= leftToDistributeArea);
+                            if(useFittest){
+
+                                len_t newWidth = fittestBase;
+                                len_t newHeight = leftToDistributeArea/fittestBase;
+                                newHeight = ((newHeight * fittestBase) >= leftToDistributeArea)? newHeight : newHeight + 1;
+                                distributedTile = new Tile(tileType::BLOCK, fitcord, newWidth, newHeight);
+                            }else{
+                                //TODO
+                                len_t newWidth = ...
+                                
+                            }
+                            
+                            break;
+                        case 2: // down
+                            /* code */
+                            break;
+                        case 3: // left
+                            /* code */
+                            break;
+                        case 4: // right
+                            /* code */
+                            break;
+                    }
+
+
+                    
+                    
+                }
+            }
+            
+            for(int i = 0; i < jarcheckLegal.size(); ++i){
+                delete(jarcheckLegal[i]);
+            }
+            for(Tile *t : jarcheckLegalTiles){
+                delete(t);
+            }
+
         }
 
     }
     
+}
+
+int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *connectedTile, len_t &leftDownFitBorder, len_t &rightTopFitBorder,  Cord &fitCord){
+    // if tessera is on top of the tile
+    std::vector<Tile *> topNeighbors;
+    mLegaliser->findTopNeighbors(target, topNeighbors);
+    for(Tile *t : topNeighbors){
+        if(t->getType() != tileType::BLANK){
+
+            int inOverlap = findVectorInclude(tess->OverlapArr, t);
+            int inTile = findVectorInclude(tess->TileArr, t);
+            if((inOverlap != -1) || (inTile != -1)){
+                
+                if(inOverlap != -1){
+                    connectedTile = tess->OverlapArr[inOverlap];
+                }else{ // intile != -1
+                    connectedTile = tess->TileArr[inTile];
+                }
+
+                if(target->getLowerLeft().x > connectedTile->getLowerLeft().x){
+                    leftDownFitBorder = target->getLowerLeft().x;
+                    fitCord = target->getUpperLeft();
+                }else{
+                    leftDownFitBorder = connectedTile->getLowerLeft().x;
+                    fitCord = connectedTile->getLowerLeft();
+                }
+                rightTopFitBorder = std::min(target->getLowerRight().x, connectedTile->getLowerRight().x);
+                return 1;
+            }
+        }
+    }
+
+    // if tessera is below the tile
+    std::vector<Tile *> bottomNeighbors;
+    mLegaliser->findDownNeighbors(target, bottomNeighbors);
+    for(Tile *t : bottomNeighbors){
+        if(t->getType() != tileType::BLANK){
+
+            int inOverlap = findVectorInclude(tess->OverlapArr, t);
+            int inTile = findVectorInclude(tess->TileArr, t);
+            if((inOverlap != -1) || (inTile != -1)){
+                
+                if(inOverlap != -1){
+                    connectedTile = tess->OverlapArr[inOverlap];
+                }else{ // intile != -1
+                    connectedTile = tess->TileArr[inTile];
+                }
+
+                if(target->getLowerLeft().x > connectedTile->getLowerLeft().x){
+                    leftDownFitBorder = target->getLowerLeft().x;
+                    fitCord = Cord(target->getLowerLeft().x, connectedTile->getLowerLeft().y);
+                }else{
+                    leftDownFitBorder = connectedTile->getLowerLeft().x;
+                    fitCord = Cord(connectedTile->getLowerLeft().x, connectedTile->getLowerLeft().y);
+
+                }
+                
+                rightTopFitBorder = std::min(target->getLowerRight().x, connectedTile->getLowerRight().x);
+                return 2;
+            }
+        }
+    }
+
+    // if tessera is at the left of the tile
+    std::vector<Tile *> leftNeighbors;
+    mLegaliser->findLeftNeighbors(target, leftNeighbors);
+    for(Tile *t : leftNeighbors){
+        if(t->getType() != tileType::BLANK){
+
+            int inOverlap = findVectorInclude(tess->OverlapArr, t);
+            int inTile = findVectorInclude(tess->TileArr, t);
+            if((inOverlap != -1) || (inTile != -1)){
+                
+                if(inOverlap != -1){
+                    connectedTile = tess->OverlapArr[inOverlap];
+                }else{ // intile != -1
+                    connectedTile = tess->TileArr[inTile];
+                }
+
+                if(target->getLowerRight().y > connectedTile->getLowerRight().y){
+                    leftDownFitBorder = target->getLowerRight().y;
+                    fitCord = target->getLowerLeft();
+                }else{
+                    leftDownFitBorder = connectedTile->getLowerRight().y;
+                    fitCord = connectedTile->getLowerRight();
+                }
+                
+                rightTopFitBorder = std::min(target->getUpperRight().y, connectedTile->getUpperRight().y);
+                return 3;
+            }
+        }
+    }
+
+    // if tesera is at the right of the tile
+    std::vector<Tile *> rightNeighbors;
+    mLegaliser->findRightNeighbors(target, rightNeighbors);
+    for(Tile *t : rightNeighbors){
+        if(t->getType() != tileType::BLANK){
+
+            int inOverlap = findVectorInclude(tess->OverlapArr, t);
+            int inTile = findVectorInclude(tess->TileArr, t);
+            if((inOverlap != -1) || (inTile != -1)){
+                
+                if(inOverlap != -1){
+                    connectedTile = tess->OverlapArr[inOverlap];
+                }else{ // intile != -1
+                    connectedTile = tess->TileArr[inTile];
+                }
+
+                if(target->getLowerRight().y > connectedTile->getLowerRight().y){
+                    leftDownFitBorder = target->getLowerRight().y;
+                    fitCord = Cord(target->getLowerRight().x, target->getLowerRight().y);
+                }else{
+                    leftDownFitBorder = connectedTile->getLowerRight().y;
+                    fitCord = Cord(target->getLowerRight().x, connectedTile->getLowerRight().y);
+                }
+                
+                rightTopFitBorder = std::min(target->getUpperRight().y, connectedTile->getUpperRight().y);
+                return 3;
+            }
+        }
+    }
 
 
+    // no found, return error codes
+    connectedTile = nullptr;
+    leftDownFitBorder = -1;
+    rightTopFitBorder = -1;
+    return -1;
 }
 
 bool compareCakes(cake *c1, cake *c2){

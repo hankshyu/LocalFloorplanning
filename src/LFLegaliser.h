@@ -99,5 +99,9 @@ public:
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c);
 bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess);
+// return -1 if not found, otherwise index
+int findVectorInclude(std::vector<Tile *>&vec, Tile *t);
+// return -1 if not found, otherwise index
+int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
 
 #endif // __LFLEGALISER_H__

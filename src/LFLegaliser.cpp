@@ -1650,4 +1650,16 @@ bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess){
     return false;
 }
 
+int findVectorInclude(std::vector<Tile *>&vec, Tile *t){
+    for(int i = 0; i < vec.size(); ++i){
+        if((*vec[i]) == (*t)) return i;
+    }
+    return -1;
+}
 
+int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess){
+    for (int i = 0; i < vec.size(); i++){
+        if(vec[i]->getName() == tess->getName()) return i;
+    }
+    return -1;
+}
