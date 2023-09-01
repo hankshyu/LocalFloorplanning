@@ -41,7 +41,7 @@ public:
     void eatCakesLevel2();
 
     //retrun -1 if no contact, tessera is (1, 2, 3, 4) = (up, down, left, right) of the tile
-    int locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *connectedTile, len_t &leftDownFitBorder, len_t &rightTopFitBorder);
+    int locateTileTesseraDirection(Tessera *tess, Tile *target, Tile &connectedTile, len_t &leftDownFitBorder, len_t &rightTopFitBorder);
 
 };
 

@@ -290,14 +290,15 @@ void paletteKnife::disperseViaMargin(){
 }
 
 void paletteKnife::eatCakesLevel2(){
-    //burntCakes records the LL Cord of uncolvable cakes at eatCakesLevel2
+    //burntCakes records the LL Cord of unsolvable cakes at eatCakesLevel2
     std::vector <Cord> burntCake;
+    for(int i = 0; i < mPaintClusters[2].size(); ++i){
+        cake *ck = new cake(this->mLegaliser, this->mTessFavorDirection, this->mPaintClusters[2][i], 2);
+        this->pastriesLevel2.push_back(ck);
+    }
+
     while(burntCake.size() != mPaintClusters[2].size()){
-        bool swallowCake = false;
-        for(int i = 0; i < mPaintClusters[2].size(); ++i){
-            cake *ck = new cake(this->mLegaliser, this->mTessFavorDirection, this->mPaintClusters[2][i], 2);
-            this->pastriesLevel2.push_back(ck);
-        }
+
         for(cake* cak : pastriesLevel2){
             cak->collectCrusts(mLegaliser);
         }
@@ -310,6 +311,7 @@ void paletteKnife::eatCakesLevel2(){
             onPlate = pastriesLevel2[plateIdx];
         }
         // cake onPlate is the target for us to solve this round, either eat it, or put into burntCake
+        std::cout << "This is onPlate for this Round..." << std::endl;
         onPlate->showCake();
         if(onPlate->getDifficultyIdx() < 1.0){
             // this is unsolvable, put into burntCake directly and start next cycle
@@ -412,6 +414,7 @@ void paletteKnife::eatCakesLevel2(){
 
             // Start by using Water-Jar strategy, iterage the priorityCrust vector from begin() to end()
             area_t leftToDistributeArea = onPlate->getOverlapTile()->getArea();
+            std::cout << "ERRRRROR probing" << leftToDistributeArea << std::endl;
             // This is the phony Tesseras to check legality, recycle after use
             std::vector <Tessera *> jarcheckLegal;
             // this is phony tiles created to check legality, recycle after use
@@ -447,7 +450,12 @@ void paletteKnife::eatCakesLevel2(){
                     jarcheckLegalTiles.push_back(distributedTile);
                     verifyTess->TileArr.push_back(distributedTile);
                     leftToDistributeArea -= priorityCrust[crustIdx]->tile->getArea();
+
+                    std::cout << "Put all into Tess" << verifyTess->getName() << " :";
+                    distributedTile->show(std::cout, false);
+                    std::cout << ", leftToDistributeArea = " << leftToDistributeArea << std::endl;
                 }else{
+
                     // this is the phony tessera we would push phony tiles into
                     Tessera *verifyTess;
                     int verifyTessIdx = findVectorIncludebyName(jarcheckLegal, priorityCrust[crustIdx]->assignedTessera);
@@ -470,13 +478,10 @@ void paletteKnife::eatCakesLevel2(){
                         verifyTess = newPhonyTess;
                     }
 
-
-                    
-                    
                     // This one single Tile could do the job, entering thsi section indicates that the round ends
                     
                     // check the direction of the cake
-                    Tile *connectedTile;
+                    Tile connectedTile;
                     len_t leftDownFitBorder, rightTopFitBorder;
 
                     int location = locateTileTesseraDirection(priorityCrust[crustIdx]->assignedTessera ,priorityCrust[crustIdx]->tile,
@@ -484,45 +489,56 @@ void paletteKnife::eatCakesLevel2(){
                     assert((location >= 1) && (location <= 4));
 
                     len_t fittestBase = (rightTopFitBorder - leftDownFitBorder);
-                    assert(fittestBase  > 0);
+                    assert(fittestBase > 0);
 
                     // This is the last phony tile we would insert into the phony tessera
                     Tile *distributedTile;
 
+
+                    std::cout << "location = " << location;
+                    std::cout<< ", (ld, rt) = (" << leftDownFitBorder << ", " << rightTopFitBorder << ")" << std::endl;
+                    std::cout << "connectedTile:";
+
+                    connectedTile.show(std::cout);
+                    std::cout << "locateTileTesseraDirection all set!" << std::endl;
+                    
+
                     switch (location){
-                        case 1: // tessera is on top of the tile
+                        case 1:{ // tessera is on top of the tile
                             bool useFittest = ((fittestBase * priorityCrust[crustIdx]->tile->getHeight()) >= leftToDistributeArea);
                             if(useFittest){
                                 len_t newWidth = fittestBase;
                                 len_t newHeight = leftToDistributeArea/fittestBase;
                                 newHeight = ((newHeight * fittestBase) >= leftToDistributeArea)? newHeight : newHeight + 1;
-                                Cord fitCord = Cord(leftDownFitBorder, connectedTile->getLowerLeft().y);
+                                Cord fitCord = Cord(leftDownFitBorder, connectedTile.getLowerLeft().y);
                                 distributedTile = new Tile(tileType::BLOCK, fitCord, newWidth, newHeight);
                             }else{
                                 // fittest plan would not work, use the entire base to distriute
                                 len_t newWidth = priorityCrust[crustIdx]->tile->getWidth();
                                 len_t newHeight = leftToDistributeArea / newWidth;
                                 newWidth = ((newWidth * newHeight) >= leftToDistributeArea)? newWidth : newWidth + 1;
-                                distributedTile = new Tile(tileType::BLOCK, connectedTile->getLowerLeft(), newWidth, newHeight);
+                                distributedTile = new Tile(tileType::BLOCK, connectedTile.getLowerLeft(), newWidth, newHeight);
                             }
                             break;
-                        case 2: // tessera is under the tile
+                        }
+                        case 2:{ // tessera is under the tile
                             bool useFittest = ((fittestBase * priorityCrust[crustIdx]->tile->getHeight()) >= leftToDistributeArea);
                             if(useFittest){
                                 len_t newWidth = fittestBase;
                                 len_t newHeight = leftToDistributeArea/fittestBase;
                                 newHeight = ((newHeight * fittestBase) >= leftToDistributeArea)? newHeight : newHeight + 1;
-                                Cord fitCord = Cord(leftDownFitBorder, connectedTile->getUpperLeft().y - newHeight);
+                                Cord fitCord = Cord(leftDownFitBorder, connectedTile.getUpperLeft().y - newHeight);
                                 distributedTile = new Tile(tileType::BLOCK, fitCord, newWidth, newHeight);
                             }else{
                                 len_t newWidth = priorityCrust[crustIdx]->tile->getWidth();
                                 len_t newHeight = leftToDistributeArea / newWidth;
                                 newWidth = ((newWidth * newHeight) >= leftToDistributeArea)? newWidth : newWidth + 1;
-                                Cord normCord = Cord(connectedTile->getLowerLeft().x, connectedTile->getUpperRight().y - newHeight);
+                                Cord normCord = Cord(connectedTile.getLowerLeft().x, connectedTile.getUpperRight().y - newHeight);
                                 distributedTile = new Tile(tileType::BLOCK, normCord, newWidth, newHeight);
                             }
                             break;
-                        case 3: // tessera is at the left of the tile
+                        }
+                        case 3:{ // tessera is at the left of the tile
                             bool useFittest = ((fittestBase * priorityCrust[crustIdx]->tile->getWidth()) >= leftToDistributeArea);
                             if(useFittest){
                                 len_t newHeight = fittestBase;
@@ -534,44 +550,56 @@ void paletteKnife::eatCakesLevel2(){
                                 len_t newHeight = priorityCrust[crustIdx]->tile->getHeight();
                                 len_t newWidth = leftToDistributeArea / newHeight;
                                 newWidth = ((newHeight * newWidth) >= leftToDistributeArea) ? newWidth : newWidth + 1;
-                                Cord normCord = Cord(connectedTile->getLowerRight().x - newWidth, connectedTile->getLowerLeft().y);
+                                Cord normCord = Cord(connectedTile.getLowerRight().x - newWidth, connectedTile.getLowerLeft().y);
                                 distributedTile = new Tile(tileType::BLOCK, normCord, newWidth, newHeight);
                             }
 
                             /* code */
                             break;
-                        case 4: // tessera is at the right of the tile
+                        }
+                        case 4:{ // tessera is at the right of the tile
                             bool useFittest = ((fittestBase * priorityCrust[crustIdx]->tile->getWidth()) >= leftToDistributeArea);
                             if(useFittest){
                                 len_t newHeight = fittestBase;
                                 len_t newWidth = leftToDistributeArea / fittestBase;
                                 newWidth = ((newHeight * newWidth) >= leftToDistributeArea) ? newWidth : newWidth + 1;
-                                Cord fitCord = Cord(connectedTile->getLowerLeft().x, leftDownFitBorder);
+                                Cord fitCord = Cord(connectedTile.getLowerLeft().x, leftDownFitBorder);
                                 distributedTile = new Tile(tileType::BLOCK, fitCord, newWidth, newHeight);
                             }else{
                                 len_t newHeight = priorityCrust[crustIdx]->tile->getHeight();
                                 len_t newWidth = leftToDistributeArea / newHeight;
                                 newWidth = ((newHeight * newWidth) >= leftToDistributeArea) ? newWidth : newWidth + 1;
-                                Cord normCord = connectedTile->getLowerRight();
+                                Cord normCord = connectedTile.getLowerRight();
                                 distributedTile = new Tile(tileType::BLOCK, normCord, newWidth, newHeight);
                             }
                             break;
+                        }
                     }
-                    
-                    jarcheckLegalTiles.push_back(distributedTile);
-                    verifyTess->TileArr.push_back(distributedTile);
-                    leftToDistributeArea = 0; // done! just clean to 0
+                    std::cout << "Show distributedTile: "<<std::endl;
+                    distributedTile->show(std::cout);
+                    // jarcheckLegalTiles.push_back(distributedTile);
+                    // verifyTess->TileArr.push_back(distributedTile);
+                    // leftToDistributeArea = 0; // done! just clean to 0
 
-                    //  now the phony tessera has been filled, verify!
-                    break;
+                    // //  now the phony tessera has been filled, verify!
+                    // break;
 
                 }
             }
 
             // now we have selected the tiles to the tessera, start verification
+            bool verifyplan = true;
             for(Tessera *phonyTess : jarcheckLegal){
                 // TODO, start verification
-                phonyTess->isLegal()
+                if(!phonyTess->isLegal()) verifyplan = false;
+            }
+
+            if(verifyplan){
+                // This plan works!
+                std::cout << "Such plan would work!";
+                onPlate->showCake();
+                break;
+
             }
 
 
@@ -585,11 +613,20 @@ void paletteKnife::eatCakesLevel2(){
 
         }
 
+        // Planning session ends here!, onPlate exists no known solution!
+        std::cout << "No known solution to cake is found: ";
+        onPlate->showCake();
+        burntCake.push_back(onPlate->getOverlapTile()->getLowerLeft());
+
+
+        // this is for debug, remove before use
+        std::cout << "Test Exit normally" << std::endl;
+        break;
     }
     
 }
 
-int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *connectedTile, len_t &leftDownFitBorder, len_t &rightTopFitBorder){
+int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile &connectedTile, len_t &leftDownFitBorder, len_t &rightTopFitBorder){
     // if tessera is on top of the tile
     std::vector<Tile *> topNeighbors;
     mLegaliser->findTopNeighbors(target, topNeighbors);
@@ -601,17 +638,17 @@ int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *
             if((inOverlap != -1) || (inTile != -1)){
                 
                 if(inOverlap != -1){
-                    connectedTile = tess->OverlapArr[inOverlap];
+                    connectedTile = *(tess->OverlapArr[inOverlap]);
                 }else{ // intile != -1
-                    connectedTile = tess->TileArr[inTile];
+                    connectedTile = *( tess->TileArr[inTile]);
                 }
 
-                if(target->getLowerLeft().x > connectedTile->getLowerLeft().x){
+                if(target->getLowerLeft().x > connectedTile.getLowerLeft().x){
                     leftDownFitBorder = target->getLowerLeft().x;
                 }else{
-                    leftDownFitBorder = connectedTile->getLowerLeft().x;
+                    leftDownFitBorder = connectedTile.getLowerLeft().x;
                 }
-                rightTopFitBorder = std::min(target->getLowerRight().x, connectedTile->getLowerRight().x);
+                rightTopFitBorder = std::min(target->getLowerRight().x, connectedTile.getLowerRight().x);
                 return 1;
             }
         }
@@ -628,18 +665,18 @@ int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *
             if((inOverlap != -1) || (inTile != -1)){
                 
                 if(inOverlap != -1){
-                    connectedTile = tess->OverlapArr[inOverlap];
+                    connectedTile = *(tess->OverlapArr[inOverlap]);
                 }else{ // intile != -1
-                    connectedTile = tess->TileArr[inTile];
+                    connectedTile = *(tess->TileArr[inTile]);
                 }
 
-                if(target->getLowerLeft().x > connectedTile->getLowerLeft().x){
+                if(target->getLowerLeft().x > connectedTile.getLowerLeft().x){
                     leftDownFitBorder = target->getLowerLeft().x;
                 }else{
-                    leftDownFitBorder = connectedTile->getLowerLeft().x;
+                    leftDownFitBorder = connectedTile.getLowerLeft().x;
                 }
                 
-                rightTopFitBorder = std::min(target->getLowerRight().x, connectedTile->getLowerRight().x);
+                rightTopFitBorder = std::min(target->getLowerRight().x, connectedTile.getLowerRight().x);
                 return 2;
             }
         }
@@ -656,18 +693,18 @@ int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *
             if((inOverlap != -1) || (inTile != -1)){
                 
                 if(inOverlap != -1){
-                    connectedTile = tess->OverlapArr[inOverlap];
+                    connectedTile = *(tess->OverlapArr[inOverlap]);
                 }else{ // intile != -1
-                    connectedTile = tess->TileArr[inTile];
+                    connectedTile = *(tess->TileArr[inTile]);
                 }
 
-                if(target->getLowerRight().y > connectedTile->getLowerRight().y){
+                if(target->getLowerRight().y > connectedTile.getLowerRight().y){
                     leftDownFitBorder = target->getLowerRight().y;
                 }else{
-                    leftDownFitBorder = connectedTile->getLowerRight().y;
+                    leftDownFitBorder = connectedTile.getLowerRight().y;
                 }
                 
-                rightTopFitBorder = std::min(target->getUpperRight().y, connectedTile->getUpperRight().y);
+                rightTopFitBorder = std::min(target->getUpperRight().y, connectedTile.getUpperRight().y);
                 return 3;
             }
         }
@@ -684,18 +721,21 @@ int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *
             if((inOverlap != -1) || (inTile != -1)){
                 
                 if(inOverlap != -1){
-                    connectedTile = tess->OverlapArr[inOverlap];
+                    connectedTile = *(tess->OverlapArr[inOverlap]);
                 }else{ // intile != -1
-                    connectedTile = tess->TileArr[inTile];
+                    connectedTile = *(tess->TileArr[inTile]);
                 }
 
-                if(target->getLowerRight().y > connectedTile->getLowerRight().y){
+                std::cout << "in locateTileTesseraDirection:";
+                connectedTile.show(std::cout);
+
+                if(target->getLowerRight().y > connectedTile.getLowerRight().y){
                     leftDownFitBorder = target->getLowerRight().y;
                 }else{
-                    leftDownFitBorder = connectedTile->getLowerRight().y;
+                    leftDownFitBorder = connectedTile.getLowerRight().y;
                 }
                 
-                rightTopFitBorder = std::min(target->getUpperRight().y, connectedTile->getUpperRight().y);
+                rightTopFitBorder = std::min(target->getUpperRight().y, connectedTile.getUpperRight().y);
                 return 4;
             }
         }
@@ -703,7 +743,6 @@ int paletteKnife::locateTileTesseraDirection(Tessera *tess, Tile *target, Tile *
 
 
     // no found, return error codes
-    connectedTile = nullptr;
     leftDownFitBorder = -1;
     rightTopFitBorder = -1;
     return -1;

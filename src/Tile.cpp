@@ -9,6 +9,10 @@ Tile::Tile(tileType t, Cord LL, len_t w, len_t h)
     : type(t), mLowerLeft(LL), mWidth(w), mHeight(h),
         rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
 
+Tile::Tile(const Tile &other)
+    : type(other.type), mLowerLeft(other.getLowerLeft()), mWidth(other.getWidth()), mHeight(other.getHeight()),
+        rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
+
 void Tile::setType(tileType newType) {
     this->type = newType;
 }
