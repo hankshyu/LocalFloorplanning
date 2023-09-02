@@ -15,7 +15,7 @@ LINKFLAGS =
 
 lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o \
 maxflow.o maxflowLegaliser.o monitor.o rgparser.o rgmodule.o rgsolver.o paletteKnife.o cake.o tensor.o DFSLegalizer.o
-
+	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
 main.o: $(SRCPATH)/main.cpp 

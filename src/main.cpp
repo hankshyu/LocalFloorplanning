@@ -5,14 +5,12 @@
 #include "Tile.h"
 #include "Tessera.h"
 #include "LFLegaliser.h"
-// #include "parser.h"
+#include "parser.h"
 #include "ppsolver.h"
 #include "rgparser.h"
 #include "rgsolver.h"
 #include "DFSLegalizer.h"
 #include "monitor.h"
-#include "paletteKnife.h"
-#include "tensor.h"
 
 int main(int argc, char const *argv[]) {
 
@@ -28,7 +26,7 @@ int main(int argc, char const *argv[]) {
     monitor.printPhase("Global Floorplanning Phase");
     auto clockCounterbegin = std::chrono::steady_clock::now();
 
-    // Parser parser(argv[1]);
+    Parser parser(argv[1]);
     int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
     int pushScale = 0;
 
@@ -109,27 +107,8 @@ int main(int argc, char const *argv[]) {
 
 
     /* Phase 3: Overlap distribution via DFS */
-    // std::cout << std::endl << std::endl;
-    // monitor.printPhase("Primitive removal/break-down of Overlaps");
-
-    // std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
-    // paletteKnife spatula(legaliser, &connectionList);
-    
-    // spatula.disperseViaMargin();
-    
-    // // Phase 3 Reports
-    // std::cout << std::endl;
-    // std::cout << "Overlap Report: " << std::endl;
-    // spatula.collectOverlaps();
-    // spatula.printpaintClusters();
-    // monitor.printPhaseReport();
-    // legaliser->visualiseArtpiece("outputs/phase3.txt", true);
-
-    // /* Phase 4: Solve 2-Overlaps */
-    // std::cout << std::endl << std::endl;
-    // monitor.printPhase("Solve Level-2 Overlaps");
-    // spatula.eatCakesLevel2();
-
+    std::cout << std::endl << std::endl;
+    monitor.printPhase("Overlap distribution");
 
     DFSL::DFSLegalizer dfsl;
     dfsl.initDFSLegalizer(legaliser);
@@ -142,6 +121,14 @@ int main(int argc, char const *argv[]) {
     // std::cout << std::endl;
     // monitor.printPhaseReport();
 
+    /* Phase 4: Physical Overlap distribution */
+    // std::cout << std::endl << std::endl;
+    // monitor.printPhase("Physical Overlap distribution");
+    // std::cout << "4.1 Analyse Overlap distribution tiles" << std::endl;
+    // legaliser->visualiseRemoveAllmark();
 
+    // // Phase 4 Reports
+    // std::cout << std::endl;
+    // monitor.printPhaseReport();
 
 }
