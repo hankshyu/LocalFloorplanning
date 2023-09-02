@@ -1,5 +1,6 @@
 #include "rgmodule.h"
 #include <cmath>
+#include <iostream>
 
 RGModule::RGModule(std::string in_name, double centerX, double centerY, int in_area, bool in_fixed) {
     name = in_name;
@@ -55,4 +56,10 @@ void RGModule::updateCord(int DieWidth, int DieHeight, double sizeScalar) {
     else if ( this->y > DieHeight - this->height ) {
         this->y = DieHeight - this->height;
     }
+
+    this->centerX = this->x + this->width / 2.;
+    this->centerY = this->y + this->height / 2.;
+
+    // std::cout << this->name << " " << this->width << " , " << this->height << std::endl;
+    // std::cout << this->centerX << " , " << this->centerY << std::endl;
 }
