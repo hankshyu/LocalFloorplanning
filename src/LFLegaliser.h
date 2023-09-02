@@ -111,6 +111,7 @@ int findVectorInclude(std::vector<Tile *>&vec, Tile *t);
 int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
 
 double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &connections, bool printReport);
+void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const std::string outputFileName);
 
 struct CPTilePair{
     Tile *father;

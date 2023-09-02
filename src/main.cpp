@@ -129,6 +129,7 @@ int main(int argc, char const *argv[]) {
     // Final Output
     double finalScore = calculateHPWL(legaliser, rgparser.getConnectionList(), true);
     printf("Final Score = %12.6f\n", finalScore);
+    outputFinalAnswer(legaliser, rgparser, argv[2]);
 
     // /* Phase 4: Solve 2-Overlaps */
     // std::cout << std::endl << std::endl;

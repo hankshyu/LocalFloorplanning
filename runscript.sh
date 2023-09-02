@@ -1,6 +1,6 @@
 set -v
-make lfrun.out
-./lfrun.out inputs/$1-input.txt | tee log/$1.log
+make
+./cadd0007 inputs/$1-input.txt answers/$1-output.txt | tee log/$1.log
 # python3 draw_circle_layout.py outputs/ppmoduleResult.txt outputs/ppmodule_$1.png
 python3 utils/draw_rect_layout.py outputs/global_test.txt outputs/global_$1.png
 python3 utils/draw_tile_layout.py outputs/phase1.txt outputs/P1_$1.png

@@ -1867,6 +1867,23 @@ double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &co
 }
 
 
+void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const std::string outputFileName){
+    std::cout << "output Final Answer..." <<outputFileName << std::endl;
+
+    std::ofstream ofs(outputFileName);
+    ofs << "HPWL " << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
+    ofs << "SOFTMODULE " << legaliser->softTesserae.size() << std::endl;
+    for(Tessera *softTess : legaliser->softTesserae){
+        assert(!softTess->TileArr.empty());
+        assert(softTess->OverlapArr.empty());
+        ofs << softTess->getName() << " " << softTess->TileArr.size() << std::endl;
+        softTess->printCorners(ofs);
+    }
+    ofs.close();
+    
+}
+
+
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
     for(auto const &e : vec){
         if(e == c) return true;
