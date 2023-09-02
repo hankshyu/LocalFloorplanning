@@ -91,8 +91,8 @@ void Tessera::calBBCentre(double &CentreX, double &CentreY){
     calBoundingBox();
     Cord LL = getBBLowerLeft();
     Cord UR = getBBUpperRight();
-    CentreX = (LL.x + UR.x)/2;
-    CentreY = (LL.y + UR.y)/2;
+    CentreX = ((double)(LL.x + UR.x))/2;
+    CentreY = ((double)(LL.y + UR.y))/2;
 
 }
 
