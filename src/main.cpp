@@ -26,10 +26,6 @@ int main(int argc, char const *argv[]) {
     monitor.printPhase("Global Floorplanning Phase");
     auto clockCounterbegin = std::chrono::steady_clock::now();
 
-    Parser parser(argv[1]);
-    int pushForceList[8] = { 5, 10, 15, 20, 25, 30, 40, 50 };
-    int pushScale = 0;
-
     LFLegaliser *legaliser;
     int iteration = 20000;
     double lr = 5. / iteration;
@@ -112,9 +108,10 @@ int main(int argc, char const *argv[]) {
     std::cout << std::endl << std::endl;
     monitor.printPhase("Overlap distribution");
 
-    DFSL::DFSLegalizer dfsl;
-    dfsl.initDFSLegalizer(legaliser);
-    dfsl.legalize();
+    DFSL::DFSLegalizer *dfsl;
+    dfsl = new DFSL::DFSLegalizer();
+    dfsl->initDFSLegalizer(legaliser);
+    dfsl->legalize();
     std::cout << "DSFL DONE\n";
 
     legaliser->visualiseArtpiece("outputs/legal.txt", true);
