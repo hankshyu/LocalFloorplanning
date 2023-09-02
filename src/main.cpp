@@ -16,6 +16,53 @@
 
 int main(int argc, char const *argv[]) {
 
+    Tile t1 = Tile(tileType::OVERLAP, Cord(7, 99), 38, 95);
+    t1.OverlapFixedTesseraeIdx.push_back(1);
+    t1.OverlapFixedTesseraeIdx.push_back(3);
+    t1.OverlapFixedTesseraeIdx.push_back(5);
+    t1.OverlapSoftTesseraeIdx.push_back(2);
+    t1.OverlapSoftTesseraeIdx.push_back(4);
+    t1.OverlapSoftTesseraeIdx.push_back(6);
+    Tile *t2 = new Tile(tileType::BLOCK, Cord(34, 12), 14, 42);
+    Tile *t33 = new Tile(tileType::BLOCK, Cord(10, 20), 3, 40);
+    t2->bl = t33;
+    t33->tr = t2;
+    t2->OverlapFixedTesseraeIdx.push_back(11);
+    t2->OverlapFixedTesseraeIdx.push_back(13);
+    t2->OverlapFixedTesseraeIdx.push_back(15);
+    t2->OverlapSoftTesseraeIdx.push_back(12);
+    t2->OverlapSoftTesseraeIdx.push_back(14);
+    t2->OverlapSoftTesseraeIdx.push_back(16);
+
+    std::cout << "t1: " << t1 <<std::endl;
+    t1.showLink(std::cout);
+    std::cout << "t2: " << *t2 <<std::endl;
+    t2->showLink(std::cout);
+    Tile t3(t1);
+    Tile t4 = Tile(*t2);
+    Tile t5 = *t2;
+    Tile *t6 = new Tile(t1);
+
+    std::cout << "t3: " << t3 <<std::endl;
+    t3.showLink(std::cout);
+    std::cout << "t4: " << t4 <<std::endl;
+    t4.showLink(std::cout);
+    std::cout << "t5: " << t5 <<std::endl;
+    t5.showLink(std::cout);
+    std::cout << "t6: " << t6 <<std::endl;
+    t6->showLink(std::cout);
+
+    Tile t7;
+    t7 = t1;
+    std::cout << "t7: " << t7 << std::endl;
+    t7 = *t2;
+    std::cout << "t7: " << t7 << std::endl;
+    t7.showLink(std::cout);
+    delete(t2);
+    std::cout << "t7(delete): " << t7 << std::endl;
+    t7.showLink(std::cout);
+
+    
 
     // RGParser rgparser(argv[1]);
     // RGSolver solver;
