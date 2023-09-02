@@ -36,7 +36,7 @@ int main(int argc, char const *argv[]) {
     solver.setMaxMovement(0.001);
 
     // ! These parameters can be modified to meet your needs
-    solver.setPunishment(0.03);
+    solver.setPunishment(1.);
     // double tolaranceLen = ( rgparser.getDieWidth() + rgparser.getDieHeight() ) / 200;
     double tolaranceLen = 0;
 
