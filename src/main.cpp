@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <cfloat>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
@@ -15,6 +16,7 @@
 #define MAX_ITER 11
 
 int main(int argc, char const *argv[]) {
+
 
     RGParser rgparser(argv[1]);
     RGSolver solver;
@@ -33,6 +35,7 @@ int main(int argc, char const *argv[]) {
 
     mnt::Monitor monitor;
     LFLegaliser *legaliser = nullptr;
+    double bestHpwl = DBL_MAX;
     monitor.printCopyRight();
     for (int iter = 0; iter < MAX_ITER; iter++){
         if (legaliser != nullptr){
@@ -166,8 +169,15 @@ int main(int argc, char const *argv[]) {
                 std::cout << "Restarting process...\n" << std::endl;
             }
             else {
+                double finalScore = calculateHPWL(legaliser, rgparser.getConnectionList(), true);
+                printf("Final Score = %12.6f\n", finalScore);
+                if (finalScore < bestHpwl){
+                    bestHpwl = finalScore;
+                    std::cout << "Best Hpwl found" << std::endl;
+                    outputFinalAnswer(legaliser, rgparser, argv[2]);
+                }
                 legaliser->visualiseArtpiece("outputs/legal.txt", true);
-                break;
+                // break;
             }
         }
         else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
@@ -179,9 +189,20 @@ int main(int argc, char const *argv[]) {
     }
 
 
-    // Phase 3 Reports
-    std::cout << std::endl;
-    monitor.printPhaseReport();
+    // // Phase 3 Reports
+    // std::cout << std::endl;
+    // monitor.printPhaseReport();
+    // legaliser->visualiseArtpiece("outputs/phase3.txt", true);
+
+    // // Final Output
+    // double finalScore = calculateHPWL(legaliser, rgparser.getConnectionList(), true);
+    // printf("Final Score = %12.6f\n", finalScore);
+    // outputFinalAnswer(legaliser, rgparser, argv[2]);
+
+    // /* Phase 4: Solve 2-Overlaps */
+    // std::cout << std::endl << std::endl;
+    // monitor.printPhase("Solve Level-2 Overlaps");
+    // spatula.eatCakesLevel2();
 
     /* Phase 4: Physical Overlap distribution */
     // std::cout << std::endl << std::endl;

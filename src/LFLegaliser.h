@@ -39,6 +39,7 @@ private:
     std::vector <Tile *> mMarkedTiles;
 
     void detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile *>> &candidateTile, Tile &t, std::vector <Cord> &record);
+    void collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std::vector<Tile *> &allTiles) const;
 
 public:
     std::vector <Tessera *> fixedTesserae;
@@ -46,7 +47,10 @@ public:
 
     LFLegaliser() = delete;
     LFLegaliser(len_t chipWidth, len_t chipHeight);
+    LFLegaliser(const LFLegaliser &other);
     ~LFLegaliser();
+
+    // LFLegaliser& operator = (const LFLegaliser &other);
 
     len_t getCanvasWidth() const;
     len_t getCanvasHeight() const;
@@ -97,9 +101,23 @@ public:
     bool searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &inTessera) const;
 
     void printOutput(std::string outputFileName);
+    void collectAllTiles(std::vector<Tile *> &allTiles) const;
 };
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c);
 bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess);
+// return -1 if not found, otherwise index
+int findVectorInclude(std::vector<Tile *>&vec, Tile *t);
+// return -1 if not found, otherwise index
+int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
+
+double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &connections, bool printReport);
+void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const std::string outputFileName);
+
+struct CPTilePair{
+    Tile *father;
+    Tile *baby;
+};
+
 
 #endif // __LFLEGALISER_H__

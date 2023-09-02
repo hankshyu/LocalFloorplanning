@@ -3,10 +3,11 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include "LFUnits.h"
 #include "Tile.h"
-#include <vector>
+
 
 enum class tesseraType{
     EMPTY ,SOFT, HARD
@@ -25,6 +26,7 @@ private:
     
     Cord mBBLowerLeft;
     Cord mBBUpperRight;
+    
 
 
     void calBoundingBox();
@@ -35,6 +37,11 @@ public:
 
     Tessera();
     Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
+    Tessera(const Tessera &other);
+
+    Tessera& operator = (const Tessera &other);
+    bool operator == (const Tessera &tess) const;
+    friend std::ostream &operator << (std::ostream &os, const Tessera &t);
 
     std::string getName () const;
     area_t getLegalArea () const;
@@ -65,9 +72,16 @@ public:
     // * added by cyuyang
     bool isLegal();
 
-    bool operator ==(const Tessera &tess) const;
-    
+    // ErrorCode encoding:
+    // 1: check whether this Tessera is connected or not
+    // 2: check whether this Tessera has holes or not
+    // 3: check whether this Tessera violates area constraint or not
+    // 4: check whether this Tessera violates aspect ratio or not
+    // 5: check whether this Tessera violates rectangle ratio or not(0.8)
+    bool isLegal(int &errorCode);
+
 };
 
+std::ostream &operator << (std::ostream &os, const Tessera &t);
 
 #endif // __TESSERA_H__
