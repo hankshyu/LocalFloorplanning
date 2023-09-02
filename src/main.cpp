@@ -32,7 +32,7 @@ int main(int argc, char const *argv[]) {
     solver.setMaxMovement(0.001);
 
     // ! These parameters can be modified to meet your needs
-    solver.setPunishment(1.);
+    solver.setPunishment(100000.);
     // double tolaranceLen = ( rgparser.getDieWidth() + rgparser.getDieHeight() ) / 200;
     double tolaranceLen = 0;
 
@@ -44,7 +44,25 @@ int main(int argc, char const *argv[]) {
             solver.gradientDescent(lr);
         }
     }
-    // solver.squeezeToFit();
+
+    solver.setPullWhileOverlap(false);
+    solver.setMaxMovement(1e-6);
+    solver.setPunishment(1e6);
+    solver.setOverlapTolaranceLen(0.);
+    solver.setSizeScalar(1.);
+    lr = 1e-8;
+    int count = 0;
+    while ( solver.hasOverlap() ) {
+        solver.squeezeToFit();
+        for ( int i = 0; i < 5000; i++ ) {
+            solver.calcGradient();
+            solver.gradientDescent(lr);
+        }
+
+        if ( ++count >= 5 ) {
+            break;
+        }
+    }
 
     solver.currentPosition2txt("outputs/global_test.txt");
     std::cout << std::fixed;

@@ -434,8 +434,8 @@ void RGSolver::squeezeToFit() {
             x_diff = curModule->centerX - tarModule->centerX;
             y_diff = curModule->centerY - tarModule->centerY;
 
-            overlappedWidth = (int) (( curModule->width + tarModule->width ) / 2.0 - std::abs(x_diff));
-            overlappedHeight = (int) (( curModule->height + tarModule->height ) / 2.0 - std::abs(y_diff));
+            overlappedWidth = ( curModule->width + tarModule->width ) / 2.0 - std::abs(x_diff);
+            overlappedHeight = ( curModule->height + tarModule->height ) / 2.0 - std::abs(y_diff);
 
             if ( overlappedWidth > curModule->width ) {
                 overlappedWidth = curModule->width;
@@ -453,17 +453,39 @@ void RGSolver::squeezeToFit() {
 
             if ( overlappedWidth > 0. && overlappedHeight > 0. ) {
                 totalOverlapWidth += overlappedWidth;
+                // std::cout << curModule->centerX << " " << tarModule->centerX << " ";
+                // std::cout << curModule->width << " " << tarModule->width << std::endl;
+                // std::cout << overlappedWidth << std::endl;
                 totalOverlapHeight += overlappedHeight;
             }
         }
         if ( totalOverlapWidth > 0. && totalOverlapHeight > 0. ) {
             double aspectRatio = (double) totalOverlapHeight / totalOverlapWidth;
-            if ( aspectRatio > 5. ) {
-                squeezeWidthVec[i] += totalOverlapWidth;
+            if ( aspectRatio > 10. ) {
+                double squeezeWidth = totalOverlapWidth;
+                std::cout << "Width: " << squeezeWidth << "\n";
+                // curModule->width -= squeezeWidth;
+                // curModule->height = std::ceil(curModule->area / curModule->width);
+                squeezeWidthVec[i] = squeezeWidth;
             }
-            else if ( aspectRatio < 0.2 ) {
-                squeezeHeightVec[i] += totalOverlapHeight;
+            else if ( aspectRatio < 0.1 ) {
+                double squeezeHeight = totalOverlapHeight;
+                std::cout << "Height: " << squeezeHeight << "\n";
+                // curModule->height -= squeezeHeight;
+                // curModule->width = std::ceil(curModule->area / curModule->height);
+                squeezeHeightVec[i] = squeezeHeight;
             }
+            // else {
+            //     aspectRatio = 0.2 * std::atan(aspectRatio - 1) + 1;
+            //     if ( aspectRatio > 2. ) {
+            //         aspectRatio = 2.;
+            //     }
+            //     else if ( aspectRatio < 0.5 ) {
+            //         aspectRatio = 0.5;
+            //     }
+            //     curModule->width = std::ceil(std::sqrt(curModule->area / aspectRatio));
+            //     curModule->height = std::ceil(std::sqrt(curModule->area * aspectRatio));
+            // }
         }
     }
     for ( int i = 0; i < this->moduleNum; ++i ) {
@@ -473,11 +495,11 @@ void RGSolver::squeezeToFit() {
         }
         if ( squeezeWidthVec[i] > 0. ) {
             curModule->width -= squeezeWidthVec[i];
-            curModule->height = std::ceil((double) curModule->area / curModule->width);
+            curModule->height = std::ceil(curModule->area / curModule->width);
         }
         else if ( squeezeHeightVec[i] > 0. ) {
             curModule->height -= squeezeHeightVec[i];
-            curModule->width = std::ceil((double) curModule->area / curModule->height);
+            curModule->width = std::ceil(curModule->area / curModule->height);
         }
         curModule->updateCord(DieWidth, DieHeight, 1.);
     }
