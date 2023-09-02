@@ -472,17 +472,21 @@ bool Tessera::isLegal() {
 
     // check whether this Tessera is connected or not
     if ( curTessSet.size() > 1 ) {
+        std::cout << "Fragmented\n";
         return false;
     }
 
     // check whether this Tessera has holes or not
     PolygonHole curTess = curTessSet[0];
     if ( curTess.begin_holes() != curTess.end_holes() ) {
+        std::cout << "Has holes\n";
         return false;
     }
 
     // check whether this Tessera violates area constraint or not
     if ( gtl::area(curTess) < this->mLegalArea ) {
+        std::cout << gtl::area(curTess) << ' ' << this->mLegalArea <<' ';
+        std::cout << "Area not legal\n";
         return false;
     }
 
@@ -490,15 +494,18 @@ bool Tessera::isLegal() {
     Rectangle boundingBox;
     gtl::extents(boundingBox, curTessSet);
     len_t width = gtl::xh(boundingBox) - gtl::xl(boundingBox);
-    len_t height = gtl::yh(boundingBox) - gtl::yh(boundingBox);
-    double aspectRatio = (double) width / height;
+    len_t height = gtl::yh(boundingBox) - gtl::yl(boundingBox);
+    double aspectRatio = ((double) width) / ((double) height);
     if ( aspectRatio > 2. || aspectRatio < 0.5 ) {
+        std::cout << aspectRatio << ' ';
+        std::cout << "aspect ratio not legal\n";
         return false;
     }
 
     // check whether this Tessera violates rectangle ratio or not
     double rectRatio = (double) gtl::area(curTess) / gtl::area(boundingBox);
     if ( rectRatio < 0.8 ) {
+        std::cout << "Util not legal\n";
         return false;
     }
 

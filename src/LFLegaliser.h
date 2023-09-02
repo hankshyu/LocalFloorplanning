@@ -95,6 +95,8 @@ public:
     void combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile);
 
     bool searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &inTessera) const;
+
+    void printOutput(std::string outputFileName);
 };
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c);

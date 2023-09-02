@@ -1635,6 +1635,15 @@ bool LFLegaliser::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> 
     return answer;  
 }
 
+// void LFLegaliser::printOutput(std::string outputFileName){
+//     std::ofstream fout(outputFileName, std::ofstream::out);
+//     if ( !fout.is_open() ) {
+//         return;
+//     }
+    
+//     fout << "HPWL ";
+//     fout 
+// }
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
     for(auto const &e : vec){
