@@ -126,6 +126,10 @@ int main(int argc, char const *argv[]) {
     monitor.printPhaseReport();
     legaliser->visualiseArtpiece("outputs/phase3.txt", true);
 
+    // Final Output
+    double finalScore = calculateHPWL(legaliser, rgparser.getConnectionList(), true);
+    printf("Final Score = %12.6f\n", finalScore);
+
     // /* Phase 4: Solve 2-Overlaps */
     // std::cout << std::endl << std::endl;
     // monitor.printPhase("Solve Level-2 Overlaps");

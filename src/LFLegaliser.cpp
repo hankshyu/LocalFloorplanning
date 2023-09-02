@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include "LFLegaliser.h"
 
 LFLegaliser::LFLegaliser(len_t chipWidth, len_t chipHeight)
@@ -23,6 +24,132 @@ LFLegaliser::~LFLegaliser() {
         delete fixedTesserae[i];
     }
 
+}
+
+LFLegaliser::LFLegaliser(const LFLegaliser &other){
+    // TODO: deep copy required
+    std::vector <Tile *> allOldTiles;
+    other.collectAllTiles(allOldTiles);
+
+    std::vector <CPTilePair *> pairs;
+    for(Tile *t : allOldTiles){
+        CPTilePair *cp = new CPTilePair();
+        cp->father = t;
+        cp->baby = new Tile((*t));
+        pairs.push_back(cp);
+    }
+
+    // maintain the pointers for the new tiles
+    for(CPTilePair *fixLinkHead : pairs){
+        
+        if(fixLinkHead->father->rt != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->rt->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->rt = newLink;
+        }
+        if(fixLinkHead->father->lb != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->lb->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->lb = newLink;
+        }
+        if(fixLinkHead->father->bl != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->bl->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->bl = newLink;
+        }
+        if(fixLinkHead->father->tr != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->tr->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->tr = newLink;
+        }
+
+    }
+
+    for(Tessera *oldT : other.fixedTesserae){
+        Tessera* newTess = new Tessera((*oldT));
+        newTess->TileArr.clear();
+        for(Tile *t : oldT->TileArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->TileArr.push_back(newTileReplacement);
+        }
+
+        newTess->OverlapArr.clear();
+        for(Tile *t : oldT->OverlapArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->OverlapArr.push_back(newTileReplacement);
+        }
+
+        this->fixedTesserae.push_back(newTess);
+    }
+
+    for(Tessera *oldT : other.softTesserae){
+        Tessera* newTess = new Tessera((*oldT));
+        newTess->TileArr.clear();
+        for(Tile *t : oldT->TileArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->TileArr.push_back(newTileReplacement);
+        }
+
+        newTess->OverlapArr.clear();
+        for(Tile *t : oldT->OverlapArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->OverlapArr.push_back(newTileReplacement);
+        }
+
+        this->softTesserae.push_back(newTess);
+    } 
 }
 
 bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const {
@@ -1648,7 +1775,7 @@ bool LFLegaliser::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> 
     return answer;  
 }
 
-void LFLegaliser::collectAllTiles(std::vector<Tile *> &allTiles){
+void LFLegaliser::collectAllTiles(std::vector<Tile *> &allTiles) const{
     allTiles.clear();
     if(fixedTesserae.empty() && softTesserae.empty()) return;
 
@@ -1658,7 +1785,7 @@ void LFLegaliser::collectAllTiles(std::vector<Tile *> &allTiles){
     collectAllTilesDFS((*seed), record, allTiles);
 }
 
-void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std::vector<Tile *> &allTiles){
+void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std::vector<Tile *> &allTiles) const{
     record.push_back(head.getLowerLeft());
     allTiles.push_back(&head);
 
@@ -1684,8 +1811,59 @@ void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std
     }
 }
 
-double calculateHPWL(){
-    
+double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &connections, bool printReport){
+    double HPWL = 0;
+    for(RGConnStruct cs : connections){
+        
+        Tessera *tess0 = nullptr;
+        Tessera *tess1 = nullptr;
+
+        for(Tessera *t : legaliser->fixedTesserae){
+            std::string tName = t->getName();
+            if(tName == cs.m0){
+                tess0 = t;
+            }
+            if(tName == cs.m1){
+                tess1 = t;
+            }
+            if((tess0 != nullptr) && (tess1 != nullptr)) break;
+        }
+        for(Tessera *t : legaliser->softTesserae){
+            std::string tName = t->getName();
+            if(tName == cs.m0){
+                tess0 = t;
+            }
+            if(tName == cs.m1){
+                tess1 = t;
+            }
+            if((tess0 != nullptr) && (tess1 != nullptr)) break;
+        }
+
+        assert((tess0 != nullptr) && (tess1 != nullptr));
+
+        double tess0CentreX, tess0CentreY;
+        tess0->calBBCentre(tess0CentreX, tess0CentreY);
+        double tess1CentreX, tess1CentreY;
+        tess1->calBBCentre(tess1CentreX, tess1CentreY);
+
+        double tessXDiff = std::abs(tess0CentreX - tess1CentreX);
+        double tessYDiff = std::abs(tess0CentreY - tess1CentreY);
+
+
+        double distance = std::sqrt((tessXDiff * tessXDiff) + (tessYDiff * tessYDiff));
+        double connectionScore = distance * ((double)cs.value);
+
+        if(printReport){
+            // std::cout << <<cs.m0 <<" ";
+            printf("%-8s (%7.1f, %7.1f), ", cs.m0.c_str(), tess0CentreX, tess0CentreY);
+            printf("%-8s (%7.1f, %7.1f), ", cs.m1.c_str(), tess1CentreX, tess1CentreY);
+            printf("Distance = %10.2f x %5d = %12.2f\n", distance, cs.value, connectionScore);
+        }
+
+        HPWL += connectionScore;
+    }
+
+    return HPWL;
 }
 
 

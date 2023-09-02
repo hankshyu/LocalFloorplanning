@@ -26,9 +26,7 @@ private:
     
     Cord mBBLowerLeft;
     Cord mBBUpperRight;
-
-    double mCentreX;
-    double mCentreY;
+    
 
 
     void calBoundingBox();
