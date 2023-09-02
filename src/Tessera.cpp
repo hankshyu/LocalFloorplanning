@@ -490,7 +490,7 @@ bool Tessera::isLegal() {
     Rectangle boundingBox;
     gtl::extents(boundingBox, curTessSet);
     len_t width = gtl::xh(boundingBox) - gtl::xl(boundingBox);
-    len_t height = gtl::yh(boundingBox) - gtl::yh(boundingBox);
+    len_t height = gtl::yh(boundingBox) - gtl::yl(boundingBox);
     double aspectRatio = (double) width / height;
     if ( aspectRatio > 2. || aspectRatio < 0.5 ) {
         return false;
