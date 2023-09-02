@@ -41,6 +41,7 @@ public:
     Tile(const Tile &other);
 
     Tile& operator = (const Tile &other);
+    friend std::ostream &operator << (std::ostream &os, const Tile &t);
     
     void setType(tileType newType);
     tileType getType() const;
@@ -81,7 +82,6 @@ public:
     void show(std::ostream &os, bool printNewLine) const;
     void showLink(std::ostream &os) const;
 
-    friend std::ostream &operator << (std::ostream &os, const Tile &t);
     
 };
 

@@ -18,6 +18,51 @@ Tessera::Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft
         calBoundingBox();
     }
 
+Tessera::Tessera(const Tessera &other)
+    : mType(other.getType()), mName(other.getName()), mLegalArea(other.getLegalArea()),
+    mInitLowerLeft(other.getInitLowerLeft()), mInitWidth(other.getInitWidth()), mInitHeight(other.getInitHeight()) {
+        TileArr.assign(other.TileArr.begin(), other.TileArr.end());
+        OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
+    }
+
+Tessera& Tessera::operator = (const Tessera &other){
+    if(this == &other) return (*this);
+
+    this->mType = other.getType();
+    this->mName = other.getName();
+    this->mLegalArea = other.getLegalArea();
+
+    this->mInitLowerLeft = other.getInitLowerLeft();
+    this->mInitWidth = other.getInitWidth();
+    this->mInitHeight = other.getInitHeight();
+
+    TileArr.assign(other.TileArr.begin(), other.TileArr.end());
+    OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
+    
+    return (*this);
+}
+
+bool Tessera::operator ==(const Tessera &tess) const{
+    
+    if(mType != tess.getType()) return false;
+    if(mName != tess.getName()) return false;
+    if(mLegalArea != tess.getLegalArea()) return false;
+    if(mInitLowerLeft != tess.getInitLowerLeft()) return false;
+    if((mInitWidth != tess.getInitWidth()) || (mInitHeight != tess.getInitHeight())) return false;
+
+    if(TileArr.size() != tess.TileArr.size()) return false;
+    for(int i = 0; i < TileArr.size(); ++i){
+        if(TileArr[i] != tess.TileArr[i]) return false;
+    }
+
+    if(OverlapArr.size() != tess.OverlapArr.size()) return false;
+    for(int i = 0; i < OverlapArr.size(); ++i){
+        if(OverlapArr[i] != tess.OverlapArr[i]) return false;
+    }
+    return true;
+}
+
+
 std::string Tessera::getName () const{
     return this->mName;
 }
@@ -439,26 +484,6 @@ void Tessera::printCorners(std::ostream& fout){
     }
 }
 
-bool Tessera::operator ==(const Tessera &tess) const{
-    
-    if(mType != tess.getType()) return false;
-    if(mName != tess.getName()) return false;
-    if(mLegalArea != tess.getLegalArea()) return false;
-    if(mInitLowerLeft != tess.getInitLowerLeft()) return false;
-    if((mInitWidth != tess.getInitWidth()) || (mInitHeight != tess.getInitHeight())) return false;
-
-    if(TileArr.size() != tess.TileArr.size()) return false;
-    for(int i = 0; i < TileArr.size(); ++i){
-        if(TileArr[i] != tess.TileArr[i]) return false;
-    }
-
-    if(OverlapArr.size() != tess.OverlapArr.size()) return false;
-    for(int i = 0; i < OverlapArr.size(); ++i){
-        if(OverlapArr[i] != tess.OverlapArr[i]) return false;
-    }
-    return true;
-}
-
 bool Tessera::isLegal() {
     typedef gtl::polygon_90_with_holes_data<len_t> PolygonHole;
     typedef std::vector<PolygonHole>               PolygonHoleSet;
@@ -554,4 +579,17 @@ bool Tessera::isLegal(int &errorCode) {
     }
 
     return true;
+}
+
+std::ostream &operator << (std::ostream &os, const Tessera &t){
+    os << t.mName << " LA=" << t.mLegalArea << std::endl;
+
+    os << "TileArr:" << std::endl;
+    for(Tile *t : t.TileArr){
+        os << (*t) << std::endl;
+    }
+    os << "OverlapArr:" << std::endl;
+    for(Tile *t : t.OverlapArr){
+        os << (*t) << std::endl;
+    }
 }

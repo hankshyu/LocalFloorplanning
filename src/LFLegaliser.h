@@ -39,6 +39,7 @@ private:
     std::vector <Tile *> mMarkedTiles;
 
     void detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile *>> &candidateTile, Tile &t, std::vector <Cord> &record);
+    void collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std::vector<Tile *> &allTiles);
 
 public:
     std::vector <Tessera *> fixedTesserae;
@@ -46,7 +47,10 @@ public:
 
     LFLegaliser() = delete;
     LFLegaliser(len_t chipWidth, len_t chipHeight);
+    LFLegaliser(const Tile &other);
     ~LFLegaliser();
+
+    LFLegaliser& operator = (const LFLegaliser &other);
 
     len_t getCanvasWidth() const;
     len_t getCanvasHeight() const;
@@ -95,6 +99,8 @@ public:
     void combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile);
 
     bool searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &inTessera) const;
+
+    void collectAllTiles(std::vector<Tile *> &allTiles);
 };
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c);
@@ -103,5 +109,10 @@ bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess);
 int findVectorInclude(std::vector<Tile *>&vec, Tile *t);
 // return -1 if not found, otherwise index
 int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
+
+struct CPTilePair{
+    Tile *father;
+    Tile *baby;
+}
 
 #endif // __LFLEGALISER_H__

@@ -5,11 +5,24 @@ LFLegaliser::LFLegaliser(len_t chipWidth, len_t chipHeight)
     : mCanvasWidth(chipWidth), mCanvasHeight(chipHeight) {}
 
 LFLegaliser::~LFLegaliser() {
-    for ( int i = 0; i < softTesserae.size(); i++ )
+
+    // Collect all the tiles for cleanUp
+    std::vector<Tile *> tileBin;
+
+    collectAllTiles(tileBin);
+
+    for(Tile *t : tileBin){
+        delete(t);
+    }
+
+    // All Tiles are recycled, now delete all tessera
+    for (int i = 0; i < softTesserae.size(); ++i){
         delete softTesserae[i];
-    for ( int i = 0; i < fixedTesserae.size(); i++ )
+    }
+    for (int i = 0; i < fixedTesserae.size(); ++i){
         delete fixedTesserae[i];
-    //std::cerr << "LFLegaliser Deleted Successfully\n";
+    }
+
 }
 
 bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const {
@@ -1633,6 +1646,42 @@ bool LFLegaliser::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> 
     }
     assert(answer);
     return answer;  
+}
+
+void LFLegaliser::collectAllTiles(std::vector<Tile *> &allTiles){
+    allTiles.clear();
+    if(fixedTesserae.empty() && softTesserae.empty()) return;
+
+    Tile *seed = getRandomTile();
+    std::vector <Cord> record; // This records which Tile has been visited;
+    
+    collectAllTilesDFS((*seed), record, allTiles);
+}
+
+void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std::vector<Tile *> &allTiles){
+    record.push_back(head.getLowerLeft());
+    allTiles.push_back(&head);
+
+    if(head.rt != nullptr){
+        if(!checkVectorInclude(record, head.rt->getLowerLeft())){
+            collectAllTilesDFS((*(head.rt)), record, allTiles);
+        }
+    }
+    if(head.lb != nullptr){
+        if(!checkVectorInclude(record, head.lb->getLowerLeft())){
+            collectAllTilesDFS((*(head.lb)), record, allTiles);
+        }
+    }
+    if(head.bl != nullptr){
+        if(!checkVectorInclude(record, head.bl->getLowerLeft())){
+            collectAllTilesDFS((*(head.bl)), record, allTiles);
+        }
+    }
+    if(head.tr != nullptr){
+        if(!checkVectorInclude(record, head.tr->getLowerLeft())){
+            collectAllTilesDFS((*(head.tr)), record, allTiles);
+        }
+    }
 }
 
 
