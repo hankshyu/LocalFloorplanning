@@ -297,7 +297,9 @@ void paletteKnife::eatCakesLevel2(){
         this->pastriesLevel2.push_back(ck);
     }
 
+    bool solutionMade;
     while(burntCake.size() != mPaintClusters[2].size()){
+        solutionMade = false;
 
         for(cake* cak : pastriesLevel2){
             cak->collectCrusts(mLegaliser);
@@ -414,7 +416,6 @@ void paletteKnife::eatCakesLevel2(){
 
             // Start by using Water-Jar strategy, iterage the priorityCrust vector from begin() to end()
             area_t leftToDistributeArea = onPlate->getOverlapTile()->getArea();
-            std::cout << "ERRRRROR probing" << leftToDistributeArea << std::endl;
             // This is the phony Tesseras to check legality, recycle after use
             std::vector <Tessera *> jarcheckLegal;
             // this is phony tiles created to check legality, recycle after use
@@ -494,13 +495,14 @@ void paletteKnife::eatCakesLevel2(){
                     // This is the last phony tile we would insert into the phony tessera
                     Tile *distributedTile;
 
-
+                    std::cout << "locateTileTesseraDirection fnc(" << priorityCrust[crustIdx]->assignedTessera->getName() << ", ";
+                    priorityCrust[crustIdx]->tile->show(std::cout, false);
+                    std::cout << std::endl;
                     std::cout << "location = " << location;
                     std::cout<< ", (ld, rt) = (" << leftDownFitBorder << ", " << rightTopFitBorder << ")" << std::endl;
                     std::cout << "connectedTile:";
 
                     connectedTile.show(std::cout);
-                    std::cout << "locateTileTesseraDirection all set!" << std::endl;
                     
 
                     switch (location){
@@ -544,17 +546,16 @@ void paletteKnife::eatCakesLevel2(){
                                 len_t newHeight = fittestBase;
                                 len_t newWidth = leftToDistributeArea / fittestBase;
                                 newWidth = ((newHeight * newWidth) >= leftToDistributeArea) ? newWidth : newWidth + 1;
-                                Cord fitCord = Cord(priorityCrust[crustIdx]->tile->getLowerLeft().x - newWidth, leftDownFitBorder);
+                                Cord fitCord = Cord(connectedTile.getLowerRight().x, leftDownFitBorder);
                                 distributedTile = new Tile(tileType::BLOCK, fitCord, newWidth, newHeight);
                             }else{
                                 len_t newHeight = priorityCrust[crustIdx]->tile->getHeight();
                                 len_t newWidth = leftToDistributeArea / newHeight;
                                 newWidth = ((newHeight * newWidth) >= leftToDistributeArea) ? newWidth : newWidth + 1;
-                                Cord normCord = Cord(connectedTile.getLowerRight().x - newWidth, connectedTile.getLowerLeft().y);
+                                Cord normCord = priorityCrust[crustIdx]->tile->getLowerLeft();
                                 distributedTile = new Tile(tileType::BLOCK, normCord, newWidth, newHeight);
                             }
 
-                            /* code */
                             break;
                         }
                         case 4:{ // tessera is at the right of the tile
@@ -563,13 +564,13 @@ void paletteKnife::eatCakesLevel2(){
                                 len_t newHeight = fittestBase;
                                 len_t newWidth = leftToDistributeArea / fittestBase;
                                 newWidth = ((newHeight * newWidth) >= leftToDistributeArea) ? newWidth : newWidth + 1;
-                                Cord fitCord = Cord(connectedTile.getLowerLeft().x, leftDownFitBorder);
+                                Cord fitCord = Cord(connectedTile.getLowerLeft().x - newWidth, leftDownFitBorder);
                                 distributedTile = new Tile(tileType::BLOCK, fitCord, newWidth, newHeight);
                             }else{
                                 len_t newHeight = priorityCrust[crustIdx]->tile->getHeight();
                                 len_t newWidth = leftToDistributeArea / newHeight;
                                 newWidth = ((newHeight * newWidth) >= leftToDistributeArea) ? newWidth : newWidth + 1;
-                                Cord normCord = connectedTile.getLowerRight();
+                                Cord normCord = Cord(connectedTile.getLowerLeft().x - newWidth, priorityCrust[crustIdx]->tile->getLowerLeft().y);
                                 distributedTile = new Tile(tileType::BLOCK, normCord, newWidth, newHeight);
                             }
                             break;
@@ -577,12 +578,12 @@ void paletteKnife::eatCakesLevel2(){
                     }
                     std::cout << "Show distributedTile: "<<std::endl;
                     distributedTile->show(std::cout);
-                    // jarcheckLegalTiles.push_back(distributedTile);
-                    // verifyTess->TileArr.push_back(distributedTile);
-                    // leftToDistributeArea = 0; // done! just clean to 0
+                    jarcheckLegalTiles.push_back(distributedTile);
+                    verifyTess->TileArr.push_back(distributedTile);
+                    leftToDistributeArea = 0; // done! just clean to 0
 
-                    // //  now the phony tessera has been filled, verify!
-                    // break;
+                    //  now the phony tessera has been filled, verify!
+                    break;
 
                 }
             }
@@ -591,15 +592,24 @@ void paletteKnife::eatCakesLevel2(){
             bool verifyplan = true;
             for(Tessera *phonyTess : jarcheckLegal){
                 // TODO, start verification
-                if(!phonyTess->isLegal()) verifyplan = false;
+                int errorCode;
+                if(!phonyTess->isLegal(errorCode)){
+                    verifyplan = false;
+                    std::cout << "isLegal() return false, " << phonyTess->getName() << " returns" << errorCode << std::endl;
+                }
+            }
+            if(verifyplan){
+                if(leftToDistributeArea != 0) verifyplan = false;
             }
 
             if(verifyplan){
                 // This plan works!
-                std::cout << "Such plan would work!";
+                std::cout << "Such plan would work!" << std::endl;
                 onPlate->showCake();
+                solutionMade = true;
                 break;
-
+            }else{
+                std::cout << "No... not legal" << std::endl;
             }
 
 
@@ -612,6 +622,10 @@ void paletteKnife::eatCakesLevel2(){
             }
 
         }
+        if(solutionMade){
+            std::cout << "found some solution!!!" << std::endl;
+            break;
+        }
 
         // Planning session ends here!, onPlate exists no known solution!
         std::cout << "No known solution to cake is found: ";
@@ -620,8 +634,8 @@ void paletteKnife::eatCakesLevel2(){
 
 
         // this is for debug, remove before use
-        std::cout << "Test Exit normally" << std::endl;
-        break;
+        // std::cout << "Test Exit normally" << std::endl;
+        // break;
     }
     
 }
