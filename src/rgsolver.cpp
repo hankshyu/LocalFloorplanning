@@ -495,11 +495,11 @@ void RGSolver::squeezeToFit() {
         }
         if ( squeezeWidthVec[i] > 0. ) {
             curModule->width -= squeezeWidthVec[i];
-            curModule->height = std::ceil(curModule->area / curModule->width);
+            curModule->height = std::ceil((double) curModule->area / curModule->width);
         }
         else if ( squeezeHeightVec[i] > 0. ) {
             curModule->height -= squeezeHeightVec[i];
-            curModule->width = std::ceil(curModule->area / curModule->height);
+            curModule->width = std::ceil((double) curModule->area / curModule->height);
         }
         curModule->updateCord(DieWidth, DieHeight, 1.);
     }
