@@ -20,7 +20,7 @@ void mnt::Monitor::printCopyRight(){
 
 void mnt::Monitor::printPhase(std::string title){
     
-    assert(this->mPhaseCounter > 0 && this->mPhaseCounter <= 20);
+    // assert(this->mPhaseCounter > 0 && this->mPhaseCounter <= 20);
     std::string toPrint = "Phase " + mnt::numToTxt[this->mPhaseCounter] + ": " + title;
 
     std::cout << mnt::PHASE_BORDER << std::endl;

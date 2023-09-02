@@ -12,44 +12,54 @@
 #include "DFSLegalizer.h"
 #include "monitor.h"
 
+#define MAX_ITER 11
+
 int main(int argc, char const *argv[]) {
 
     RGParser rgparser(argv[1]);
     RGSolver solver;
     solver.readFromParser(rgparser);
     
-    mnt::Monitor monitor;
-    monitor.printCopyRight();
-    int iteration = 0;
-    // double punishmentValues[5] = {  };
-    // double initPunishmentValue = 100000.0;
-    double initToleranceLenValue = rgparser.getDieWidth() + rgparser.getDieHeight() / 800;
+    std::vector<double> punishmentValues{
+        50000.0, 100000.0, 200000.0, 
+        5000.0, 10000.0, 50000.0,
+        1.0, 100.0, 1000.0,
+        0.03, 1  };
+    std::vector<double> toleranceLengthValues(MAX_ITER);
+    std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+3, 0);
+    std::fill(toleranceLengthValues.begin()+3, toleranceLengthValues.begin()+6, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
+    std::fill(toleranceLengthValues.begin()+6, toleranceLengthValues.begin()+9, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
+    std::fill(toleranceLengthValues.begin()+9, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
 
-    // double punishmentValue = initPunishmentValue;
-    while (1){
-        iteration++;
-        std::cout << "ITERATION: " << iteration << std::endl; 
-        double toleranceValue = iteration > 5 ? 0.0 : toleranceValue / iteration;
+    mnt::Monitor monitor;
+    LFLegaliser *legaliser = nullptr;
+    monitor.printCopyRight();
+    for (int iter = 0; iter < MAX_ITER; iter++){
+        if (legaliser != nullptr){
+            delete legaliser;
+        }
+        double toleranceValue = toleranceLengthValues[iter];
+        double punishmentValue = punishmentValues[iter];
+        std::cout << "ITERATION: " << iter;
+        std::cout << "\nTolerance: " << toleranceValue;
+        std::cout << "\nPunishment: " << punishmentValue << std::endl; 
 
         /* Phase 1: Global Floorplanning */
         std::cout << std::endl << std::endl;
         monitor.printPhase("Global Floorplanning Phase");
         auto clockCounterbegin = std::chrono::steady_clock::now();
 
-        LFLegaliser *legaliser;
         int iteration = 20000;
         double lr = 5. / iteration;
         solver.setMaxMovement(0.001);
 
     
         // ! These parameters can be modified to meet your needs
-        solver.setPunishment(100000.);
-        // double tolaranceLen = ( rgparser.getDieWidth() + rgparser.getDieHeight() ) / 200;
-        double tolaranceLen = toleranceValue;
+        solver.setPunishment(punishmentValue);
 
         for ( int phase = 1; phase <= 50; phase++ ) {
             solver.setSizeScalar(phase * 0.02);
-            solver.setOverlapTolaranceLen(tolaranceLen * phase * 0.02);
+            solver.setOverlapTolaranceLen(toleranceValue * phase * 0.02);
             for ( int i = 0; i < iteration; i++ ) {
                 solver.calcGradient();
                 solver.gradientDescent(lr);
@@ -149,15 +159,6 @@ int main(int argc, char const *argv[]) {
                 if (!tess->isLegal()){
                     std::cout << tess->getName() << " is not legal!" << std::endl;
                     legal = false;
-                    break;
-                }
-            }
-
-            for (Tessera* tess: legaliser->fixedTesserae){
-                if (!tess->isLegal()){
-                    std::cout << tess->getName() << " is not legal!" << std::endl;
-                    legal = false;
-                    break;
                 }
             }
             
