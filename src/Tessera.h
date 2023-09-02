@@ -27,6 +27,9 @@ private:
     Cord mBBLowerLeft;
     Cord mBBUpperRight;
 
+    double mCentreX;
+    double mCentreY;
+
 
     void calBoundingBox();
     area_t calRealArea();

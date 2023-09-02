@@ -1684,6 +1684,10 @@ void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std
     }
 }
 
+double calculateHPWL(){
+    
+}
+
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
     for(auto const &e : vec){

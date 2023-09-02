@@ -110,9 +110,12 @@ int findVectorInclude(std::vector<Tile *>&vec, Tile *t);
 // return -1 if not found, otherwise index
 int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
 
+double calculateHPWL(LFLegaliser legaliser, const std::vector<RGConnStruct> &connection);
+
 struct CPTilePair{
     Tile *father;
     Tile *baby;
-}
+};
+
 
 #endif // __LFLEGALISER_H__

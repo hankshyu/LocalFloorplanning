@@ -592,4 +592,6 @@ std::ostream &operator << (std::ostream &os, const Tessera &t){
     for(Tile *t : t.OverlapArr){
         os << (*t) << std::endl;
     }
+
+    return os;
 }
