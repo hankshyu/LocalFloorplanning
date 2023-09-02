@@ -14,6 +14,9 @@ RGSolver::RGSolver() {
     sizeScalar = 1;
     punishment = 1e4;
     overlapTolaranceLen = 0;
+    momentum = 0;
+    pullWhileOverlap = false;
+    overlapped = true;
 }
 
 RGSolver::~RGSolver() {
@@ -34,6 +37,8 @@ void RGSolver::setSoftModuleNum(int num) {
     moduleNum = softModuleNum + fixedModuleNum;
     xGradient.resize(moduleNum);
     yGradient.resize(moduleNum);
+    xGradientPrev.resize(moduleNum);
+    yGradientPrev.resize(moduleNum);
 }
 
 void RGSolver::setFixedModuleNum(int num) {
@@ -41,6 +46,8 @@ void RGSolver::setFixedModuleNum(int num) {
     moduleNum = softModuleNum + fixedModuleNum;
     xGradient.resize(moduleNum);
     yGradient.resize(moduleNum);
+    xGradientPrev.resize(moduleNum);
+    yGradientPrev.resize(moduleNum);
 }
 
 void RGSolver::setConnectionNum(int num) {
@@ -179,15 +186,15 @@ void RGSolver::calcGradient() {
             double curHeight = curModule->height * sizeScalar;
             double pushHeight = ( pullModule->fixed ) ? pullModule->height : pullModule->height * sizeScalar;
             double overlappedWidth, overlappedHeight;
-            overlappedWidth = ( curWidth + pushWidth ) / 2. - std::abs(x_diff);
-            overlappedHeight = ( curHeight + pushHeight ) / 2. - std::abs(y_diff);
+            overlappedWidth = ( curWidth + pushWidth ) / 2.0 - std::abs(x_diff);
+            overlappedHeight = ( curHeight + pushHeight ) / 2.0 - std::abs(y_diff);
 
-            if ( overlappedWidth > overlapTolaranceLen && overlappedHeight > overlapTolaranceLen ) {
+            if ( overlappedWidth > overlapTolaranceLen && overlappedHeight > overlapTolaranceLen && !pullWhileOverlap ) {
                 continue;
             }
 
-            double x_sign = ( x_diff == 0 ) ? 0 : ( x_diff > 0 ) ? 1. : -1.;
-            double y_sign = ( y_diff == 0 ) ? 0 : ( y_diff > 0 ) ? 1. : -1.;
+            double x_sign = ( x_diff == 0 ) ? 0. : ( x_diff > 0 ) ? 1. : -1.;
+            double y_sign = ( y_diff == 0 ) ? 0. : ( y_diff > 0 ) ? 1. : -1.;
             x_grad += pullValue * x_sign;
             y_grad += pullValue * y_sign;
             // x_grad += pullValue * x_diff;
@@ -211,8 +218,8 @@ void RGSolver::calcGradient() {
             double pushWidth = ( pushModule->fixed ) ? pushModule->width : pushModule->width * sizeScalar;
             double curHeight = curModule->height * sizeScalar;
             double pushHeight = ( pushModule->fixed ) ? pushModule->height : pushModule->height * sizeScalar;
-            overlappedWidth = ( curWidth + pushWidth ) / 2. - std::abs(x_diff);
-            overlappedHeight = ( curHeight + pushHeight ) / 2. - std::abs(y_diff);
+            overlappedWidth = ( curWidth + pushWidth ) / 2.0 - std::abs(x_diff);
+            overlappedHeight = ( curHeight + pushHeight ) / 2.0 - std::abs(y_diff);
             if ( overlappedWidth <= overlapTolaranceLen || overlappedHeight <= overlapTolaranceLen ) {
                 continue;
             }
@@ -250,6 +257,7 @@ void RGSolver::calcGradient() {
 }
 
 void RGSolver::gradientDescent(double lr) {
+    // saturated = true;
     // move soft modules
     RGModule *curModule;
     for ( int i = 0; i < moduleNum; i++ ) {
@@ -258,8 +266,18 @@ void RGSolver::gradientDescent(double lr) {
 
         curModule = modules[i];
 
-        double xMovement = xGradient[i] * lr * DieWidth;
-        double yMovement = yGradient[i] * lr * DieHeight;
+        // double xMovement = ( xGradient[i] + xGradientPrev[i] ) * lr * DieWidth;
+        // double yMovement = ( yGradient[i] + yGradientPrev[i] ) * lr * DieHeight;
+
+        double xMovement = ( xGradient[i] ) * lr * DieWidth;
+        double yMovement = ( yGradient[i] ) * lr * DieHeight;
+
+        xGradientPrev[i] = momentum * xGradient[i];
+        yGradientPrev[i] = momentum * yGradient[i];
+
+        // if ( xGradient[i] > 1. || yGradient[i] > 1. ) {
+        //     saturated = false;
+        // }
 
         if ( std::abs(xMovement) > xMaxMovement ) {
             xMovement = ( xMovement > 0 ) ? xMaxMovement : -xMaxMovement;
@@ -332,4 +350,135 @@ void RGSolver::setMaxMovement(double ratio) {
 
 void RGSolver::setOverlapTolaranceLen(double len) {
     this->overlapTolaranceLen = len;
+}
+
+bool RGSolver::isSaturated() {
+    // return saturated;
+    return false;
+}
+
+void RGSolver::setMomentum(double momentum) {
+    this->momentum = momentum;
+}
+
+void RGSolver::setPullWhileOverlap(bool onoff) {
+    this->pullWhileOverlap = onoff;
+}
+
+bool RGSolver::hasOverlap() {
+    for ( auto &mod : modules ) {
+        mod->updateCord(DieWidth, DieHeight, 1.);
+    }
+    overlapped = false;
+    for ( int i = 0; i < moduleNum - 1; i++ ) {
+        for ( int j = i + 1; j < moduleNum; j++ ) {
+            RGModule *mod1 = modules[i];
+            RGModule *mod2 = modules[j];
+            double overlappedWidth, overlappedHeight, x_diff, y_diff;
+
+            x_diff = mod1->centerX - mod2->centerX;
+            y_diff = mod1->centerY - mod2->centerY;
+
+            overlappedWidth = ( mod1->width + mod2->width ) / 2.0 - std::abs(x_diff);
+            overlappedHeight = ( mod1->height + mod2->height ) / 2.0 - std::abs(y_diff);
+
+            if ( overlappedWidth > 0. && overlappedHeight > 0. ) {
+                overlapped = true;
+            }
+        }
+    }
+    return overlapped;
+}
+
+void RGSolver::reportOverlap() {
+    for ( int i = 0; i < moduleNum - 1; i++ ) {
+        for ( int j = i + 1; j < moduleNum; j++ ) {
+            RGModule *mod1 = modules[i];
+            RGModule *mod2 = modules[j];
+            double overlappedWidth, overlappedHeight, x_diff, y_diff;
+
+            x_diff = mod1->centerX - mod2->centerX;
+            y_diff = mod1->centerY - mod2->centerY;
+
+            overlappedWidth = ( mod1->width + mod2->width ) / 2.0 - std::abs(x_diff);
+            overlappedHeight = ( mod1->height + mod2->height ) / 2.0 - std::abs(y_diff);
+
+            if ( overlappedWidth > 0. && overlappedHeight > 0. ) {
+                std::cout << "Overlap: " << mod1->name << " & " << mod2->name << " : " << overlappedWidth * overlappedHeight << std::endl;
+            }
+        }
+    }
+}
+
+void RGSolver::squeezeToFit() {
+    for ( auto &mod : modules ) {
+        mod->updateCord(DieWidth, DieHeight, 1.);
+    }
+
+    std::vector<int> squeezeWidthVec(this->moduleNum, 0);
+    std::vector<int> squeezeHeightVec(this->moduleNum, 0);
+
+    for ( int i = 0; i < this->moduleNum; ++i ) {
+        RGModule *curModule = modules[i];
+        if ( curModule->fixed ) {
+            continue;
+        }
+        int totalOverlapWidth = 0;
+        int totalOverlapHeight = 0;
+        for ( RGModule *tarModule : modules ) {
+            if ( curModule == tarModule ) {
+                continue;
+            }
+            int overlappedWidth, overlappedHeight, x_diff, y_diff;
+
+            x_diff = curModule->centerX - tarModule->centerX;
+            y_diff = curModule->centerY - tarModule->centerY;
+
+            overlappedWidth = (int) (( curModule->width + tarModule->width ) / 2.0 - std::abs(x_diff));
+            overlappedHeight = (int) (( curModule->height + tarModule->height ) / 2.0 - std::abs(y_diff));
+
+            if ( overlappedWidth > curModule->width ) {
+                overlappedWidth = curModule->width;
+            }
+            else if ( overlappedWidth > tarModule->width ) {
+                overlappedWidth = tarModule->width;
+            }
+
+            if ( overlappedHeight > curModule->height ) {
+                overlappedHeight = curModule->height;
+            }
+            else if ( overlappedHeight > tarModule->height ) {
+                overlappedHeight = tarModule->height;
+            }
+
+            if ( overlappedWidth > 0. && overlappedHeight > 0. ) {
+                totalOverlapWidth += overlappedWidth;
+                totalOverlapHeight += overlappedHeight;
+            }
+        }
+        if ( totalOverlapWidth > 0. && totalOverlapHeight > 0. ) {
+            double aspectRatio = (double) totalOverlapHeight / totalOverlapWidth;
+            if ( aspectRatio > 5. ) {
+                squeezeWidthVec[i] += totalOverlapWidth;
+            }
+            else if ( aspectRatio < 0.2 ) {
+                squeezeHeightVec[i] += totalOverlapHeight;
+            }
+        }
+    }
+    for ( int i = 0; i < this->moduleNum; ++i ) {
+        RGModule *curModule = modules[i];
+        if ( curModule->fixed ) {
+            continue;
+        }
+        if ( squeezeWidthVec[i] > 0. ) {
+            curModule->width -= squeezeWidthVec[i];
+            curModule->height = std::ceil((double) curModule->area / curModule->width);
+        }
+        else if ( squeezeHeightVec[i] > 0. ) {
+            curModule->height -= squeezeHeightVec[i];
+            curModule->width = std::ceil((double) curModule->area / curModule->height);
+        }
+        curModule->updateCord(DieWidth, DieHeight, 1.);
+    }
 }

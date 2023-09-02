@@ -14,7 +14,7 @@ struct RGConnection {
 struct RGModule {
     std::string name;
     double centerX, centerY;
-    double x, y;
+    int x, y;
     int area;
     int width, height;
     bool fixed;

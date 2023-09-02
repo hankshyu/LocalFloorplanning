@@ -31,13 +31,14 @@ int main(int argc, char const *argv[]) {
     int pushScale = 0;
 
     LFLegaliser *legaliser;
-    int iteration = 6000;
-    double lr = 1. / iteration;
-    
+    int iteration = 20000;
+    double lr = 5. / iteration;
+    solver.setMaxMovement(0.001);
 
     // ! These parameters can be modified to meet your needs
     solver.setPunishment(0.03);
-    double tolaranceLen = ( rgparser.getDieWidth() + rgparser.getDieHeight() ) / 200;
+    // double tolaranceLen = ( rgparser.getDieWidth() + rgparser.getDieHeight() ) / 200;
+    double tolaranceLen = 0;
 
     for ( int phase = 1; phase <= 50; phase++ ) {
         solver.setSizeScalar(phase * 0.02);
@@ -47,6 +48,7 @@ int main(int argc, char const *argv[]) {
             solver.gradientDescent(lr);
         }
     }
+    // solver.squeezeToFit();
 
     solver.currentPosition2txt("outputs/global_test.txt");
     std::cout << std::fixed;
