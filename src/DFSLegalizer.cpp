@@ -713,7 +713,8 @@ namespace DFSL {
 
             edgeCost += (overlapArea / blockArea) * config.OBAreaWeight + 
                         (withOverlapUtil - withoutOverlapUtil) * config.OBUtilWeight +
-                        abs(aspectRatio - 1.0) * config.OBAspWeight; 
+                        // tan(pow(withOverlapUtil - withoutOverlapUtil, 2.0) * PI / 180.0) * config.OBUtilWeight +
+                        tan(pow(aspectRatio - 1.0, 2.0) * PI / 180.0) * config.OBAspWeight; 
 
             break;
         }
@@ -783,7 +784,7 @@ namespace DFSL {
             double aspectRatio = newBlockInfo.aspectRatio;
 
             edgeCost += (oldBlockUtil - newBlockUtil) * config.OBUtilWeight +
-                        abs(aspectRatio - 1.0) * config.OBAspWeight; 
+                        tan(pow(aspectRatio - 1.0, 4.0) * PI / 180.0) * config.OBAspWeight; 
 
             break;
         }
@@ -811,13 +812,13 @@ namespace DFSL {
     } 
 
     Config::Config(): maxCostCutoff(1000000.0),
-                        OBAreaWeight(1000.0),
-                        OBUtilWeight(500.0),
+                        OBAreaWeight(750.0),
+                        OBUtilWeight(1000.0),
                         OBAspWeight(100.0),
-                        BWUtilWeight(1000.0),
+                        BWUtilWeight(1500.0),
                         BWAspWeight(100.0),
-                        BBFlatCost(1000.0),
-                        WWFlatCost(1000.0) { ; }
+                        BBFlatCost(1000000.0),
+                        WWFlatCost(1000000.0) { ; }
 
     LegalInfo DFSLegalizer::getLegalInfo(std::vector<Tile*>& tiles){
         LegalInfo legal;

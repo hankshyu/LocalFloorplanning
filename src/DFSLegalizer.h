@@ -9,6 +9,7 @@
 
 namespace DFSL {
 
+#define PI 3.14159265358979323846
 #define UTIL_RULE 0.8
 #define ASPECT_RATIO_RULE 2.0 
 
