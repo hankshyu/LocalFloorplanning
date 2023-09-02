@@ -14,8 +14,8 @@ verify: ./utils/verify.out
 LINKFLAGS = 
 
 lfrun.out: main.o Tile.o $(SRCPATH)/LFUnits.h Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o \
-maxflow.o maxflowLegaliser.o monitor.o rgparser.o rgmodule.o rgsolver.o paletteKnife.o cake.o tensor.o
-	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
+maxflow.o maxflowLegaliser.o monitor.o rgparser.o rgmodule.o rgsolver.o paletteKnife.o cake.o tensor.o DFSLegalizer.o
+
 
 
 main.o: $(SRCPATH)/main.cpp 
@@ -27,7 +27,7 @@ main.o: $(SRCPATH)/main.cpp
 
 
 lfrun_debug.out: main_db.o Tile_db.o $(SRCPATH)/LFUnits.h Tessera_db.o LFLegaliser_db.o parser_db.o ppmodule_db.o ppsolver_db.o \
-maxflow_db.o maxflowLegaliser_db.o monitor_db.o rgparser_db.o rgmodule_db.o rgsolver_db.o  paletteKnife_db.o cake_db.o tensor_db.o
+maxflow_db.o maxflowLegaliser_db.o monitor_db.o rgparser_db.o rgmodule_db.o rgsolver_db.o  paletteKnife_db.o cake_db.o tensor_db.o DFSLegalizer_db.o
 	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 main_db.o: $(SRCPATH)/main.cpp 

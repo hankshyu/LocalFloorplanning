@@ -9,7 +9,7 @@
 #include "ppsolver.h"
 #include "rgparser.h"
 #include "rgsolver.h"
-#include "maxflowLegaliser.h"
+#include "DFSLegalizer.h"
 #include "monitor.h"
 #include "paletteKnife.h"
 #include "tensor.h"
@@ -108,27 +108,39 @@ int main(int argc, char const *argv[]) {
     legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
 
-    /* Phase 3: Promitive Overlap Removal */
-    std::cout << std::endl << std::endl;
-    monitor.printPhase("Primitive removal/break-down of Overlaps");
+    /* Phase 3: Overlap distribution via DFS */
+    // std::cout << std::endl << std::endl;
+    // monitor.printPhase("Primitive removal/break-down of Overlaps");
 
-    std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
-    paletteKnife spatula(legaliser, &connectionList);
+    // std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
+    // paletteKnife spatula(legaliser, &connectionList);
     
-    spatula.disperseViaMargin();
+    // spatula.disperseViaMargin();
     
+    // // Phase 3 Reports
+    // std::cout << std::endl;
+    // std::cout << "Overlap Report: " << std::endl;
+    // spatula.collectOverlaps();
+    // spatula.printpaintClusters();
+    // monitor.printPhaseReport();
+    // legaliser->visualiseArtpiece("outputs/phase3.txt", true);
+
+    // /* Phase 4: Solve 2-Overlaps */
+    // std::cout << std::endl << std::endl;
+    // monitor.printPhase("Solve Level-2 Overlaps");
+    // spatula.eatCakesLevel2();
+
+
+    DFSL::DFSLegalizer dfsl;
+    dfsl.initDFSLegalizer(legaliser);
+    dfsl.legalize();
+    std::cout << "DSFL DONE\n";
+
+    legaliser->visualiseArtpiece("outputs/legal.txt", true);
+
     // Phase 3 Reports
-    std::cout << std::endl;
-    std::cout << "Overlap Report: " << std::endl;
-    spatula.collectOverlaps();
-    spatula.printpaintClusters();
-    monitor.printPhaseReport();
-    legaliser->visualiseArtpiece("outputs/phase3.txt", true);
-
-    /* Phase 4: Solve 2-Overlaps */
-    std::cout << std::endl << std::endl;
-    monitor.printPhase("Solve Level-2 Overlaps");
-    spatula.eatCakesLevel2();
+    // std::cout << std::endl;
+    // monitor.printPhaseReport();
 
 
 

@@ -52,6 +52,7 @@ public:
     len_t getWidth() const;
     len_t getHeight() const;
 
+    void setType(tileType type);
     void setCord(Cord cord);
     void setWidth(len_t width);
     void setHeight(len_t height);

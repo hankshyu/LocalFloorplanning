@@ -45,12 +45,13 @@ namespace MFL {
         void addOverlapInfo(Tile* tile, MFLTessInfo& tess);
         void addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2);
         void MFLTraverseBlank(Tile* tile, std::vector <Cord> &record);
+        void constructSingleFlow(MFLTessInfo& sourceTessInfo, MFLFlowTessInfo* sourceFlowInfo, 
+                                 MFLTessInfo& destTessInfo, MFLFlowTessInfo* destFlowInfo );
 
         LFLegaliser* mLF;
         MaxFlow mMaxflowManager;
         int mMaxflowInf;
         int mFixedTessNum;
-        void makeSingleFlow(MFLSingleFlowInfo& flow, MFLFlowTessInfo* source, MFLFlowTessInfo* dest, int flowAmt);
 
     public:
         MaxflowLegaliser(/* args */);

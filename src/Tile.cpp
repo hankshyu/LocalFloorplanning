@@ -41,6 +41,10 @@ len_t Tile::getHeight() const {
     return this->mHeight;
 };
 
+void Tile::setType(tileType type){
+    this->type = type;
+}
+
 void Tile::setCord (Cord cord){
     this->mLowerLeft = cord;
 }

@@ -337,36 +337,21 @@ namespace MFL {
             for (int j = 0; j < overlapTessFlows.size(); j++){
                 MFLTessInfo& overlapInfo = mAllOverlaps[j];
                 MFLFlowTessInfo* destFlowInfo = overlapTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, overlapInfo.tessName);
-                if (maxflowAmnt > 0){
-                    // should not happen
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, overlapInfo, destFlowInfo);
+                // should not have flow
             }
 
             for (int j = 0; j < blockTessFlows.size(); j++){
                 MFLTessInfo& blockInfo = mAllBlocks[j];
                 MFLFlowTessInfo* destFlowInfo = blockTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blockInfo.tessName);
-                if (maxflowAmnt > 0){
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, blockInfo, destFlowInfo);
             }
             
             for (int j = 0; j < blankTessFlows.size(); j++){
                 MFLTessInfo& blankInfo = mAllBlanks[j];
                 MFLFlowTessInfo* destFlowInfo = blankTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blankInfo.tessName);
-                if (maxflowAmnt > 0){
-                    // should not happen
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, blankInfo, destFlowInfo);
+                // should not have flow
             }
         }
 
@@ -379,35 +364,20 @@ namespace MFL {
             for (int j = 0; j < overlapTessFlows.size(); j++){
                 MFLTessInfo& overlapInfo = mAllOverlaps[j];
                 MFLFlowTessInfo* destFlowInfo = overlapTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, overlapInfo.tessName);
-                if (maxflowAmnt > 0){
-                    // should not happen
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, overlapInfo, destFlowInfo);
+                // should not have flow
             }
 
             for (int j = 0; j < blockTessFlows.size(); j++){
                 MFLTessInfo& blockInfo = mAllBlocks[j];
                 MFLFlowTessInfo* destFlowInfo = blockTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blockInfo.tessName);
-                if (maxflowAmnt > 0){
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, blockInfo, destFlowInfo);
             }
             
             for (int j = 0; j < blankTessFlows.size(); j++){
                 MFLTessInfo& blankInfo = mAllBlanks[j];
                 MFLFlowTessInfo* destFlowInfo = blankTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blankInfo.tessName);
-                if (maxflowAmnt > 0){
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, blankInfo, destFlowInfo);
             }
         }
 
@@ -418,47 +388,39 @@ namespace MFL {
             for (int j = 0; j < overlapTessFlows.size(); j++){
                 MFLTessInfo& overlapInfo = mAllOverlaps[j];
                 MFLFlowTessInfo* destFlowInfo = overlapTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, overlapInfo.tessName);
-                if (maxflowAmnt > 0){
-                    // should not happen
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, overlapInfo, destFlowInfo);
+                // should not have flow
             }
 
             for (int j = 0; j < blockTessFlows.size(); j++){
                 MFLTessInfo& blockInfo = mAllBlocks[j];
                 MFLFlowTessInfo* destFlowInfo = blockTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blockInfo.tessName);
-                if (maxflowAmnt > 0){
-                    // should not happen
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, blockInfo, destFlowInfo);
+                // should not have flow
             }
             
             for (int j = 0; j < blankTessFlows.size(); j++){
                 MFLTessInfo& blankInfo = mAllBlanks[j];
                 MFLFlowTessInfo* destFlowInfo = blankTessFlows[j];
-                int maxflowAmnt = mMaxflowManager.edgeFlow(tessInfo.tessName, blankInfo.tessName);
-                if (maxflowAmnt > 0){
-                    // should not happen
-                    MFLSingleFlowInfo flow;
-                    makeSingleFlow(flow, sourceFlowInfo, destFlowInfo, maxflowAmnt);
-                    sourceFlowInfo->fromFlows.push_back(flow);
-                }
+                constructSingleFlow(tessInfo, sourceFlowInfo, blankInfo, destFlowInfo);
+                // should not have flow
             }
         }
 
     }   
 
-    void MaxflowLegaliser::makeSingleFlow(MFLSingleFlowInfo& flow, MFLFlowTessInfo* source, MFLFlowTessInfo* dest, int flowAmt){
-        flow.sourceTile = source;
-        flow.destTile = dest;
-        flow.flowAmount = flowAmt;
+    void MaxflowLegaliser::constructSingleFlow(MFLTessInfo& sourceTessInfo, MFLFlowTessInfo* sourceFlowInfo, 
+                                                MFLTessInfo& destTessInfo, MFLFlowTessInfo* destFlowInfo ){
+        int maxflowAmnt = mMaxflowManager.edgeFlow(sourceTessInfo.tessName, destTessInfo.tessName);
+        if (maxflowAmnt > 0){
+            // should not happen
+            MFLSingleFlowInfo flow;
+            flow.sourceTile = sourceFlowInfo;
+            flow.destTile = destFlowInfo;
+            flow.flowAmount = maxflowAmnt;
+            sourceFlowInfo->fromFlows.push_back(flow);
+            destFlowInfo->toFlows.push_back(flow);
+        }
     }
 
     std::string toOverlapName(int tessIndex1, int tessIndex2){
