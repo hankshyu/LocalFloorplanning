@@ -17,6 +17,8 @@
 #define MAX_ITER 12
 #define LEGAL_MAX_ITER 4
 
+#define MAX_MINUTE_RUNTIME 59
+
 int main(int argc, char const *argv[]) {
 
     bool legalSolutionFound = false;
@@ -25,16 +27,32 @@ int main(int argc, char const *argv[]) {
 
     
     std::vector<double> punishmentValues{
-        0.05, 1000.0, 100000.0, 
-        200000.0, 5000.0, 10000.0, 
-        50000.0, 1.0, 100.0, 
-        1000.0, 0.03, 1  };
+        0.00001, 0.0001 ,0.005, 0.1, 1.0 ,10.0, 200.0 ,1000.0, 10000.0, 100000.0, 
+    };
 
-    std::vector<double> toleranceLengthValues(MAX_ITER);
-    std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+4, 0);
-    std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
-    std::fill(toleranceLengthValues.begin()+7, toleranceLengthValues.begin()+10, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
-    std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
+    std::vector<double> toleranceLengthValues;
+    for(int i = 0; i < punishmentValues.size(); ++i){
+        toleranceLengthValues.push_back(0);
+    }
+    double pushValue = 1;
+    while(pushValue < ((rgparser.getDieWidth() + rgparser.getDieHeight()) * 0.5 * 0.25)){
+        for(int i = 0; i < punishmentValues.size(); ++i){
+            toleranceLengthValues.push_back(pushValue);
+        }
+        pushValue = pushValue * 2;
+
+    }
+
+    // toleranceLengthValues.push_back()
+
+    // std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+4, 0);
+    // std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 12800);
+    // std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
+    // std::fill(toleranceLengthValues.begin()+7, toleranceLengthValues.begin()+10, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
+    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
+    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 200);
+    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 50);
+    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 200);
 
     
     mnt::Monitor monitor;
@@ -49,12 +67,12 @@ int main(int argc, char const *argv[]) {
             double etSec;
             double elapsedTime = monitor.getElapsedSeconds(etMin, etSec);
             double toleranceValue = toleranceLengthValues[iter];
-            double punishmentValue = punishmentValues[iter];
+            double punishmentValue = punishmentValues[iter%punishmentValues.size()];
             // double punishmentValue = punishmentValues[iter % punishmentValues.size()];
             // double toleranceValue = toleranceLengthValues[iter / toleranceLengthValues.size()];
             
             std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<"(s)" << std::endl;
-            if(etMin >= 27){
+            if(etMin >= MAX_MINUTE_RUNTIME){
                 std::cout << "Too late to start anothe iteration, terminate Program." << std::endl;
                 exit(0);
             }else{
@@ -289,6 +307,7 @@ int main(int argc, char const *argv[]) {
         catch (char const *errMsg) {
             std::cout << errMsg << std::endl;
             std::cout << "[ERROR] Caught an exception, skip to next iteration" << std::endl;
+
         }
 
     }
