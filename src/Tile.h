@@ -18,7 +18,6 @@ typedef gtl::point_data<len_t> Point;
 typedef std::vector<Polygon>                     PolygonSet;
 
 
-
 enum class tileType{
     BLOCK, BLANK, OVERLAP
 };
@@ -39,6 +38,10 @@ public:
     
     Tile();
     Tile(tileType t, Cord LL, len_t w, len_t h);
+    Tile(const Tile &other);
+
+    Tile& operator = (const Tile &other);
+    friend std::ostream &operator << (std::ostream &os, const Tile &t);
     
     tileType getType() const;
 
@@ -82,13 +85,15 @@ public:
     
 };
 
-    std::ostream &operator << (std::ostream &o, const Point &pt);
-    std::ostream &operator << (std::ostream &o, const Polygon &poly);
-    std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
-    
-    // * These are new added functions for tile manipulation
-    std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
-    std::vector<Tile> mergeTile(Tile tile1, Tile tile2);
-    std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut);
+std::ostream &operator << (std::ostream &os, const Tile &t);
+
+std::ostream &operator << (std::ostream &o, const Point &pt);
+std::ostream &operator << (std::ostream &o, const Polygon &poly);
+std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
+
+// * These are new added functions for tile manipulation
+std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
+std::vector<Tile> mergeTile(Tile tile1, Tile tile2);
+std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut);
 
 #endif // __TILE_H__

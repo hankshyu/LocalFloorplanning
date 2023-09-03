@@ -9,6 +9,36 @@ Tile::Tile(tileType t, Cord LL, len_t w, len_t h)
     : type(t), mLowerLeft(LL), mWidth(w), mHeight(h),
         rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
 
+Tile::Tile(const Tile &other)
+    : type(other.type), mLowerLeft(other.getLowerLeft()), mWidth(other.getWidth()), mHeight(other.getHeight()),
+        rt(other.rt), tr(other.tr), bl(other.bl), lb(other.lb) {
+            this->OverlapFixedTesseraeIdx.assign(other.OverlapFixedTesseraeIdx.begin(), other.OverlapFixedTesseraeIdx.end());
+            this->OverlapSoftTesseraeIdx.assign(other.OverlapSoftTesseraeIdx.begin(), other.OverlapSoftTesseraeIdx.end());
+        }
+
+Tile& Tile::operator = (const Tile &other){
+    if(this == &other) return (*this);
+
+    this->type = other.getType();
+    this->mLowerLeft = other.getLowerLeft();
+    this->mWidth = other.getWidth();
+    this->mHeight = other.getHeight();
+
+    this->rt = other.rt;
+    this->tr = other.tr;
+    this->bl = other.bl;
+    this->lb = other.lb;
+
+    this->OverlapFixedTesseraeIdx.assign(other.OverlapFixedTesseraeIdx.begin(), other.OverlapFixedTesseraeIdx.end());
+    this->OverlapSoftTesseraeIdx.assign(other.OverlapSoftTesseraeIdx.begin(), other.OverlapSoftTesseraeIdx.end());
+
+    return (*this);
+}
+
+void Tile::setType(tileType type) {
+    this->type = type;
+}
+
 tileType Tile::getType() const {
     return this->type;
 }
@@ -36,10 +66,6 @@ len_t Tile::getWidth() const {
 len_t Tile::getHeight() const {
     return this->mHeight;
 };
-
-void Tile::setType(tileType type){
-    this->type = type;
-}
 
 void Tile::setCord (Cord cord){
     this->mLowerLeft = cord;
@@ -115,7 +141,21 @@ void Tile::showLink(std::ostream &os) const{
     os << std::endl;
 }
 
-
+std::ostream &operator << (std::ostream &os, const Tile &t){
+    os << "(" << t.mLowerLeft << ", W=" << t.mWidth << ", H=" << t.mHeight;
+    os << ", oFt=[";
+    for(int i = 0; i < t.OverlapFixedTesseraeIdx.size(); ++i){
+        os << t.OverlapFixedTesseraeIdx[i];
+        if(i != t.OverlapFixedTesseraeIdx.size() -1) os << ", ";
+    }
+    os << "], oSt=[";
+    for(int i = 0; i < t.OverlapSoftTesseraeIdx.size(); ++i){
+        os << t.OverlapSoftTesseraeIdx[i];
+        if(i != t.OverlapSoftTesseraeIdx.size() -1) os << ", ";
+    }
+    os << "])";
+    return os;
+}
 
 std::ostream &operator << (std::ostream &o, const Point &pt) {
     o << "(" << gtl::x(pt) << ", " << gtl::y(pt) << ")";

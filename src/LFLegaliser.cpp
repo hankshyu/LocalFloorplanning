@@ -1,15 +1,159 @@
 #include <iostream>
+#include <stdio.h>
 #include "LFLegaliser.h"
 
 LFLegaliser::LFLegaliser(len_t chipWidth, len_t chipHeight)
     : mCanvasWidth(chipWidth), mCanvasHeight(chipHeight) {}
 
 LFLegaliser::~LFLegaliser() {
-    for ( int i = 0; i < softTesserae.size(); i++ )
+
+    // Collect all the tiles for cleanUp
+    std::vector<Tile *> tileBin;
+
+    collectAllTiles(tileBin);
+
+    for(int i = 0; i < tileBin.size(); ++i){
+        // std::cout << "Delete " << *(tileBin[i]) << std::endl;
+        delete(tileBin[i]);
+    }
+
+    // All Tiles are recycled, now delete all tessera
+    for (int i = 0; i < softTesserae.size(); ++i){
         delete softTesserae[i];
-    for ( int i = 0; i < fixedTesserae.size(); i++ )
+    }
+    for (int i = 0; i < fixedTesserae.size(); ++i){
         delete fixedTesserae[i];
-    //std::cerr << "LFLegaliser Deleted Successfully\n";
+    }
+
+}
+
+LFLegaliser::LFLegaliser(const LFLegaliser &other){
+    this->mCanvasWidth = other.mCanvasWidth;
+    this->mCanvasHeight = other.mCanvasHeight;
+    this->overlap3 = other.overlap3;
+
+    std::vector <Tile *> allOldTiles;
+    other.collectAllTiles(allOldTiles);
+
+    std::vector <CPTilePair *> pairs;
+    for(Tile *t : allOldTiles){
+        CPTilePair *cp = new CPTilePair();
+        cp->father = t;
+        cp->baby = new Tile((*t));
+        pairs.push_back(cp);
+    }
+
+    // maintain the pointers for the new tiles
+    for(CPTilePair *fixLinkHead : pairs){
+        
+        if(fixLinkHead->father->rt != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->rt->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->rt = newLink;
+        }
+        if(fixLinkHead->father->lb != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->lb->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->lb = newLink;
+        }
+        if(fixLinkHead->father->bl != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->bl->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->bl = newLink;
+        }
+        if(fixLinkHead->father->tr != nullptr){
+            Tile *newLink = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == fixLinkHead->father->tr->getLowerLeft()){
+                    newLink = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newLink != nullptr);
+            fixLinkHead->baby->tr = newLink;
+        }
+
+    }
+
+    for(Tessera *oldT : other.fixedTesserae){
+        Tessera* newTess = new Tessera((*oldT));
+        newTess->TileArr.clear();
+        for(Tile *t : oldT->TileArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->TileArr.push_back(newTileReplacement);
+        }
+
+        newTess->OverlapArr.clear();
+        for(Tile *t : oldT->OverlapArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->OverlapArr.push_back(newTileReplacement);
+        }
+
+        this->fixedTesserae.push_back(newTess);
+    }
+
+    for(Tessera *oldT : other.softTesserae){
+        Tessera* newTess = new Tessera((*oldT));
+        newTess->TileArr.clear();
+        for(Tile *t : oldT->TileArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->TileArr.push_back(newTileReplacement);
+        }
+
+        newTess->OverlapArr.clear();
+        for(Tile *t : oldT->OverlapArr){
+            Tile *newTileReplacement = nullptr;
+            for(CPTilePair *findingHead : pairs){
+                if(findingHead->father->getLowerLeft() == t->getLowerLeft()){
+                    newTileReplacement = findingHead->baby;
+                    break;
+                }
+            }
+            assert(newTileReplacement != nullptr);
+            newTess->OverlapArr.push_back(newTileReplacement);
+        }
+
+        this->softTesserae.push_back(newTess);
+    } 
 }
 
 bool LFLegaliser::checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const {
@@ -590,8 +734,16 @@ void LFLegaliser::insertFirstTile(Tile &newTile){
 }
 
 void LFLegaliser::insertTile(Tile &tile){
-    assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
-    assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
+    // assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
+    if (!checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight())) {
+        throw "assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()))";
+    }
+
+    // assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
+    if (searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight())) {
+        throw "assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()))";
+    }
+
 
     /* STEP 1) Find the space Tile containing the top edge of the aera to be occupied, process */
     bool tileTouchesSky = (tile.getUpperRight().y == getCanvasHeight());
@@ -1635,6 +1787,122 @@ bool LFLegaliser::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> 
     return answer;  
 }
 
+// void LFLegaliser::printOutput(std::string outputFileName){
+//     std::ofstream fout(outputFileName, std::ofstream::out);
+//     if ( !fout.is_open() ) {
+//         return;
+//     }
+    
+//     fout << "HPWL ";
+//     fout 
+// }
+void LFLegaliser::collectAllTiles(std::vector<Tile *> &allTiles) const{
+    allTiles.clear();
+    if(fixedTesserae.empty() && softTesserae.empty()) return;
+
+    Tile *seed = getRandomTile();
+    std::vector <Cord> record; // This records which Tile has been visited;
+    
+    collectAllTilesDFS((*seed), record, allTiles);
+}
+
+void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std::vector<Tile *> &allTiles) const{
+    record.push_back(head.getLowerLeft());
+    allTiles.push_back(&head);
+
+    if(head.rt != nullptr){
+        if(!checkVectorInclude(record, head.rt->getLowerLeft())){
+            collectAllTilesDFS((*(head.rt)), record, allTiles);
+        }
+    }
+    if(head.lb != nullptr){
+        if(!checkVectorInclude(record, head.lb->getLowerLeft())){
+            collectAllTilesDFS((*(head.lb)), record, allTiles);
+        }
+    }
+    if(head.bl != nullptr){
+        if(!checkVectorInclude(record, head.bl->getLowerLeft())){
+            collectAllTilesDFS((*(head.bl)), record, allTiles);
+        }
+    }
+    if(head.tr != nullptr){
+        if(!checkVectorInclude(record, head.tr->getLowerLeft())){
+            collectAllTilesDFS((*(head.tr)), record, allTiles);
+        }
+    }
+}
+
+double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &connections, bool printReport){
+    double HPWL = 0;
+    for(RGConnStruct cs : connections){
+        
+        Tessera *tess0 = nullptr;
+        Tessera *tess1 = nullptr;
+
+        for(Tessera *t : legaliser->fixedTesserae){
+            std::string tName = t->getName();
+            if(tName == cs.m0){
+                tess0 = t;
+            }
+            if(tName == cs.m1){
+                tess1 = t;
+            }
+            if((tess0 != nullptr) && (tess1 != nullptr)) break;
+        }
+        for(Tessera *t : legaliser->softTesserae){
+            std::string tName = t->getName();
+            if(tName == cs.m0){
+                tess0 = t;
+            }
+            if(tName == cs.m1){
+                tess1 = t;
+            }
+            if((tess0 != nullptr) && (tess1 != nullptr)) break;
+        }
+
+        assert((tess0 != nullptr) && (tess1 != nullptr));
+
+        double tess0CentreX, tess0CentreY;
+        tess0->calBBCentre(tess0CentreX, tess0CentreY);
+        double tess1CentreX, tess1CentreY;
+        tess1->calBBCentre(tess1CentreX, tess1CentreY);
+
+        double tessXDiff = std::abs(tess0CentreX - tess1CentreX);
+        double tessYDiff = std::abs(tess0CentreY - tess1CentreY);
+
+
+        double distance = tessXDiff + tessYDiff;
+        double connectionScore = distance * ((double)cs.value);
+
+        if(printReport){
+            // std::cout << <<cs.m0 <<" ";
+            printf("%-8s (%7.1f, %7.1f), ", cs.m0.c_str(), tess0CentreX, tess0CentreY);
+            printf("%-8s (%7.1f, %7.1f), ", cs.m1.c_str(), tess1CentreX, tess1CentreY);
+            printf("Distance = %10.2f x %5d = %12.2f\n", distance, cs.value, connectionScore);
+        }
+
+        HPWL += connectionScore;
+    }
+
+    return HPWL;
+}
+
+
+void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const std::string outputFileName){
+    std::cout << "output Final Answer..." <<outputFileName << std::endl;
+
+    std::ofstream ofs(outputFileName);
+    ofs << "HPWL " << std::fixed << std::setprecision(1) << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
+    ofs << "SOFTMODULE " << legaliser->softTesserae.size() << std::endl;
+    for(Tessera *softTess : legaliser->softTesserae){
+        assert(!softTess->TileArr.empty());
+        assert(softTess->OverlapArr.empty());
+        softTess->printCorners(ofs);
+    }
+    ofs.close();
+    
+}
+
 
 bool checkVectorInclude(std::vector<Cord> &vec, Cord c){
     for(auto const &e : vec){
@@ -1650,4 +1918,16 @@ bool checkVectorInclude(std::vector<Tessera *>&vec, Tessera *tess){
     return false;
 }
 
+int findVectorInclude(std::vector<Tile *>&vec, Tile *t){
+    for(int i = 0; i < vec.size(); ++i){
+        if((*vec[i]) == (*t)) return i;
+    }
+    return -1;
+}
 
+int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess){
+    for (int i = 0; i < vec.size(); i++){
+        if(vec[i]->getName() == tess->getName()) return i;
+    }
+    return -1;
+}

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
+#include <cassert>
 
 RGSolver::RGSolver() {
     std::srand(std::time(NULL));
@@ -423,8 +424,8 @@ void RGSolver::squeezeToFit() {
         if ( curModule->fixed ) {
             continue;
         }
-        int totalOverlapWidth = 0;
-        int totalOverlapHeight = 0;
+        int totalOverlapWidth = 0.0;
+        int totalOverlapHeight = 0.0;
         for ( RGModule *tarModule : modules ) {
             if ( curModule == tarModule ) {
                 continue;
@@ -462,14 +463,14 @@ void RGSolver::squeezeToFit() {
         if ( totalOverlapWidth > 0. && totalOverlapHeight > 0. ) {
             double aspectRatio = (double) totalOverlapHeight / totalOverlapWidth;
             if ( aspectRatio > 10. ) {
-                double squeezeWidth = totalOverlapWidth;
-                std::cout << "Width: " << squeezeWidth << "\n";
+                int squeezeWidth = totalOverlapWidth;
+                // std::cout << "Width: " << squeezeWidth << "\n";
                 // curModule->width -= squeezeWidth;
                 // curModule->height = std::ceil(curModule->area / curModule->width);
                 squeezeWidthVec[i] = squeezeWidth;
             }
             else if ( aspectRatio < 0.1 ) {
-                double squeezeHeight = totalOverlapHeight;
+                int squeezeHeight = totalOverlapHeight;
                 std::cout << "Height: " << squeezeHeight << "\n";
                 // curModule->height -= squeezeHeight;
                 // curModule->width = std::ceil(curModule->area / curModule->height);
@@ -495,12 +496,25 @@ void RGSolver::squeezeToFit() {
         }
         if ( squeezeWidthVec[i] > 0. ) {
             curModule->width -= squeezeWidthVec[i];
-            curModule->height = std::ceil((double) curModule->area / curModule->width);
+            curModule->height = std::ceil((double) curModule->area / (double) curModule->width);
         }
         else if ( squeezeHeightVec[i] > 0. ) {
             curModule->height -= squeezeHeightVec[i];
-            curModule->width = std::ceil((double) curModule->area / curModule->height);
+            curModule->width = std::ceil((double) curModule->area / (double) curModule->height);
         }
+        assert(curModule->height * curModule->width >= curModule->area);
         curModule->updateCord(DieWidth, DieHeight, 1.);
     }
+}
+
+bool RGSolver::isAreaLegal() {
+    for ( auto &mod : modules ) {
+        if ( mod->fixed ) {
+            continue;
+        }
+        if ( mod->width * mod->height < mod->area ) {
+            return false;
+        }
+    }
+    return true;
 }
