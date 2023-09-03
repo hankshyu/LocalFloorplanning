@@ -225,8 +225,10 @@ void paletteKnife::disperseViaMargin(){
                                 afterTess.OverlapArr.push_back(t);
                             }
                         }
-                        if(afterTess.checkLegal() != 0){
-                            std::cout <<"Potential Removal: violate rule #" << afterTess.checkLegal();
+                        int errorCode = -1;
+
+                        if(!afterTess.isLegal(errorCode)){
+                            std::cout <<"Potential Removal: violate rule #" << errorCode;
                             tile->show(std::cout);
                             continue;
                         }
