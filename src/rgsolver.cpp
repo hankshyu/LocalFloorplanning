@@ -502,7 +502,7 @@ void RGSolver::squeezeToFit() {
             curModule->height -= squeezeHeightVec[i];
             curModule->width = std::ceil((double) curModule->area / (double) curModule->height);
         }
-        assert(curModule->height * curModule->width > curModule->area);
+        assert(curModule->height * curModule->width >= curModule->area);
         curModule->updateCord(DieWidth, DieHeight, 1.);
     }
 }
