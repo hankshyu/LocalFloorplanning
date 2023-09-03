@@ -12,6 +12,7 @@
 #include "rgsolver.h"
 #include "DFSLegalizer.h"
 #include "monitor.h"
+#include "paletteKnife.h"
 
 #define MAX_ITER 12
 #define LEGAL_MAX_ITER 4
@@ -39,19 +40,29 @@ int main(int argc, char const *argv[]) {
     double bestHpwl = DBL_MAX;
     monitor.printCopyRight();
     for (int iter = 0; iter < MAX_ITER; iter++){
+        
+        int etMin;
+        double etSec;
+        double elapsedTime = monitor.getElapsedSeconds(etMin, etSec);
+        double toleranceValue = toleranceLengthValues[iter];
+        double punishmentValue = punishmentValues[iter];
+        
+        std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<"(s)" << std::endl;
+        if(etMin >= 27){
+            std::cout << "Too late to start anothe iteration, terminate Program." << std::endl;
+            exit(0);
+        }else{
+            std::cout << "Running with parameter: Tolerance: " << toleranceValue << ", Punishment: " << punishmentValue << std::endl; 
+        }
+
         if (legaliser != nullptr){
             delete legaliser;
         }
-        double toleranceValue = toleranceLengthValues[iter];
-        double punishmentValue = punishmentValues[iter];
-        std::cout << "ITERATION: " << iter;
-        std::cout << "\nTolerance: " << toleranceValue;
-        std::cout << "\nPunishment: " << punishmentValue << std::endl; 
 
         /* Phase 1: Global Floorplanning */
         std::cout << std::endl << std::endl;
-        monitor.printPhase("Global Floorplanning Phase");
-        auto clockCounterbegin = std::chrono::steady_clock::now();
+        monitor.printPhase("Global Floorplanning Phase", iter);
+        // auto clockCounterbegin = std::chrono::steady_clock::now();
 
         int iteration = 20000;
         double lr = 5. / iteration;
@@ -150,13 +161,15 @@ int main(int argc, char const *argv[]) {
         // Phase 2 Reports
         std::cout << std::endl;
         monitor.printPhaseReport();
-        
         legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
         /* Phase 3: disperseViaMerge*/
-        
+        // std::cout << std::endl << "Overlap Report:" << std::endl;
+        // spatula.collectOverlaps();
+        // spatula.printpaintClusters();
+        // monitor.printPhaseReport();
 
-        /* Phase 3: Overlap distribution via DFS */
+        /* Phase 4: Overlap distribution via DFS */
         std::cout << std::endl << std::endl;
         monitor.printPhase("Overlap distribution");
         DFSL::DFSLegalizer dfsl;

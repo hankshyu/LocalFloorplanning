@@ -12,8 +12,9 @@ LFLegaliser::~LFLegaliser() {
 
     collectAllTiles(tileBin);
 
-    for(Tile *t : tileBin){
-        delete(t);
+    for(int i = 0; i < tileBin.size(); ++i){
+        // std::cout << "Delete " << *(tileBin[i]) << std::endl;
+        delete(tileBin[i]);
     }
 
     // All Tiles are recycled, now delete all tessera
@@ -1862,7 +1863,7 @@ double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &co
         double tessYDiff = std::abs(tess0CentreY - tess1CentreY);
 
 
-        double distance = std::sqrt((tessXDiff * tessXDiff) + (tessYDiff * tessYDiff));
+        double distance = tessXDiff + tessYDiff;
         double connectionScore = distance * ((double)cs.value);
 
         if(printReport){
@@ -1883,12 +1884,11 @@ void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const s
     std::cout << "output Final Answer..." <<outputFileName << std::endl;
 
     std::ofstream ofs(outputFileName);
-    ofs << "HPWL " << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
+    ofs << "HPWL " << std::fixed << std::setprecision(1) << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
     ofs << "SOFTMODULE " << legaliser->softTesserae.size() << std::endl;
     for(Tessera *softTess : legaliser->softTesserae){
         assert(!softTess->TileArr.empty());
         assert(softTess->OverlapArr.empty());
-        ofs << softTess->getName() << " " << softTess->TileArr.size() << std::endl;
         softTess->printCorners(ofs);
     }
     ofs.close();
