@@ -181,7 +181,7 @@ void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
         for(runConfig *cf : configs){
             printf("[%2d,%2d] (P,T) = (%12.2f, %12.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
             printf(", (%12.2f, %12.2f, %12.2f, %12.2f, %12.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
-            printf(", Time = %1d:%2.0f", cf->minutes, cf->seconds);
+            printf(", Time = %1d:%02.0f", cf->minutes, cf->seconds);
             printf(" >> (LegaliseSuccess, LegalResult, HPWL) = (%1d, %1d, %14.2f)\n", cf->legaliseSuccess, cf->legal, cf->resultHPWL);
             if(cf->legal) verifySolutionFound = true;
             if(cf->legaliseSuccess && cf->legal){
