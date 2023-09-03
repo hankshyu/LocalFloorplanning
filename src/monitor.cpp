@@ -37,7 +37,7 @@ void mnt::Monitor::printCopyRight(){
     std::cout << std::endl;
     std::cout << "ICCAD Contest 2023" << std::endl;
     std::cout << "Problem D: Fixed-Outline Floorplanning with Rectilinear Soft Blocks" << std::endl;
-    std::cout << "Authors: ...." << std::endl;
+    std::cout << "Authors: Prof. Iris Jiang, Kevin Chen, Ryan Lin, Hank Hsu" << std::endl;
 }
 
 void mnt::Monitor::printPhase(std::string title, int iteration){
@@ -179,10 +179,10 @@ void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
         bool verifySolutionFound = false;
         double bestHPWL = std::numeric_limits<double>::max();
         for(runConfig *cf : configs){
-            printf("[%2d,%2d] (P,T) = (%12.2f, %12.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
-            printf(", (%12.2f, %12.2f, %12.2f, %12.2f, %12.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
+            printf("[%2d,%2d] (P,T) = (%11.2f, %11.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
+            printf(", (%10.2f, %10.2f, %10.2f, %10.2f, %10.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
             printf(", Time = %1d:%02.0f", cf->minutes, cf->seconds);
-            printf(" >> (LegaliseSuccess, LegalResult, HPWL) = (%1d, %1d, %14.2f)\n", cf->legaliseSuccess, cf->legal, cf->resultHPWL);
+            printf(" >> (Lglise, Lg?, fault, HPWL) = (%1d, %1d, %14.2f)\n", cf->legaliseSuccess, cf->legal, cf->resultHPWL);
             if(cf->legal) verifySolutionFound = true;
             if(cf->legaliseSuccess && cf->legal){
                 if(cf->resultHPWL < bestHPWL) bestHPWL = cf->resultHPWL;
