@@ -14,7 +14,7 @@
 #include "monitor.h"
 #include "paletteKnife.h"
 
-#define MAX_ITER 12
+// #define MAX_ITER 12
 #define LEGAL_MAX_ITER 4
 
 #define MAX_MINUTE_RUNTIME 59
@@ -42,6 +42,7 @@ int main(int argc, char const *argv[]) {
         pushValue = pushValue * 2;
 
     }
+    const int MAX_ITER = toleranceLengthValues.size();
 
     // toleranceLengthValues.push_back()
 
