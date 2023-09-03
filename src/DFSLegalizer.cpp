@@ -434,6 +434,11 @@ namespace DFSL {
     }
 
     bool DFSLegalizer::migrateOverlap(int overlapIndex){
+        // 0903: SEVERE BUG
+        // Because migrating overlap may take several passes, an overlap may migrate to A in one iteration
+        // and then to B in later iterations. But at the end, the overlap will completely assigned to one Tess
+        // This causes mismatch in tess area
+        // possible fix: implementation of slicing of block tiles
         mBestPath.clear();
         mCurrentPath.clear();
         mBestCost = (double) INT_MAX;
@@ -491,12 +496,24 @@ namespace DFSL {
                     // create transient overlap area
                     std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << " whitespace area: " << resolvableArea << ")\n";
                     std::cout << "Saving rest of overlap to resolve later\n";
-                    OverlapArea tempArea;
-                    tempArea.index1 = *(fromNode.overlaps.begin());
-                    tempArea.index2 = *(fromNode.overlaps.rbegin());
-                    tempArea.area = mMigratingArea - resolvableArea;
+                    int index1 = *(fromNode.overlaps.begin());
+                    int index2 = *(fromNode.overlaps.rbegin());
 
-                    mTransientOverlapArea.push_back(tempArea);
+                    bool found = false;
+                    for (OverlapArea& overlapInfo: mTransientOverlapArea){
+                        if ((overlapInfo.index1 == index1 || overlapInfo.index2 == index1) && (overlapInfo.index1 == index2 || overlapInfo.index2 == index2)){
+                            found = true;
+                            overlapInfo.area = mMigratingArea - resolvableArea;
+                            break;
+                        }
+                    }
+                    if (!found){
+                        OverlapArea tempArea;
+                        tempArea.index1 = index1;
+                        tempArea.index2 = index2;
+                        tempArea.area = mMigratingArea - resolvableArea;
+                        mTransientOverlapArea.push_back(tempArea);
+                    }
                 }
                 else {
                     std::cout << "Removing " << toNode.nodeName << " attribute from " << fromNode.tileList.size() << " tiles\n";
@@ -536,6 +553,16 @@ namespace DFSL {
                             else {
                                 removeFromVector(overlapTile, mLF->softTesserae[indexToRemove - mFixedTessNum]->OverlapArr);
                                 removeFromVector(indexToRemove - mFixedTessNum, overlapTile->OverlapSoftTesseraeIdx);                                
+                            }
+                        }
+
+                        int index1 = *(fromNode.overlaps.begin());
+                        int index2 = *(fromNode.overlaps.rbegin());
+                        for (std::vector<OverlapArea>::iterator it = mTransientOverlapArea.begin() ; it != mTransientOverlapArea.end(); ++it){
+                            if ((it->index1 == index1 || it->index2 == index1)
+                                && (it->index1 == index2 || it->index2 == index2)){
+                                mTransientOverlapArea.erase(it);
+                                break;
                             }
                         }
                     }

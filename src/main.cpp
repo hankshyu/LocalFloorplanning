@@ -171,7 +171,7 @@ int main(int argc, char const *argv[]) {
             else if (legalIter == 1){
                 // prioritize area 
                 std::cout << "LegalIter = 1, prioritizing area\n";
-                dfsl.config.OBAreaWeight = 1400.0;
+                dfsl.config.OBAreaWeight = 2000.0;
                 dfsl.config.OBUtilWeight = 750.0;
                 dfsl.config.OBAspWeight = 100.0;
                 dfsl.config.BWUtilWeight = 750.0;
@@ -180,19 +180,19 @@ int main(int argc, char const *argv[]) {
             else if (legalIter == 2){
                 // prioritize util
                 std::cout << "LegalIter = 2, prioritizing utilization\n";
-                dfsl.config.OBAreaWeight = 750.0;
+                dfsl.config.OBAreaWeight = 700.0;
                 dfsl.config.OBUtilWeight = 900.0;
                 dfsl.config.OBAspWeight = 100.0;
-                dfsl.config.BWUtilWeight = 2000.0;
+                dfsl.config.BWUtilWeight = 2100.0;
                 dfsl.config.BWAspWeight = 100.0;
             }
             else if (legalIter == 3){
                 // prioritize aspect ratio
                 std::cout << "LegalIter = 3, prioritizing aspect ratio\n";
-                dfsl.config.OBAreaWeight = 750.0;
-                dfsl.config.OBUtilWeight = 1100.0;
+                dfsl.config.OBAreaWeight = 650.0;
+                dfsl.config.OBUtilWeight = 700.0;
                 dfsl.config.OBAspWeight = 1000.0;
-                dfsl.config.BWUtilWeight = 1000.0;
+                dfsl.config.BWUtilWeight = 800.0;
                 dfsl.config.BWAspWeight = 1100.0;
             }
 
@@ -232,30 +232,5 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-
-    // // Phase 3 Reports
-    // std::cout << std::endl;
-    // monitor.printPhaseReport();
-    // legaliser->visualiseArtpiece("outputs/phase3.txt", true);
-
-    // // Final Output
-    // double finalScore = calculateHPWL(legaliser, rgparser.getConnectionList(), true);
-    // printf("Final Score = %12.6f\n", finalScore);
-    // outputFinalAnswer(legaliser, rgparser, argv[2]);
-
-    // /* Phase 4: Solve 2-Overlaps */
-    // std::cout << std::endl << std::endl;
-    // monitor.printPhase("Solve Level-2 Overlaps");
-    // spatula.eatCakesLevel2();
-
-    /* Phase 4: Physical Overlap distribution */
-    // std::cout << std::endl << std::endl;
-    // monitor.printPhase("Physical Overlap distribution");
-    // std::cout << "4.1 Analyse Overlap distribution tiles" << std::endl;
-    // legaliser->visualiseRemoveAllmark();
-
-    // // Phase 4 Reports
-    // std::cout << std::endl;
-    // monitor.printPhaseReport();
-
+    std::cout << "\nFinished. Thank you..." << std::endl;
 }
