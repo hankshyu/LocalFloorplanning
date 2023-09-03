@@ -179,14 +179,30 @@ void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
     if(configs.empty()) return;
         bool verifySolutionFound = false;
         double bestHPWL = std::numeric_limits<double>::max();
+
+        int bestiteration;
+        int bestepoch;
+        
+        double bestpunishmentValue;
+        double besttoleranceLengthValue;
+
+
+
         for(runConfig *cf : configs){
-            printf("[%2d,%2d] (P,T) = (%11.2f, %11.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
+            printf("[%2d,%2d] (P,T) = (%14.6f, %11.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
             printf(", (%10.2f, %10.2f, %10.2f, %10.2f, %10.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
             printf(", Time = %1d:%02.0f", cf->minutes, cf->seconds);
             printf(" >> (Lglise, Lg?, fault, HPWL) = (%1d, %1d, %1d, %12.2f)\n", cf->legaliseSuccess, cf->legal, cf->fault, cf->resultHPWL);
             if(cf->legal) verifySolutionFound = true;
             if(cf->legaliseSuccess && cf->legal){
-                if(cf->resultHPWL < bestHPWL) bestHPWL = cf->resultHPWL;
+                if(cf->resultHPWL < bestHPWL){
+                    bestHPWL = cf->resultHPWL;
+
+                    bestiteration = cf->iteration;
+                    bestepoch = cf->epoch;
+                    bestpunishmentValue = cf->punishmentValue;
+                    besttoleranceLengthValue = cf->toleranceLengthValue;
+                }
             }
         }
 
@@ -202,9 +218,11 @@ void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
         int etMin;
         double etSec;
         double elapsedTime = getElapsedSeconds(etMin, etSec);        
-        std::cout <<  " Program runtime: " << etMin << "(min) " << etSec <<"(s)";
+        std::cout <<  " Program runtime: " << etMin << "(min) " << etSec <<"(s)" << std::endl;
         if(verifySolutionFound){
-            printf("\t best HPWL = %14.2f\n", bestHPWL);
+            printf("Best HPWL = %14.2f\n", bestHPWL);
+            printf(" @[%2d,%2d] (P,T) = (%14.6f, %11.2f)\n", bestiteration, bestepoch, bestpunishmentValue, besttoleranceLengthValue);
+
         }
 
 }

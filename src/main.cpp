@@ -17,7 +17,7 @@
 // #define MAX_ITER 12
 #define LEGAL_MAX_ITER 4
 
-#define MAX_MINUTE_RUNTIME 59
+#define MAX_MINUTE_RUNTIME 119
 
 int main(int argc, char const *argv[]) {
 
@@ -27,7 +27,7 @@ int main(int argc, char const *argv[]) {
 
     
     std::vector<double> punishmentValues{
-        0.00001, 0.0001 ,0.005, 0.1, 1.0 ,10.0, 200.0 ,1000.0, 10000.0, 100000.0, 
+        0.000001, 0.00001, 0.0001 ,0.001, 0.01, 0.1, 1.0 ,10.0, 100.0 ,1000.0, 10000.0, 100000.0, 1000000
     };
 
     std::vector<double> toleranceLengthValues;

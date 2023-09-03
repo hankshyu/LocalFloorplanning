@@ -15,7 +15,7 @@ namespace mnt
         "Sixteen", "Seventeen", "Eighteen", "Nineteen", "Twenty"
     };
 
-    const std::string PHASE_BORDER  = "==========================================================================";
+    const std::string PHASE_BORDER  = "==============================================================================";
     const std::string NORMAL_BORDER = "------------------------------------------------------";
     struct runConfig{
         int iteration;
