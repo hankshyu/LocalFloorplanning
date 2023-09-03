@@ -6,3 +6,6 @@ log/
 *.o*
 *.out
 .DS_Store
+boost_1_72_0
+answers/
+cadd0007
