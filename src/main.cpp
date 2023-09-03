@@ -19,6 +19,8 @@
 
 int main(int argc, char const *argv[]) {
 
+    bool legalSolutionFound = false;
+
 
     RGParser rgparser(argv[1]);
     RGSolver solver;
@@ -219,6 +221,7 @@ int main(int argc, char const *argv[]) {
 
             DFSL::RESULT legalResult = dfsl.legalize();
             if (legalResult == DFSL::RESULT::SUCCESS){
+                legalSolutionFound = true;
                 std::cout << "DSFL DONE\n" << std::endl;
                 std::cout << "Checking legality..." << std::endl;
                 bool legal = true;
@@ -252,6 +255,13 @@ int main(int argc, char const *argv[]) {
             }
         }
     }
+
+    if(legalSolutionFound){
+        std::cout << "Run " << MAX_ITER << " iterations and found Solution HPWL = " << bestHpwl << std::endl;
+    }else{
+        std::cout << " FAIL! No legal solution found, run " << MAX_ITER << " iterations" << std::endl;
+    }
+
 
 
     // // Phase 3 Reports
