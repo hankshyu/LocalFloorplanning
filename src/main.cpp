@@ -14,7 +14,8 @@
 #include "monitor.h"
 #include "paletteKnife.h"
 
-#define MAX_ITER 11
+#define MAX_ITER 12
+#define LEGAL_MAX_ITER 4
 
 int main(int argc, char const *argv[]) {
 
@@ -24,15 +25,15 @@ int main(int argc, char const *argv[]) {
     solver.readFromParser(rgparser);
     
     std::vector<double> punishmentValues{
-        50000.0, 100000.0, 200000.0, 
+        0.05, 1000.0, 100000.0, 200000.0, 
         5000.0, 10000.0, 50000.0,
         1.0, 100.0, 1000.0,
         0.03, 1  };
     std::vector<double> toleranceLengthValues(MAX_ITER);
-    std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+3, 0);
-    std::fill(toleranceLengthValues.begin()+3, toleranceLengthValues.begin()+6, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
-    std::fill(toleranceLengthValues.begin()+6, toleranceLengthValues.begin()+9, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
-    std::fill(toleranceLengthValues.begin()+9, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
+    std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+4, 0);
+    std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
+    std::fill(toleranceLengthValues.begin()+7, toleranceLengthValues.begin()+10, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
+    std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
 
     mnt::Monitor monitor;
     LFLegaliser *legaliser = nullptr;
@@ -99,9 +100,16 @@ int main(int argc, char const *argv[]) {
             }
         }
 
+        if ( !solver.isAreaLegal() ) {
+            std::cout << "[RGSolver] ERROR: Area Constraint Violated.\n";
+        }
+        else {
+            std::cout << "[RGSolver] Note: Area Constraint Met.\n";
+        }
+
         solver.currentPosition2txt("outputs/global_test.txt");
         std::cout << std::fixed;
-        std::cout << "Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
+        std::cout << "[RGSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
 
         legaliser = new LFLegaliser((len_t) rgparser.getDieWidth(), (len_t) rgparser.getDieHeight());
         legaliser->translateGlobalFloorplanning(solver);
@@ -172,40 +180,76 @@ int main(int argc, char const *argv[]) {
         /* Phase 4: Overlap distribution via DFS */
         std::cout << std::endl << std::endl;
         monitor.printPhase("Overlap distribution");
+        DFSL::DFSLegalizer dfsl;
 
-        DFSL::DFSLegalizer *dfsl;
-        dfsl = new DFSL::DFSLegalizer();
-        dfsl->initDFSLegalizer(legaliser);
-        DFSL::RESULT legalResult = dfsl->legalize();
-        if (legalResult == DFSL::RESULT::SUCCESS){
-            std::cout << "DSFL DONE\n" << std::endl;
-            std::cout << "Checking legality..." << std::endl;
-            bool legal = true;
-            for (Tessera* tess: legaliser->softTesserae){
-                if (!tess->isLegal()){
-                    std::cout << tess->getName() << " is not legal!" << std::endl;
-                    legal = false;
+        for (int legalIter = 0; legalIter < LEGAL_MAX_ITER; legalIter++){
+            LFLegaliser legalizedFloorplan(*(legaliser));
+            dfsl.initDFSLegalizer(&(legalizedFloorplan));
+            if (legalIter == 0){
+                std::cout << "LegalIter = 0, using default configs\n";
+                // default configs
+            }
+            else if (legalIter == 1){
+                // prioritize area 
+                std::cout << "LegalIter = 1, prioritizing area\n";
+                dfsl.config.OBAreaWeight = 1400.0;
+                dfsl.config.OBUtilWeight = 750.0;
+                dfsl.config.OBAspWeight = 100.0;
+                dfsl.config.BWUtilWeight = 750.0;
+                dfsl.config.BWAspWeight = 100.0;
+            }
+            else if (legalIter == 2){
+                // prioritize util
+                std::cout << "LegalIter = 2, prioritizing utilization\n";
+                dfsl.config.OBAreaWeight = 750.0;
+                dfsl.config.OBUtilWeight = 900.0;
+                dfsl.config.OBAspWeight = 100.0;
+                dfsl.config.BWUtilWeight = 2000.0;
+                dfsl.config.BWAspWeight = 100.0;
+            }
+            else if (legalIter == 3){
+                // prioritize aspect ratio
+                std::cout << "LegalIter = 3, prioritizing aspect ratio\n";
+                dfsl.config.OBAreaWeight = 750.0;
+                dfsl.config.OBUtilWeight = 1100.0;
+                dfsl.config.OBAspWeight = 1000.0;
+                dfsl.config.BWUtilWeight = 1000.0;
+                dfsl.config.BWAspWeight = 1100.0;
+            }
+
+            DFSL::RESULT legalResult = dfsl.legalize();
+            if (legalResult == DFSL::RESULT::SUCCESS){
+                std::cout << "DSFL DONE\n" << std::endl;
+                std::cout << "Checking legality..." << std::endl;
+                bool legal = true;
+                for (Tessera* tess: legalizedFloorplan.softTesserae){
+                    if (!tess->isLegal()){
+                        std::cout << tess->getName() << " is not legal!" << std::endl;
+                        legal = false;
+                    }
+                }
+                
+                if (!legal){
+                    std::cout << "Restarting process...\n" << std::endl;
+                }
+                else {
+                    double finalScore = calculateHPWL(&(legalizedFloorplan), rgparser.getConnectionList(), false);
+                    printf("Final Score = %12.6f\n", finalScore);
+                    if (finalScore < bestHpwl){
+                        bestHpwl = finalScore;
+                        std::cout << "Best Hpwl found" << std::endl;
+                        outputFinalAnswer(&(legalizedFloorplan), rgparser, argv[2]);
+                    }
+                    legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
+                    // break;
                 }
             }
-            
-            if (!legal){
-                std::cout << "Restarting process...\n" << std::endl;
+            else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
+                std::cout << "Constraints FAIL, restarting process...\n" << std::endl;
             }
             else {
-                double finalScore = calculateHPWL(legaliser, rgparser.getConnectionList(), true);
-                printf("Final Score = %12.6f\n", finalScore);
-                if (finalScore < bestHpwl){
-                    bestHpwl = finalScore;
-                    std::cout << "Best Hpwl found" << std::endl;
-                    outputFinalAnswer(legaliser, rgparser, argv[2]);
-                }
-                legaliser->visualiseArtpiece("outputs/legal.txt", true);
-                // break;
+                std::cout << "Impossible to solve, restarting process...\n" << std::endl;
             }
-        } else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
-            std::cout << "Constraints FAIL, restarting process...\n" << std::endl;
-        } else {
-            std::cout << "Impossible to solve, restarting process...\n" << std::endl;
         }
     }
 
