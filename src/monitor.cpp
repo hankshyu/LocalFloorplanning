@@ -3,15 +3,20 @@
 #include "monitor.h"
 
 mnt::Monitor::Monitor() : mIterationCounter(-1), mPhaseCounter(-1) {
-    this->mClockStartingPoint = std::clock();
-    this->mClockCounter = std::clock();
+    mClockStartingPoint =  mClockIterationCounter =  mClockCounter = std::clock();
     this->mPhaseCounter = 1;
+}
+
+mnt::Monitor::~Monitor(){
+    for(runConfig *config : configs){
+        delete(config);
+    }
 }
 
 clock_t mnt::Monitor::toggleCounter(){
 
-    clock_t elapsed = clock() - this->mClockCounter;
-    this->mClockCounter = clock();
+    clock_t elapsed = std::clock() - this->mClockCounter;
+    this->mClockCounter = std::clock();
 
     return elapsed;
 }
@@ -118,10 +123,50 @@ double mnt::Monitor::getElapsedSeconds(int &minutes, double &seconds){
     return elaspedSeconds;
 }
 
-// void mnt::Monitor::printFinalTimeReport(){
-//     //TODO
-// }
+void mnt::Monitor::startIteratrion(){
+    mClockIterationCounter = std::clock();
+}
+double mnt::Monitor::getIterationSeconds(int &minutes, double &seconds){
+    
+    double elaspedSeconds = ((std::clock() - mIterationCounter) / CLOCKS_PER_SEC);
+    double leftSeconds = elaspedSeconds;
+    if(elaspedSeconds > 60){
+        int leftMinutes = ((int)elaspedSeconds) / 60;
+        leftSeconds -= (leftMinutes * 60);
 
+        minutes = leftMinutes;
+        seconds = leftSeconds;
+    }else{
+        minutes = 0;
+        seconds = elaspedSeconds;
+    }
+
+    return elaspedSeconds;
+}
+
+void mnt::Monitor::recordInteration( int iteration, int epoch, double punishmentValue, double toleranceLengthValue, 
+            double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,  
+            bool legaliseSuccess, bool legal, double resultHPWL){
+
+    runConfig *cf = new runConfig;
+
+    cf->iteration = iteration;
+    cf->epoch = epoch;
+
+    cf->punishmentValue = punishmentValue;
+    cf->toleranceLengthValue = toleranceLengthValue;
+    cf->OBAreaWeight = OBAreaWeight;
+    cf->OBUtilWeight = OBUtilWeight;
+    cf->OBAspWeight = OBAspWeight;
+    cf->BWUtilWeight = BWUtilWeight;
+    cf->BWAspWeight = BWAspWeight;
+
+    cf->legaliseSuccess = legaliseSuccess;
+    cf->legal = legal;
+    cf->resultHPWL = resultHPWL;
+
+    configs.push_back(cf);
+}
 
 
 

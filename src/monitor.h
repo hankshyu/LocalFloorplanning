@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <iomanip>
+#include <vector>
 #include <time.h>
-
 
 namespace mnt
 {
@@ -17,11 +17,31 @@ namespace mnt
 
     const std::string PHASE_BORDER  = "==========================================================================";
     const std::string NORMAL_BORDER = "------------------------------------------------------";
+    struct runConfig{
+        int iteration;
+        int epoch;
+        
+        double punishmentValue;
+        double toleranceLengthValue;
+
+        double OBAreaWeight;
+        double OBUtilWeight;
+        double OBAspWeight;
+        double BWUtilWeight;
+        double BWAspWeight;
+
+        bool legaliseSuccess;
+        bool legal;
+        double resultHPWL;
+
+    };
+
     class Monitor{
     
         private:
             
             clock_t mClockStartingPoint;
+            clock_t mClockIterationCounter;
             clock_t mClockCounter;
             
             int mIterationCounter;
@@ -29,8 +49,12 @@ namespace mnt
 
             clock_t toggleCounter();
             clock_t getTotalElapsedTime();
+
+            std::vector <runConfig*> configs;
+
         public:
             Monitor();
+            ~Monitor();
 
             void printCopyRight();
             void printPhase(std::string title, int iteration);
@@ -39,7 +63,13 @@ namespace mnt
 
             double getElapsedSeconds();
             double getElapsedSeconds(int &minutes, double &seconds);
-            // void printFinalTimeReport();
+
+            void startIteratrion();
+            double getIterationSeconds(int &minutes, double &seconds);
+
+            void recordInteration(int iteration, int epoch, double punishmentValue, double toleranceLengthValue, 
+                        double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,  
+                        bool legaliseSuccess, bool legal, double resultHPWL);
 
 
      

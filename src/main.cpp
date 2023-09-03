@@ -25,10 +25,10 @@ int main(int argc, char const *argv[]) {
 
     
     std::vector<double> punishmentValues{
-        0.05, 1000.0, 100000.0, 200000.0, 
-        5000.0, 10000.0, 50000.0,
-        1.0, 100.0, 1000.0,
-        0.03, 1  };
+        0.05, 1000.0, 100000.0, 
+        200000.0, 5000.0, 10000.0, 
+        50000.0, 1.0, 100.0, 
+        1000.0, 0.03, 1  };
     std::vector<double> toleranceLengthValues(MAX_ITER);
     std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+4, 0);
     std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
