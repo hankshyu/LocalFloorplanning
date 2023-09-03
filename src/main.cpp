@@ -46,7 +46,7 @@ int main(int argc, char const *argv[]) {
         double toleranceValue = toleranceLengthValues[iter];
         double punishmentValue = punishmentValues[iter];
         
-        std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<" (s)" << std::endl;
+        std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<"(s)" << std::endl;
         if(etMin >= 27){
             std::cout << "Too late to start anothe iteration, terminate Program." << std::endl;
             exit(0);

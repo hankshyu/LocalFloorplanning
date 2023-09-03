@@ -13,11 +13,9 @@ LFLegaliser::~LFLegaliser() {
     collectAllTiles(tileBin);
 
     for(int i = 0; i < tileBin.size(); ++i){
-        std::cout << "Delete " << *(tileBin[i]) << std::endl;
+        // std::cout << "Delete " << *(tileBin[i]) << std::endl;
         delete(tileBin[i]);
-
     }
-
 
     // All Tiles are recycled, now delete all tessera
     for (int i = 0; i < softTesserae.size(); ++i){
@@ -1883,12 +1881,11 @@ void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const s
     std::cout << "output Final Answer..." <<outputFileName << std::endl;
 
     std::ofstream ofs(outputFileName);
-    ofs << "HPWL " << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
+    ofs << "HPWL " << std::fixed << std::setprecision(1) << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
     ofs << "SOFTMODULE " << legaliser->softTesserae.size() << std::endl;
     for(Tessera *softTess : legaliser->softTesserae){
         assert(!softTess->TileArr.empty());
         assert(softTess->OverlapArr.empty());
-        ofs << softTess->getName() << " " << softTess->TileArr.size() << std::endl;
         softTess->printCorners(ofs);
     }
     ofs.close();
