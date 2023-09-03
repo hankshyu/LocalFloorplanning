@@ -106,7 +106,7 @@ double mnt::Monitor::getElapsedSeconds(int &minutes, double &seconds){
     double leftSeconds = elaspedSeconds;
     if(elaspedSeconds > 60){
         int leftMinutes = ((int)elaspedSeconds) / 60;
-        leftSeconds -= (minutes * 60);
+        leftSeconds -= (leftMinutes * 60);
 
         minutes = leftMinutes;
         seconds = leftSeconds;
