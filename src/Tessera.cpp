@@ -494,6 +494,10 @@ bool Tessera::isLegal() {
         Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
         curTessSet += box;
     }
+    for ( auto &tile : this->OverlapArr ) {
+        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
+        curTessSet += box;
+    }
 
     // check whether this Tessera is connected or not
     if ( curTessSet.size() > 1 ) {
@@ -544,6 +548,10 @@ bool Tessera::isLegal(int &errorCode) {
     PolygonHoleSet curTessSet;
 
     for ( auto &tile : this->TileArr ) {
+        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
+        curTessSet += box;
+    }
+    for ( auto &tile : this->OverlapArr ) {
         Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
         curTessSet += box;
     }

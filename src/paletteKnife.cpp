@@ -11,6 +11,18 @@ paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <RGConnStruct> *c
 
 }
 
+paletteKnife::~paletteKnife(){
+    for(cake *ck : pastriesLevel2){
+        delete(ck);
+    }
+    for(cake *ck : pastriesLevel3){
+        delete(ck);
+    }
+    for(cake *ck : pastriesLevel4){
+        delete(ck);
+    }
+}
+
 void paletteKnife::calAllTessFavorDirection(std::vector <RGConnStruct> *connectionList){
     for(Tessera *tess : mLegaliser->fixedTesserae){
         //this did not process when direction is absent!
@@ -105,28 +117,7 @@ bool paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <RGConnSt
     return metConnections;
 }
 
-paletteKnife::~paletteKnife(){
 
-    // free mPaintClusters memories
-    for(int i = 0; i < 5; ++i){
-        for(int j = 0; j < mPaintClusters[i].size(); ++j){
-            delete(mPaintClusters[i][j]);
-        }
-    }
-
-    //free all pastry level memories
-    for(cake *c : pastriesLevel2){
-        delete(c);
-    }
-    for(cake *c : pastriesLevel3){
-        delete(c);
-    }
-    for(cake *c : pastriesLevel4){
-        delete(c);
-    }
-
-
-}
 
 int paletteKnife::collectOverlaps(){
     std::vector <Cord> record;
@@ -202,6 +193,7 @@ void paletteKnife::printpaintClusters(){
 }
 
 void paletteKnife::disperseViaMargin(){
+    collectOverlaps();
     for(int overlapNum = 4; overlapNum >= 2; overlapNum--){
         
         for(int tessIdx = 0; tessIdx < this->mLegaliser->softTesserae.size(); ++tessIdx){
@@ -228,7 +220,9 @@ void paletteKnife::disperseViaMargin(){
                         int errorCode = -1;
 
                         if(!afterTess.isLegal(errorCode)){
+                            std::cout << afterTess << std::endl;
                             std::cout <<"Potential Removal: violate rule #" << errorCode;
+                            std::cout << "Residual = " << residual;
                             tile->show(std::cout);
                             continue;
                         }

@@ -21,10 +21,8 @@ int main(int argc, char const *argv[]) {
 
     bool legalSolutionFound = false;
 
-
     RGParser rgparser(argv[1]);
-    RGSolver solver;
-    solver.readFromParser(rgparser);
+
     
     std::vector<double> punishmentValues{
         0.05, 1000.0, 100000.0, 200000.0, 
@@ -60,6 +58,9 @@ int main(int argc, char const *argv[]) {
         if (legaliser != nullptr){
             delete legaliser;
         }
+
+        RGSolver solver;
+        solver.readFromParser(rgparser);
 
         /* Phase 1: Global Floorplanning */
         std::cout << std::endl << std::endl;
@@ -122,7 +123,6 @@ int main(int argc, char const *argv[]) {
         monitor.printPhaseReport();
         // std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << solver->calcEstimatedHPWL() << std::endl;
         std::cout << "Multiple Tile overlap (>3) count: " << legaliser->has3overlap() << std::endl;
-        // solver->currentPosition2txt("outputs/ppmoduleResult.txt");
         legaliser->visualiseArtpiece("outputs/phase1.txt", false);
         
         
@@ -166,18 +166,17 @@ int main(int argc, char const *argv[]) {
         legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
         
-        // // Phase 3: Primitive Overlap Reduction
-        // std::cout << std::endl << std::endl;
-        // monitor.printPhase("Primitive removal/breaking-down Overlaps");
-        // std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
-        // paletteKnife spatula(legaliser, &connectionList);
-        // spatula.disperseViaMargin();
-        // // Phase 3 reports
+        // Phase 3: Primitive Overlap Reduction
+        std::cout << std::endl << std::endl;
+        monitor.printPhase("Primitive removal/breaking-down Overlaps");
+        std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
+        paletteKnife spatula(legaliser, &connectionList);
+        spatula.disperseViaMargin();
+        // Phase 3 reports
 
-        // std::cout << std::endl << "Overlap Report:" << std::endl;
-        // spatula.collectOverlaps();
-        // spatula.printpaintClusters();
-        // monitor.printPhaseReport();
+        std::cout << std::endl << "Overlap Report:" << std::endl;
+        spatula.printpaintClusters();
+        monitor.printPhaseReport();
 
         /* Phase 4: Overlap distribution via DFS */
         std::cout << std::endl << std::endl;
