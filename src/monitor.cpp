@@ -40,7 +40,7 @@ void mnt::Monitor::printPhaseReport(){
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << ((double)toggleCounter() / CLOCKS_PER_SEC);
     std::string timeInfo = "Time Elapsed: "  + ss.str() + " (s)";
-    this->phaseTimeArr[this->mPhaseCounter - 1] = ss.str();
+    // this->phaseTimeArr[this->mPhaseCounter - 1] = ss.str();
 
 
     std::cout << mnt::NORMAL_BORDER << std::endl;
