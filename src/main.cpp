@@ -14,7 +14,7 @@
 #include "monitor.h"
 #include "paletteKnife.h"
 
-#define MAX_ITER 12
+#define MAX_ITER 26
 #define LEGAL_MAX_ITER 4
 
 int main(int argc, char const *argv[]) {
@@ -25,15 +25,19 @@ int main(int argc, char const *argv[]) {
     solver.readFromParser(rgparser);
     
     std::vector<double> punishmentValues{
-        0.05, 1000.0, 100000.0, 200000.0, 
-        5000.0, 10000.0, 50000.0,
-        1.0, 100.0, 1000.0,
-        0.03, 1  };
+        0.05, 10.0, 100.0, 1000.0, 100000.0, 200000.0, 
+        0.05, 10.0, 100.0, 5000.0, 10000.0, 40000.0,
+        1.0, 100.0, 1000.0, 10000.0,
+        1.0, 100.0, 1000.0, 10000.0,
+        0.03, 1.0, 100.0,
+        0.03, 1.0, 100.0  };
     std::vector<double> toleranceLengthValues(MAX_ITER);
-    std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+4, 0);
-    std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
-    std::fill(toleranceLengthValues.begin()+7, toleranceLengthValues.begin()+10, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
-    std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
+    std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+6, 0);
+    std::fill(toleranceLengthValues.begin()+6, toleranceLengthValues.begin()+12, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
+    std::fill(toleranceLengthValues.begin()+12, toleranceLengthValues.begin()+16, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
+    std::fill(toleranceLengthValues.begin()+16, toleranceLengthValues.begin()+20, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 600);
+    std::fill(toleranceLengthValues.begin()+20, toleranceLengthValues.begin()+23, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
+    std::fill(toleranceLengthValues.begin()+23, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 200);
 
     mnt::Monitor monitor;
     LFLegaliser *legaliser = nullptr;
@@ -211,7 +215,7 @@ int main(int argc, char const *argv[]) {
 
             DFSL::RESULT legalResult = dfsl.legalize();
             if (legalResult == DFSL::RESULT::SUCCESS){
-                std::cout << "DSFL DONE\n" << std::endl;
+                std::cout << "DSFL DONE\n";
                 std::cout << "Checking legality..." << std::endl;
                 bool legal = true;
                 for (Tessera* tess: legalizedFloorplan.softTesserae){
@@ -233,7 +237,7 @@ int main(int argc, char const *argv[]) {
                         outputFinalAnswer(&(legalizedFloorplan), rgparser, argv[2]);
                     }
                     legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
-                    // break;
+                    std::cout << std::endl;
                 }
             }
             else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
