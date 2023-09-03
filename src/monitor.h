@@ -20,19 +20,27 @@ namespace mnt
     class Monitor{
     
         private:
-            std::string phaseTimeArr [20];
+            
+            clock_t mClockStartingPoint;
             clock_t mClockCounter;
+            
+            int mIterationCounter;
             int mPhaseCounter;
 
+            clock_t toggleCounter();
+            clock_t getTotalElapsedTime();
         public:
             Monitor();
 
             void printCopyRight();
+            void printPhase(std::string title, int iteration);
             void printPhase(std::string title);
             void printPhaseReport();
-            void printFinalTimeReport();
 
-            clock_t toggleCounter();
+            double getElapsedSeconds();
+            double getElapsedSeconds(int &minutes, double &seconds);
+            // void printFinalTimeReport();
+
 
      
     };

@@ -12,9 +12,12 @@ LFLegaliser::~LFLegaliser() {
 
     collectAllTiles(tileBin);
 
-    for(Tile *t : tileBin){
-        delete(t);
+    for(int i = 0; i < tileBin.size(); ++i){
+        std::cout << "Delete " << *(tileBin[i]) << std::endl;
+        delete(tileBin[i]);
+
     }
+
 
     // All Tiles are recycled, now delete all tessera
     for (int i = 0; i < softTesserae.size(); ++i){
@@ -1859,7 +1862,7 @@ double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &co
         double tessYDiff = std::abs(tess0CentreY - tess1CentreY);
 
 
-        double distance = std::sqrt((tessXDiff * tessXDiff) + (tessYDiff * tessYDiff));
+        double distance = tessXDiff + tessYDiff;
         double connectionScore = distance * ((double)cs.value);
 
         if(printReport){

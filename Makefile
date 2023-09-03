@@ -39,7 +39,7 @@ main_db.o: $(SRCPATH)/main.cpp
 	$(CXX) $(DEBUGFLAGS) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o *.gch *.out
+	rm -rf *.o *.gch *.out cadd0007
 
 
 
