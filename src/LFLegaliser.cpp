@@ -734,8 +734,16 @@ void LFLegaliser::insertFirstTile(Tile &newTile){
 }
 
 void LFLegaliser::insertTile(Tile &tile){
-    assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
-    assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
+    // assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
+    if (!checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight())) {
+        throw "assert(checkTesseraInCanvas(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()))";
+    }
+
+    // assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()));
+    if (searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight())) {
+        throw "assert(!searchArea(tile.getLowerLeft(), tile.getWidth(), tile.getHeight()))";
+    }
+
 
     /* STEP 1) Find the space Tile containing the top edge of the aera to be occupied, process */
     bool tileTouchesSky = (tile.getUpperRight().y == getCanvasHeight());
