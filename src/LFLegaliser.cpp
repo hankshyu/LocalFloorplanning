@@ -27,7 +27,10 @@ LFLegaliser::~LFLegaliser() {
 }
 
 LFLegaliser::LFLegaliser(const LFLegaliser &other){
-    // TODO: deep copy required
+    this->mCanvasWidth = other.mCanvasWidth;
+    this->mCanvasHeight = other.mCanvasHeight;
+    this->overlap3 = other.overlap3;
+
     std::vector <Tile *> allOldTiles;
     other.collectAllTiles(allOldTiles);
 
