@@ -7,3 +7,6 @@ python3 utils/draw_tile_layout.py outputs/phase1.txt outputs/P1_$1.png
 python3 utils/draw_tile_layout.py outputs/phase2_1.txt outputs/P2.1_$1.png
 python3 utils/draw_tile_layout.py outputs/phase2.txt outputs/P2_$1.png
 python3 utils/draw_tile_layout.py outputs/legal.txt outputs/legal_$1.png
+
+./utils/verify.out ./inputs/$1-input.txt ./answers/$1-output.txt
+python3 utils/draw_floorplan.py ./inputs/$1-input.txt ./answers/$1-output.txt ./outputs/floorplan_$1.png

@@ -4,7 +4,7 @@ CFLAGS = -c
 DEBUGFLAGS = -g
 
 SRCPATH = ./src
-BOOSTPATH = boost_1_82_0
+BOOSTPATH = boost_1_72_0
 
 all: cadd0007
 debug: cadd0007_debug.out
@@ -16,14 +16,14 @@ LINKFLAGS =
 cadd0007: main.o Tile.o LFUnits.o Tessera.o LFLegaliser.o parser.o ppmodule.o ppsolver.o \
 maxflow.o maxflowLegaliser.o monitor.o rgparser.o rgmodule.o rgsolver.o paletteKnife.o cake.o \
 tensor.o DFSLegalizer.o
-	$(CXX) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
+	$(CXX) $(FLAGS) -I $(BOOSTPATH) $(LINKFLAGS) $^ -o $@
 
 
 main.o: $(SRCPATH)/main.cpp 
-	$(CXX) -I $(BOOSTPATH) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
+	$(CXX) $(FLAGS) -I $(BOOSTPATH) $(CFLAGS) -DCOMPILETIME="\"`date`\"" $^ -o $@
 
 %.o: $(SRCPATH)/%.cpp $(SRCPATH)/%.h
-	$(CXX) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
+	$(CXX) $(FLAGS) -I $(BOOSTPATH) $(CFLAGS) $< -o $@
 
 
 
