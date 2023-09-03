@@ -69,8 +69,7 @@ public:
 
     void printCorners(std::ostream &fout);
 
-    // * added by cyuyang
-    bool isLegal();
+
 
     // ErrorCode encoding:
     // 1: check whether this Tessera is connected or not
@@ -79,6 +78,7 @@ public:
     // 4: check whether this Tessera violates aspect ratio or not
     // 5: check whether this Tessera violates rectangle ratio or not(0.8)
     bool isLegal(int &errorCode);
+    bool isLegal();
 
 };
 
