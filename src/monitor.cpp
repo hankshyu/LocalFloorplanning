@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <sstream>
+#include <stdio.h>
+#include <limits>
 #include "monitor.h"
 
 mnt::Monitor::Monitor() : mIterationCounter(-1), mPhaseCounter(-1) {
@@ -145,7 +147,8 @@ double mnt::Monitor::getIterationSeconds(int &minutes, double &seconds){
 }
 
 void mnt::Monitor::recordInteration( int iteration, int epoch, double punishmentValue, double toleranceLengthValue, 
-            double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,  
+            double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,
+            int minutes, double seconds,
             bool legaliseSuccess, bool legal, double resultHPWL){
 
     runConfig *cf = new runConfig;
@@ -161,6 +164,9 @@ void mnt::Monitor::recordInteration( int iteration, int epoch, double punishment
     cf->BWUtilWeight = BWUtilWeight;
     cf->BWAspWeight = BWAspWeight;
 
+    cf->minutes = minutes;
+    cf->seconds = seconds;
+
     cf->legaliseSuccess = legaliseSuccess;
     cf->legal = legal;
     cf->resultHPWL = resultHPWL;
@@ -168,6 +174,39 @@ void mnt::Monitor::recordInteration( int iteration, int epoch, double punishment
     configs.push_back(cf);
 }
 
+void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
+    if(configs.empty()) return;
+        bool verifySolutionFound = false;
+        double bestHPWL = std::numeric_limits<double>::max();
+        for(runConfig *cf : configs){
+            printf("[%2d,%2d] (P,T) = (%12.2f, %12.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
+            printf(", (%12.2f, %12.2f, %12.2f, %12.2f, %12.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
+            printf(", Time = %1d:%2.0f", cf->minutes, cf->seconds);
+            printf(" >> (LegaliseSuccess, LegalResult, HPWL) = (%1d, %1d, %14.2f)\n", cf->legaliseSuccess, cf->legal, cf->resultHPWL);
+            if(cf->legal) verifySolutionFound = true;
+            if(cf->legaliseSuccess && cf->legal){
+                if(cf->resultHPWL < bestHPWL) bestHPWL = cf->resultHPWL;
+            }
+        }
+
+        assert(verifySolutionFound == legalSolutionFound);
+        assert(inbestHPWL == bestHPWL);
+
+
+        if(verifySolutionFound){
+            printf("[Success]");
+        }else{
+            printf("[Fail]");
+        }
+        int etMin;
+        double etSec;
+        double elapsedTime = getElapsedSeconds(etMin, etSec);        
+        std::cout <<  " Program runtime: " << etMin << "(min) " << etSec <<"(s)";
+        if(verifySolutionFound){
+            printf("\t best HPWL = %14.2f\n", bestHPWL);
+        }
+
+}
 
 
 

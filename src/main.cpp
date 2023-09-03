@@ -40,7 +40,7 @@ int main(int argc, char const *argv[]) {
     double bestHpwl = DBL_MAX;
     monitor.printCopyRight();
     for (int iter = 0; iter < MAX_ITER; iter++){
-        
+        monitor.startIteratrion();
         int etMin;
         double etSec;
         double elapsedTime = monitor.getElapsedSeconds(etMin, etSec);
@@ -186,39 +186,55 @@ int main(int argc, char const *argv[]) {
         for (int legalIter = 0; legalIter < LEGAL_MAX_ITER; legalIter++){
             LFLegaliser legalizedFloorplan(*(legaliser));
             dfsl.initDFSLegalizer(&(legalizedFloorplan));
+
+            double storeOBAreaWeight;
+            double storeOBUtilWeight;
+            double storeOBAspWeight;
+            double storeBWUtilWeight;
+            double storeBWAspWeight;
+            
+            
             if (legalIter == 0){
                 std::cout << "LegalIter = 0, using default configs\n";
                 // default configs
+                storeOBAreaWeight = 750.0;
+                storeOBUtilWeight = 1000.0;
+                storeOBAspWeight = 100.0;
+                storeBWUtilWeight = 1500.0;
+                storeBWAspWeight = 100.0;
             }
             else if (legalIter == 1){
                 // prioritize area 
                 std::cout << "LegalIter = 1, prioritizing area\n";
-                dfsl.config.OBAreaWeight = 1400.0;
-                dfsl.config.OBUtilWeight = 750.0;
-                dfsl.config.OBAspWeight = 100.0;
-                dfsl.config.BWUtilWeight = 750.0;
-                dfsl.config.BWAspWeight = 100.0;
+                dfsl.config.OBAreaWeight = storeOBAreaWeight = 1400.0;
+                dfsl.config.OBUtilWeight = storeOBUtilWeight = 750.0;
+                dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
+                dfsl.config.BWUtilWeight = storeBWUtilWeight = 750.0;
+                dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
             }
             else if (legalIter == 2){
                 // prioritize util
                 std::cout << "LegalIter = 2, prioritizing utilization\n";
-                dfsl.config.OBAreaWeight = 750.0;
-                dfsl.config.OBUtilWeight = 900.0;
-                dfsl.config.OBAspWeight = 100.0;
-                dfsl.config.BWUtilWeight = 2000.0;
-                dfsl.config.BWAspWeight = 100.0;
+                dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
+                dfsl.config.OBUtilWeight = storeOBUtilWeight  = 900.0;
+                dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
+                dfsl.config.BWUtilWeight = storeBWUtilWeight = 2000.0;
+                dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
             }
             else if (legalIter == 3){
                 // prioritize aspect ratio
                 std::cout << "LegalIter = 3, prioritizing aspect ratio\n";
-                dfsl.config.OBAreaWeight = 750.0;
-                dfsl.config.OBUtilWeight = 1100.0;
-                dfsl.config.OBAspWeight = 1000.0;
-                dfsl.config.BWUtilWeight = 1000.0;
-                dfsl.config.BWAspWeight = 1100.0;
+                dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
+                dfsl.config.OBUtilWeight = storeOBUtilWeight  = 1100.0;
+                dfsl.config.OBAspWeight = storeOBAspWeight = 1000.0;
+                dfsl.config.BWUtilWeight = storeBWUtilWeight = 1000.0;
+                dfsl.config.BWAspWeight = storeBWAspWeight = 1100.0;
             }
 
             DFSL::RESULT legalResult = dfsl.legalize();
+            int itm;
+            double its;
+            monitor.getIterationSeconds(itm, its);
             if (legalResult == DFSL::RESULT::SUCCESS){
                 legalSolutionFound = true;
                 std::cout << "DSFL DONE\n" << std::endl;
@@ -233,8 +249,11 @@ int main(int argc, char const *argv[]) {
                 
                 if (!legal){
                     std::cout << "Restarting process...\n" << std::endl;
-                }
-                else {
+                    monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
+                        storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                        itm, its, true, false, -1);
+
+                }else {
                     double finalScore = calculateHPWL(&(legalizedFloorplan), rgparser.getConnectionList(), false);
                     printf("Final Score = %12.6f\n", finalScore);
                     if (finalScore < bestHpwl){
@@ -243,23 +262,29 @@ int main(int argc, char const *argv[]) {
                         outputFinalAnswer(&(legalizedFloorplan), rgparser, argv[2]);
                     }
                     legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
-                    // break;
+                    monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
+                        storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                        itm, its, true, true, finalScore);
                 }
             }
             else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
                 std::cout << "Constraints FAIL, restarting process...\n" << std::endl;
+                monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
+                    storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                    itm, its, false, false, -1);
             }
             else {
                 std::cout << "Impossible to solve, restarting process...\n" << std::endl;
+                monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
+                    storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                    itm, its, false, false, -1);
             }
         }
     }
 
-    if(legalSolutionFound){
-        std::cout << "Run " << MAX_ITER << " iterations and found Solution HPWL = " << bestHpwl << std::endl;
-    }else{
-        std::cout << " FAIL! No legal solution found, run " << MAX_ITER << " iterations" << std::endl;
-    }
+    // This is final Report
+    std::cout << "Final Report:" << std::endl << std::endl;
+    monitor.finalReport(legalSolutionFound, bestHpwl);
 
 
 

@@ -30,6 +30,9 @@ namespace mnt
         double BWUtilWeight;
         double BWAspWeight;
 
+        int minutes;
+        double seconds;
+
         bool legaliseSuccess;
         bool legal;
         double resultHPWL;
@@ -50,6 +53,8 @@ namespace mnt
             clock_t toggleCounter();
             clock_t getTotalElapsedTime();
 
+            
+
             std::vector <runConfig*> configs;
 
         public:
@@ -68,10 +73,11 @@ namespace mnt
             double getIterationSeconds(int &minutes, double &seconds);
 
             void recordInteration(int iteration, int epoch, double punishmentValue, double toleranceLengthValue, 
-                        double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,  
+                        double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,
+                        int minutes, double seconds,
                         bool legaliseSuccess, bool legal, double resultHPWL);
 
-
+            void finalReport(bool legalSolutionFound, double inbestHPWL);
      
     };
 
