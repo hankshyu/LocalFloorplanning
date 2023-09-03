@@ -149,7 +149,7 @@ double mnt::Monitor::getIterationSeconds(int &minutes, double &seconds){
 void mnt::Monitor::recordInteration( int iteration, int epoch, double punishmentValue, double toleranceLengthValue, 
             double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,
             int minutes, double seconds,
-            bool legaliseSuccess, bool legal, double resultHPWL){
+            bool legaliseSuccess, bool legal,bool fault, double resultHPWL){
 
     runConfig *cf = new runConfig;
 
@@ -169,6 +169,7 @@ void mnt::Monitor::recordInteration( int iteration, int epoch, double punishment
 
     cf->legaliseSuccess = legaliseSuccess;
     cf->legal = legal;
+    cf->fault = fault;
     cf->resultHPWL = resultHPWL;
 
     configs.push_back(cf);
@@ -182,7 +183,7 @@ void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
             printf("[%2d,%2d] (P,T) = (%11.2f, %11.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
             printf(", (%10.2f, %10.2f, %10.2f, %10.2f, %10.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
             printf(", Time = %1d:%02.0f", cf->minutes, cf->seconds);
-            printf(" >> (Lglise, Lg?, fault, HPWL) = (%1d, %1d, %14.2f)\n", cf->legaliseSuccess, cf->legal, cf->resultHPWL);
+            printf(" >> (Lglise, Lg?, fault, HPWL) = (%1d, %1d, %1d, %12.2f)\n", cf->legaliseSuccess, cf->legal, cf->fault, cf->resultHPWL);
             if(cf->legal) verifySolutionFound = true;
             if(cf->legaliseSuccess && cf->legal){
                 if(cf->resultHPWL < bestHPWL) bestHPWL = cf->resultHPWL;

@@ -251,7 +251,7 @@ int main(int argc, char const *argv[]) {
                     std::cout << "Restarting process...\n" << std::endl;
                     monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
                         storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                        itm, its, true, false, -1);
+                        itm, its, true, false, false, -1);
 
                 }else {
                     double finalScore = calculateHPWL(&(legalizedFloorplan), rgparser.getConnectionList(), false);
@@ -264,20 +264,20 @@ int main(int argc, char const *argv[]) {
                     legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
                     monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
                         storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                        itm, its, true, true, finalScore);
+                        itm, its, true, true, false, finalScore);
                 }
             }
             else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
                 std::cout << "Constraints FAIL, restarting process...\n" << std::endl;
                 monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
                     storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                    itm, its, false, false, -1);
+                    itm, its, false, false, false, -1);
             }
             else {
                 std::cout << "Impossible to solve, restarting process...\n" << std::endl;
                 monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
                     storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                    itm, its, false, false, -1);
+                    itm, its, false, false,false, -1);
             }
         }
     }

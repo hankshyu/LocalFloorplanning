@@ -35,6 +35,7 @@ namespace mnt
 
         bool legaliseSuccess;
         bool legal;
+        bool fault;
         double resultHPWL;
 
     };
@@ -75,7 +76,7 @@ namespace mnt
             void recordInteration(int iteration, int epoch, double punishmentValue, double toleranceLengthValue, 
                         double OBAreaWeight, double OBUtilWeight, double OBAspWeight, double BWUtilWeight, double BWAspWeight,
                         int minutes, double seconds,
-                        bool legaliseSuccess, bool legal, double resultHPWL);
+                        bool legaliseSuccess, bool legal, bool fault, double resultHPWL);
 
             void finalReport(bool legalSolutionFound, double inbestHPWL);
      
