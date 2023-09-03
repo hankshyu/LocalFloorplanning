@@ -49,6 +49,7 @@ public:
     bool hasOverlap();
     void reportOverlap();
     void squeezeToFit();
+    bool isAreaLegal();
 };
 
 

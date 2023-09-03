@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
+#include <cassert>
 
 RGSolver::RGSolver() {
     std::srand(std::time(NULL));
@@ -415,27 +416,27 @@ void RGSolver::squeezeToFit() {
         mod->updateCord(DieWidth, DieHeight, 1.);
     }
 
-    std::vector<double> squeezeWidthVec(this->moduleNum, 0);
-    std::vector<double> squeezeHeightVec(this->moduleNum, 0);
+    std::vector<int> squeezeWidthVec(this->moduleNum, 0);
+    std::vector<int> squeezeHeightVec(this->moduleNum, 0);
 
     for ( int i = 0; i < this->moduleNum; ++i ) {
         RGModule *curModule = modules[i];
         if ( curModule->fixed ) {
             continue;
         }
-        double totalOverlapWidth = 0.0;
-        double totalOverlapHeight = 0.0;
+        int totalOverlapWidth = 0.0;
+        int totalOverlapHeight = 0.0;
         for ( RGModule *tarModule : modules ) {
             if ( curModule == tarModule ) {
                 continue;
             }
-            double overlappedWidth, overlappedHeight, x_diff, y_diff;
+            int overlappedWidth, overlappedHeight, x_diff, y_diff;
 
             x_diff = curModule->centerX - tarModule->centerX;
             y_diff = curModule->centerY - tarModule->centerY;
 
-            overlappedWidth = (double)( curModule->width + tarModule->width ) / 2.0 - std::abs(x_diff);
-            overlappedHeight = (double)( curModule->height + tarModule->height ) / 2.0 - std::abs(y_diff);
+            overlappedWidth = ( curModule->width + tarModule->width ) / 2.0 - std::abs(x_diff);
+            overlappedHeight = ( curModule->height + tarModule->height ) / 2.0 - std::abs(y_diff);
 
             if ( overlappedWidth > curModule->width ) {
                 overlappedWidth = curModule->width;
@@ -460,16 +461,16 @@ void RGSolver::squeezeToFit() {
             }
         }
         if ( totalOverlapWidth > 0. && totalOverlapHeight > 0. ) {
-            double aspectRatio = totalOverlapHeight / totalOverlapWidth;
+            double aspectRatio = (double) totalOverlapHeight / totalOverlapWidth;
             if ( aspectRatio > 10. ) {
-                double squeezeWidth = totalOverlapWidth;
-                std::cout << "Width: " << squeezeWidth << "\n";
+                int squeezeWidth = totalOverlapWidth;
+                // std::cout << "Width: " << squeezeWidth << "\n";
                 // curModule->width -= squeezeWidth;
                 // curModule->height = std::ceil(curModule->area / curModule->width);
                 squeezeWidthVec[i] = squeezeWidth;
             }
             else if ( aspectRatio < 0.1 ) {
-                double squeezeHeight = totalOverlapHeight;
+                int squeezeHeight = totalOverlapHeight;
                 std::cout << "Height: " << squeezeHeight << "\n";
                 // curModule->height -= squeezeHeight;
                 // curModule->width = std::ceil(curModule->area / curModule->height);
@@ -494,13 +495,26 @@ void RGSolver::squeezeToFit() {
             continue;
         }
         if ( squeezeWidthVec[i] > 0. ) {
-            curModule->width -= std::floor(squeezeWidthVec[i]);
+            curModule->width -= squeezeWidthVec[i];
             curModule->height = std::ceil((double) curModule->area / (double) curModule->width);
         }
         else if ( squeezeHeightVec[i] > 0. ) {
-            curModule->height -= std::floor(squeezeHeightVec[i]);
+            curModule->height -= squeezeHeightVec[i];
             curModule->width = std::ceil((double) curModule->area / (double) curModule->height);
         }
+        assert(curModule->height * curModule->width > curModule->area);
         curModule->updateCord(DieWidth, DieHeight, 1.);
     }
+}
+
+bool RGSolver::isAreaLegal() {
+    for ( auto &mod : modules ) {
+        if ( mod->fixed ) {
+            continue;
+        }
+        if ( mod->width * mod->height < mod->area ) {
+            return false;
+        }
+    }
+    return true;
 }

@@ -88,9 +88,16 @@ int main(int argc, char const *argv[]) {
             }
         }
 
+        if ( !solver.isAreaLegal() ) {
+            std::cout << "[RGSolver] ERROR: Area Constraint Violated.\n";
+        }
+        else {
+            std::cout << "[RGSolver] Note: Area Constraint Met.\n";
+        }
+
         solver.currentPosition2txt("outputs/global_test.txt");
         std::cout << std::fixed;
-        std::cout << "Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
+        std::cout << "[RGSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
 
         legaliser = new LFLegaliser((len_t) rgparser.getDieWidth(), (len_t) rgparser.getDieHeight());
         legaliser->translateGlobalFloorplanning(solver);

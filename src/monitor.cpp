@@ -33,7 +33,7 @@ void mnt::Monitor::printPhase(std::string title){
 
 void mnt::Monitor::printPhaseReport(){
     
-    assert(this->mPhaseCounter > 0 && this->mPhaseCounter <= 20);
+    // assert(this->mPhaseCounter > 0 && this->mPhaseCounter <= 20);
     std::string toPrint = "Phase " + mnt::numToTxt[this->mPhaseCounter - 1] + " Report";
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << ((double)toggleCounter() / CLOCKS_PER_SEC);
