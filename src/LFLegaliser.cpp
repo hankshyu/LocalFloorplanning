@@ -1245,7 +1245,7 @@ void LFLegaliser::insertTile(Tile &tile){
                     lastBotLeftDown = lastBotLeftUp->lb;
                     bool sameWidth = (lastBotLeftUp->getWidth() == lastBotLeftDown->getWidth());
                     bool xAligned = (lastBotLeftUp->getLowerLeft().x == lastBotLeftDown->getLowerLeft().x);
-                    if(lastBotLeftDown->getType() == tileType::BLANK && sameWidth && xAligned){
+                    if(lastBotLeftUp->getType() == tileType::BLANK && lastBotLeftDown->getType() == tileType::BLANK && sameWidth && xAligned){
                         lastDownLeftMerge = true;
                     }
                 }
@@ -1295,7 +1295,7 @@ void LFLegaliser::insertTile(Tile &tile){
                     lastBotRightDown = lastBotRightUp->lb;
                     bool sameWidth = (lastBotRightUp->getWidth() == lastBotRightDown->getWidth());
                     bool xAligned = (lastBotRightUp->getLowerLeft().x == lastBotRightDown->getLowerLeft().x);
-                    if(lastBotRightDown->getType() == tileType::BLANK && sameWidth && xAligned){
+                    if(lastBotRightUp->getType() == tileType::BLANK && lastBotRightDown->getType() == tileType::BLANK && sameWidth && xAligned){
                         lastDownRightmerge = true;
                     }
 
