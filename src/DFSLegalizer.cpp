@@ -72,7 +72,8 @@ namespace DFSL {
 
         // find all blanks
         std::vector <Cord> blankRecord;
-        DFSLTraverseBlank(mLF->softTesserae[0]->TileArr[0], blankRecord);
+        // This line would cuase bug...
+        DFSLTraverseBlank(mLF->getRandomTile(), blankRecord);
         mBlankNum = mAllNodes.size() - mFixedTessNum - mSoftTessNum - mOverlapNum;
 
 

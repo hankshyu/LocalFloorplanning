@@ -30,7 +30,6 @@ private:
     // void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
     void visualiseDebugDFS(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
 
-    Tile *getRandomTile() const;
 
     // subRoutine used in enumerateDirectArea
     void enumerateDirectAreaRProcess(Cord lowerleft, len_t width, len_t height, std::vector <Tile *> &allTiles, Tile *targetTile) const;
@@ -62,6 +61,8 @@ public:
     void splitTesseraeOverlaps();
 
     void arrangeTesseraetoCanvas();
+
+    Tile *getRandomTile() const;
 
 
     /* Functions proposed in the paper */

@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cfloat>
+#include <stdio.h>
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
@@ -17,7 +18,7 @@
 // #define MAX_ITER 12
 #define LEGAL_MAX_ITER 4
 
-#define MAX_MINUTE_RUNTIME 119
+#define MAX_MINUTE_RUNTIME 27
 
 int main(int argc, char const *argv[]) {
 
@@ -35,7 +36,7 @@ int main(int argc, char const *argv[]) {
         toleranceLengthValues.push_back(0);
     }
     double pushValue = 1;
-    while(pushValue < ((rgparser.getDieWidth() + rgparser.getDieHeight()) * 0.5 * 0.25)){
+    while(pushValue < ((rgparser.getDieWidth() + rgparser.getDieHeight()) * 0.5 * 0.125)){
         for(int i = 0; i < punishmentValues.size(); ++i){
             toleranceLengthValues.push_back(pushValue);
         }
@@ -43,6 +44,7 @@ int main(int argc, char const *argv[]) {
 
     }
     const int MAX_ITER = toleranceLengthValues.size();
+    std::cout << "MAX_ITER: " << MAX_ITER << std::endl;
 
     // toleranceLengthValues.push_back()
 
@@ -72,18 +74,18 @@ int main(int argc, char const *argv[]) {
             // double punishmentValue = punishmentValues[iter % punishmentValues.size()];
             // double toleranceValue = toleranceLengthValues[iter / toleranceLengthValues.size()];
             
-            std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<"(s)" << std::endl;
+            std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<"(s)";
+            std::cout << ", current best HPWL = " << bestHpwl << std::endl;
             if(etMin >= MAX_MINUTE_RUNTIME){
                 std::cout << "Too late to start anothe iteration, terminate Program." << std::endl;
                 exit(0);
             }else{
-                std::cout << "Running with parameter: Tolerance: " << toleranceValue << ", Punishment: " << punishmentValue << std::endl; 
+                printf("Running with parameter: Tolerance: %14.6f, Punishment: %14.6f\n", toleranceValue, punishmentValue);
             }
 
             if (legaliser != nullptr){
                 delete legaliser;
             }
-
             RGSolver solver;
             solver.readFromParser(rgparser);
 
@@ -191,17 +193,17 @@ int main(int argc, char const *argv[]) {
             legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
             
-            // Phase 3: Primitive Overlap Reduction
-            std::cout << std::endl << std::endl;
-            monitor.printPhase("Primitive removal/breaking-down Overlaps");
-            std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
-            paletteKnife spatula(legaliser, &connectionList);
-            spatula.disperseViaMargin();
-            // Phase 3 reports
+            // // Phase 3: Primitive Overlap Reduction
+            // std::cout << std::endl << std::endl;
+            // monitor.printPhase("Primitive removal/breaking-down Overlaps");
+            // std::vector <RGConnStruct> connectionList = rgparser.getConnectionList();
+            // paletteKnife spatula(legaliser, &connectionList);
+            // spatula.disperseViaMargin();
+            // // Phase 3 reports
 
-            std::cout << std::endl << "Overlap Report:" << std::endl;
-            spatula.printpaintClusters();
-            monitor.printPhaseReport();
+            // std::cout << std::endl << "Overlap Report:" << std::endl;
+            // spatula.printpaintClusters();
+            // monitor.printPhaseReport();
 
             /* Phase 4: Overlap distribution via DFS */
             std::cout << std::endl << std::endl;
@@ -304,8 +306,7 @@ int main(int argc, char const *argv[]) {
                         itm, its, false, false,false, -1);
                 }
             }
-        }
-        catch (char const *errMsg) {
+        } catch (char const *errMsg) {
             std::cout << errMsg << std::endl;
             std::cout << "[ERROR] Caught an exception, skip to next iteration" << std::endl;
 
