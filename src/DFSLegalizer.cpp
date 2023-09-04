@@ -372,7 +372,10 @@ namespace DFSL {
         }
     }
 
-    RESULT DFSLegalizer::legalize(){
+    // mode 0: resolve area big -> area small
+    // mode 1: resolve area small -> area big
+    // mode 2: resolve overlaps near center -> outer edge
+    RESULT DFSLegalizer::legalize(int mode){
         // todo: create backup (deep copy)
         RESULT result;
 
@@ -388,22 +391,75 @@ namespace DFSL {
             std::vector<bool> solveable(mAllNodes.size(), true);
             
             while (!overlapResolved){
-                int maxOverlapArea = 0;
-                int maxOverlapIndex = -1;
+                int bestMetric;
+                if (mode == 1 || mode == 2){
+                    bestMetric = INT_MAX;
+                }
+                else {
+                    bestMetric = -INT_MAX;
+                }
+                int bestIndex = -1;
                 for (int i = overlapStart; i < overlapEnd; i++){
                     DFSLNode& currentOverlap = mAllNodes[i];
-                    if (currentOverlap.area > maxOverlapArea && solveable[i]){
-                        maxOverlapArea = currentOverlap.area;
-                        maxOverlapIndex = i;
+                    switch (mode)
+                    {
+                    case 1:
+                        if (currentOverlap.area < bestMetric && solveable[i]){
+                            bestMetric = currentOverlap.area;
+                            bestIndex = i;
+                        }
+                        break;
+                    
+                    case 2:{
+                        int chipCenterx = mLF->getCanvasWidth() / 2;
+                        int chipCentery = mLF->getCanvasHeight() / 2;
+                        
+                        int min_x, max_x, min_y, max_y;
+                        min_x = min_y = INT_MAX;
+                        max_x = max_y = -INT_MAX;
+
+                        for (Tile* tile: currentOverlap.tileList){
+                            if (tile->getLowerLeft().x < min_x){
+                                min_x = tile->getLowerLeft().x;
+                            }            
+                            if (tile->getLowerLeft().y < min_y){
+                                min_y = tile->getLowerLeft().y;
+                            }            
+                            if (tile->getUpperRight().x > max_x){
+                                max_x = tile->getUpperRight().x;
+                            }            
+                            if (tile->getUpperRight().y > max_y){
+                                max_y = tile->getUpperRight().y;
+                            }
+                        }
+                        int overlapCenterx = (min_x + max_x) / 2;
+                        int overlapCentery = (min_y + max_y) / 2;
+                        int distSquared = pow(overlapCenterx - chipCenterx, 2) + pow(overlapCentery - chipCentery, 2);
+
+                        if (distSquared < bestMetric && solveable[i]){
+                            bestMetric = currentOverlap.area;
+                            bestIndex = i;
+                        }
+
+                        break;
+                    }
+                    default:
+                        // area big -> small, default
+                        
+                        if (currentOverlap.area > bestMetric && solveable[i]){
+                            bestMetric = currentOverlap.area;
+                            bestIndex = i;
+                        }
+                        break;
                     }
                 }
-                if (maxOverlapIndex == -1){
+                if (bestIndex == -1){
                     std::cout << "[DFSL] ERROR: Overlaps unable to resolve\n";
                     result = RESULT::OVERLAP_NOT_RESOLVED;
                     return result;
                 }
                 else {
-                    solveable[maxOverlapIndex] = overlapResolved = migrateOverlap(maxOverlapIndex);
+                    solveable[bestIndex] = overlapResolved = migrateOverlap(bestIndex);
                 }
             }
 
@@ -580,7 +636,7 @@ namespace DFSL {
                     return false;
                 }
 
-                resolvableArea = width * height;
+                resolvableArea = width * height;    
                 Tile* newTile = new Tile(tileType::BLOCK, BL, width, height);
                 std::cout << "Placing new Tile: ";
                 newTile->show(std::cout, true);

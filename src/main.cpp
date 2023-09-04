@@ -27,6 +27,10 @@ int main(int argc, char const *argv[]) {
     RGParser rgparser(argv[1]);
 
     
+    // std::vector<double> punishmentValues{
+    //     0.000001, 0.00001, 0.0001 ,0.001, 0.01, 0.1, 1.0 ,10.0, 100.0 ,1000.0, 10000.0, 100000.0, 1000000
+    // };
+
     std::vector<double> punishmentValues{
         10E-5,
         10E-4, 7.25E-4, 5E-4, 2.5E-4,
@@ -39,10 +43,10 @@ int main(int argc, char const *argv[]) {
     };
 
     std::vector<double> toleranceLengthValues;
-    for(int i = 0; i < punishmentValues.size(); ++i){
-        toleranceLengthValues.push_back(0);
-    }
-    double pushValue = 1;
+    // for(int i = 0; i < punishmentValues.size(); ++i){
+    //     toleranceLengthValues.push_back(0);
+    // }
+    double pushValue = 8;
     while(pushValue < ((rgparser.getDieWidth() + rgparser.getDieHeight()) * 0.5 * 0.125)){
         for(int i = 0; i < punishmentValues.size(); ++i){
             toleranceLengthValues.push_back(pushValue);
@@ -218,99 +222,103 @@ int main(int argc, char const *argv[]) {
             DFSL::DFSLegalizer dfsl;
 
             for (int legalIter = 0; legalIter < LEGAL_MAX_ITER; legalIter++){
-                LFLegaliser legalizedFloorplan(*(legaliser));
-                dfsl.initDFSLegalizer(&(legalizedFloorplan));
+                for (int legalizeMode = 0; legalizeMode < 3; legalizeMode++){
+                    LFLegaliser legalizedFloorplan(*(legaliser));
+                    dfsl.initDFSLegalizer(&(legalizedFloorplan));
 
-                double storeOBAreaWeight;
-                double storeOBUtilWeight;
-                double storeOBAspWeight;
-                double storeBWUtilWeight;
-                double storeBWAspWeight;
-                
-                
-                if (legalIter == 0){
-                    std::cout << "LegalIter = 0, using default configs\n";
-                    // default configs
-                    storeOBAreaWeight = 750.0;
-                    storeOBUtilWeight = 1000.0;
-                    storeOBAspWeight = 100.0;
-                    storeBWUtilWeight = 1500.0;
-                    storeBWAspWeight = 100.0;
-                }
-                else if (legalIter == 1){
-                    // prioritize area 
-                    std::cout << "LegalIter = 1, prioritizing area\n";
-                    dfsl.config.OBAreaWeight = storeOBAreaWeight = 1400.0;
-                    dfsl.config.OBUtilWeight = storeOBUtilWeight = 750.0;
-                    dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
-                    dfsl.config.BWUtilWeight = storeBWUtilWeight = 750.0;
-                    dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
-                }
-                else if (legalIter == 2){
-                    // prioritize util
-                    std::cout << "LegalIter = 2, prioritizing utilization\n";
-                    dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
-                    dfsl.config.OBUtilWeight = storeOBUtilWeight  = 900.0;
-                    dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
-                    dfsl.config.BWUtilWeight = storeBWUtilWeight = 2000.0;
-                    dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
-                }
-                else if (legalIter == 3){
-                    // prioritize aspect ratio
-                    std::cout << "LegalIter = 3, prioritizing aspect ratio\n";
-                    dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
-                    dfsl.config.OBUtilWeight = storeOBUtilWeight  = 1100.0;
-                    dfsl.config.OBAspWeight = storeOBAspWeight = 1000.0;
-                    dfsl.config.BWUtilWeight = storeBWUtilWeight = 1000.0;
-                    dfsl.config.BWAspWeight = storeBWAspWeight = 1100.0;
-                }
-
-                DFSL::RESULT legalResult = dfsl.legalize();
-                int itm;
-                double its;
-                monitor.getIterationSeconds(itm, its);
-
-                if (legalResult == DFSL::RESULT::SUCCESS){
-                    legalSolutionFound = true;
-                    std::cout << "DSFL DONE\n" << std::endl;
-                    std::cout << "Checking legality..." << std::endl;
-                    bool legal = true;
-                    for (Tessera* tess: legalizedFloorplan.softTesserae){
-                        if (!tess->isLegal()){
-                            std::cout << tess->getName() << " is not legal!" << std::endl;
-                            legal = false;
-                        }
-                    }
+                    double storeOBAreaWeight;
+                    double storeOBUtilWeight;
+                    double storeOBAspWeight;
+                    double storeBWUtilWeight;
+                    double storeBWAspWeight;
                     
-                    if (!legal){
-                        std::cout << "Restarting process...\n" << std::endl;
-                        monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
-                            storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                            itm, its, true, false, false, -1);
-
-                    }else {
-                        double finalScore = calculateHPWL(&(legalizedFloorplan), rgparser.getConnectionList(), false);
-                        printf("Final Score = %12.6f\n", finalScore);
-                        if (finalScore < bestHpwl){
-                            bestHpwl = finalScore;
-                            std::cout << "Best Hpwl found" << std::endl;
-                            outputFinalAnswer(&(legalizedFloorplan), rgparser, argv[2]);
-                        }
-                        legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
-                        monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
-                            storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                            itm, its, true, true, false, finalScore);
+                    
+                    if (legalIter == 0){
+                        std::cout << "LegalIter = 0, using default configs\n";
+                        // default configs
+                        storeOBAreaWeight = 750.0;
+                        storeOBUtilWeight = 1000.0;
+                        storeOBAspWeight = 100.0;
+                        storeBWUtilWeight = 1500.0;
+                        storeBWAspWeight = 100.0;
                     }
-                } else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
-                    std::cout << "Constraints FAIL, restarting process...\n" << std::endl;
-                    monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
-                        storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                        itm, its, false, false, false, -1);
-                } else {
-                    std::cout << "Impossible to solve, restarting process...\n" << std::endl;
-                    monitor.recordInteration(iter, legalIter, punishmentValue, toleranceValue,
-                        storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
-                        itm, its, false, false,false, -1);
+                    else if (legalIter == 1){
+                        // prioritize area 
+                        std::cout << "LegalIter = 1, prioritizing area\n";
+                        dfsl.config.OBAreaWeight = storeOBAreaWeight = 1400.0;
+                        dfsl.config.OBUtilWeight = storeOBUtilWeight = 750.0;
+                        dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
+                        dfsl.config.BWUtilWeight = storeBWUtilWeight = 750.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
+                    }
+                    else if (legalIter == 2){
+                        // prioritize util
+                        std::cout << "LegalIter = 2, prioritizing utilization\n";
+                        dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
+                        dfsl.config.OBUtilWeight = storeOBUtilWeight  = 900.0;
+                        dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
+                        dfsl.config.BWUtilWeight = storeBWUtilWeight = 2000.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
+                    }
+                    else if (legalIter == 3){
+                        // prioritize aspect ratio
+                        std::cout << "LegalIter = 3, prioritizing aspect ratio\n";
+                        dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
+                        dfsl.config.OBUtilWeight = storeOBUtilWeight  = 1100.0;
+                        dfsl.config.OBAspWeight = storeOBAspWeight = 1000.0;
+                        dfsl.config.BWUtilWeight = storeBWUtilWeight = 1000.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 1100.0;
+                    }
+                    std::cout << "Legalization mode: " << legalizeMode << std::endl;
+
+                    DFSL::RESULT legalResult = dfsl.legalize(legalizeMode);
+                    int itm;
+                    double its;
+                    monitor.getIterationSeconds(itm, its);
+
+                    if (legalResult == DFSL::RESULT::SUCCESS){
+                        legalSolutionFound = true;
+                        std::cout << "DSFL DONE\n";
+                        std::cout << "Checking legality..." << std::endl;
+                        bool legal = true;
+                        for (Tessera* tess: legalizedFloorplan.softTesserae){
+                            if (!tess->isLegal()){
+                                std::cout << tess->getName() << " is not legal!" << std::endl;
+                                legal = false;
+                            }
+                        }
+                        
+                        if (!legal){
+                            std::cout << "Restarting process...\n" << std::endl;
+                            monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
+                                storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                                itm, its, true, false, false, -1);
+
+                        }else {
+                            double finalScore = calculateHPWL(&(legalizedFloorplan), rgparser.getConnectionList(), false);
+                            printf("Final Score = %12.6f\n", finalScore);
+                            if (finalScore < bestHpwl){
+                                bestHpwl = finalScore;
+                                std::cout << "Best Hpwl found\n";
+                                outputFinalAnswer(&(legalizedFloorplan), rgparser, argv[2]);
+                            }
+                            legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
+                            monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
+                                storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                                itm, its, true, true, false, finalScore);
+                            std::cout << std::endl;
+                        }
+                    } else if (legalResult == DFSL::RESULT::CONSTRAINT_FAIL ) {
+                        std::cout << "Constraints FAIL, restarting process...\n" << std::endl;
+                        monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
+                            storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                            itm, its, false, false, false, -1);
+                    } else {
+                        std::cout << "Impossible to solve, restarting process...\n" << std::endl;
+                        monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
+                            storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
+                            itm, its, false, false,false, -1);
+                    }
                 }
             }
         } catch (char const *errMsg) {
