@@ -70,7 +70,7 @@ public:
     DFSLegalizer();
     ~DFSLegalizer();
     void initDFSLegalizer(LFLegaliser* floorplan);
-    RESULT legalize();
+    RESULT legalize(int mode);
     void constructGraph();
     Config config;
 };
