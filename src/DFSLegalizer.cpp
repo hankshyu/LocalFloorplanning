@@ -29,6 +29,9 @@ namespace DFSL {
         newNode.nodeName = tess->getName();
         newNode.nodeType = isFixed ? DFSLTessType::FIXED : DFSLTessType::SOFT;
         newNode.index = mAllNodes.size();
+        if (!isFixed && tess->TileArr.size() == 0){
+            throw "Soft tessera: assert(tess->TileArr.size() > 0)";
+        }
         for(Tile* tile : tess->TileArr){
             newNode.tileList.push_back(tile); 
             newNode.area += tile->getArea();
