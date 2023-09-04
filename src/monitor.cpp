@@ -175,7 +175,7 @@ void mnt::Monitor::recordInteration( int iteration, int epoch, double punishment
     configs.push_back(cf);
 }
 
-void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
+void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL, bool onlyPrintSuccessLog){
     if(configs.empty()) return;
         bool verifySolutionFound = false;
         double bestHPWL = std::numeric_limits<double>::max();
@@ -189,19 +189,22 @@ void mnt::Monitor::finalReport(bool legalSolutionFound, double inbestHPWL){
 
 
         for(runConfig *cf : configs){
-            printf("[%2d,%2d] (P,T) = (%14.6f, %11.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
-            printf(", (%10.2f, %10.2f, %10.2f, %10.2f, %10.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
-            printf(", Time = %1d:%02.0f", cf->minutes, cf->seconds);
-            printf(" >> (Lglise, Lg?, fault, HPWL) = (%1d, %1d, %1d, %12.2f)\n", cf->legaliseSuccess, cf->legal, cf->fault, cf->resultHPWL);
-            if(cf->legal) verifySolutionFound = true;
-            if(cf->legaliseSuccess && cf->legal){
-                if(cf->resultHPWL < bestHPWL){
-                    bestHPWL = cf->resultHPWL;
+            if(!onlyPrintSuccessLog || (onlyPrintSuccessLog && (cf->resultHPWL > 0))){
 
-                    bestiteration = cf->iteration;
-                    bestepoch = cf->epoch;
-                    bestpunishmentValue = cf->punishmentValue;
-                    besttoleranceLengthValue = cf->toleranceLengthValue;
+                printf("[%2d,%2d] (P,T) = (%14.6f, %11.2f)", cf->iteration, cf->epoch, cf->punishmentValue, cf->toleranceLengthValue);
+                printf(", (%10.2f, %10.2f, %10.2f, %10.2f, %10.2f)", cf->OBAreaWeight, cf->OBUtilWeight, cf->OBAspWeight, cf->BWUtilWeight, cf->BWAspWeight);
+                printf(", Time = %1d:%02.0f", cf->minutes, cf->seconds);
+                printf(" >> (Lglise, Lg?, fault, HPWL) = (%1d, %1d, %1d, %12.2f)\n", cf->legaliseSuccess, cf->legal, cf->fault, cf->resultHPWL);
+                if(cf->legal) verifySolutionFound = true;
+                if(cf->legaliseSuccess && cf->legal){
+                    if(cf->resultHPWL < bestHPWL){
+                        bestHPWL = cf->resultHPWL;
+
+                        bestiteration = cf->iteration;
+                        bestepoch = cf->epoch;
+                        bestpunishmentValue = cf->punishmentValue;
+                        besttoleranceLengthValue = cf->toleranceLengthValue;
+                    }
                 }
             }
         }

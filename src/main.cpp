@@ -28,7 +28,12 @@ int main(int argc, char const *argv[]) {
 
     
     std::vector<double> punishmentValues{
-        0.000001, 0.00001, 0.0001 ,0.001, 0.01, 0.1, 1.0 ,10.0, 100.0 ,1000.0, 10000.0, 100000.0, 1000000
+        10E-4, 
+        10E-3, 7.5E-3, 5E-3, 2.5E-3, 
+        10E-2, 7.5E-2, 5E-2, 2.5E-2 ,
+        10E-1, 7.5E-1, 5E-1, 2.5E-1,
+        1.0,
+        100.0, 100000.0
     };
 
     std::vector<double> toleranceLengthValues;
@@ -316,6 +321,6 @@ int main(int argc, char const *argv[]) {
 
     // This is final Report
     std::cout << "Final Report:" << std::endl << std::endl;
-    monitor.finalReport(legalSolutionFound, bestHpwl);
+    monitor.finalReport(legalSolutionFound, bestHpwl, true);
 
 }

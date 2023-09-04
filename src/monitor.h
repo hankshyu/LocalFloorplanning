@@ -78,7 +78,7 @@ namespace mnt
                         int minutes, double seconds,
                         bool legaliseSuccess, bool legal, bool fault, double resultHPWL);
 
-            void finalReport(bool legalSolutionFound, double inbestHPWL);
+            void finalReport(bool legalSolutionFound, double inbestHPWL, bool onlyPrintSuccessLog);
      
     };
 
