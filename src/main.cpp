@@ -32,11 +32,11 @@ int main(int argc, char const *argv[]) {
     // };
 
     std::vector<double> punishmentValues{
-        10E-5, 5E-5,
-        10E-4, 5E-4, 2.5E-4,
-        10E-3, 7.5E-3, 5.0E-3, 2.5E-3, 1.25E-3,
+        10E-5,
+        10E-4, 5E-4,
+        10E-3, 8.75E-3, 7.5E-3, 5E-3, 2.5E-3, 1.25E-3,
         10E-2, 8.75E-2, 7.5E-2, 6.25E-2, 5E-2, 3.75E-2, 2.5E-2, 1.25E-2,
-        10E-1, 7.5E-1, 5.0E-1, 3.75E-1, 2.5E-1, 1.25E-1,
+        10E-1, 7.5E-1, 5.0E-1, 3.75E-2, 2.5E-1, 1.25E-1,
         1.0,
         10E+1, 10E+2, 10E+4
     };
@@ -147,7 +147,7 @@ int main(int argc, char const *argv[]) {
                 std::cout << "[RGSolver] Note: Area Constraint Met.\n";
             }
 
-            solver.currentPosition2txt("outputs/global_test.txt");
+            // solver.currentPosition2txt("outputs/global_test.txt");
             std::cout << std::fixed;
             std::cout << "[RGSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
 
@@ -160,7 +160,7 @@ int main(int argc, char const *argv[]) {
             monitor.printPhaseReport();
             // std::cout << "Estimated HPWL in Global Phase: " << std::setprecision(2) << solver->calcEstimatedHPWL() << std::endl;
             std::cout << "Multiple Tile overlap (>3) count: " << legaliser->has3overlap() << std::endl;
-            legaliser->visualiseArtpiece("outputs/phase1.txt", false);
+            // legaliser->visualiseArtpiece("outputs/phase1.txt", false);
             
             
             /* Phase 2: Processing Corner Stiching */
@@ -183,7 +183,7 @@ int main(int argc, char const *argv[]) {
                 legaliser->visualiseAddMark(tp.first);
                 legaliser->visualiseAddMark(tp.second);
             }
-            legaliser->visualiseArtpiece("outputs/phase2_1.txt", true);
+            // legaliser->visualiseArtpiece("outputs/phase2_1.txt", true);
 
             legaliser->visualiseRemoveAllmark();
             while(!detectMergeTile.empty()){
@@ -200,7 +200,7 @@ int main(int argc, char const *argv[]) {
             // Phase 2 Reports
             std::cout << std::endl;
             monitor.printPhaseReport();
-            legaliser->visualiseArtpiece("outputs/phase2.txt", true);
+            // legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
             
             // // Phase 3: Primitive Overlap Reduction
@@ -301,7 +301,7 @@ int main(int argc, char const *argv[]) {
                                 std::cout << "Best Hpwl found\n";
                                 outputFinalAnswer(&(legalizedFloorplan), rgparser, argv[2]);
                             }
-                            legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
+                            // legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
                             monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
                                 storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
                                 itm, its, true, true, false, finalScore);
