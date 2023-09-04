@@ -33,10 +33,10 @@ int main(int argc, char const *argv[]) {
 
     std::vector<double> punishmentValues{
         10E-5,
-        10E-4, 5E-4,
-        10E-3, 8.75E-3, 7.5E-3, 5E-3, 2.5E-3, 1.25E-3,
+        10E-4, 2.5E-4,
+        10E-3, 8.75E-2, 7.5E-3, 6.25E-3, 5E-3, 3.75E-3, 2.5E-3, 1.25E-3,
         10E-2, 8.75E-2, 7.5E-2, 6.25E-2, 5E-2, 3.75E-2, 2.5E-2, 1.25E-2,
-        10E-1 ,7.5E-1, 5.0E-1, 3.75E-2, 2.5E-1, 1.25E-1,
+        10E-1, 8.75E-2, 7.5E-1, 6.25E-1, 5E-1, 3.75E-1, 2.5E-1, 1.25E-1,
         1.0,
         10E+1, 10E+2, 10E+4
     };
@@ -88,6 +88,9 @@ int main(int argc, char const *argv[]) {
             std::cout << ", current best HPWL = " << bestHpwl << std::endl;
             if(etMin >= MAX_MINUTE_RUNTIME){
                 std::cout << "Too late to start anothe iteration, terminate Program." << std::endl;
+                // This is final Report
+                std::cout << "Final Report:" << std::endl << std::endl;
+                monitor.finalReport(legalSolutionFound, bestHpwl, true);
                 exit(0);
             }else{
                 printf("Running with parameter: Tolerance: %14.6f, Punishment: %14.6f\n", toleranceValue, punishmentValue);
