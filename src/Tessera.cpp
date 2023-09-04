@@ -603,15 +603,15 @@ bool Tessera::isLegal(int &errorCode) {
     return true;
 }
 
-std::ostream &operator << (std::ostream &os, const Tessera &t){
-    os << t.mName << " LA=" << t.mLegalArea << std::endl;
+std::ostream &operator << (std::ostream &os, const Tessera &tes){
+    os << tes.mName << " LA=" << tes.mLegalArea << std::endl;
 
     os << "TileArr:" << std::endl;
-    for(Tile *t : t.TileArr){
+    for(Tile *t : tes.TileArr){
         os << (*t) << std::endl;
     }
     os << "OverlapArr:" << std::endl;
-    for(Tile *t : t.OverlapArr){
+    for(Tile *t : tes.OverlapArr){
         os << (*t) << std::endl;
     }
 
