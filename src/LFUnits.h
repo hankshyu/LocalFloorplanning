@@ -10,55 +10,30 @@ class Cord{
 public:
     len_t x;
     len_t y;
-    Cord()
-        : x(0), y(0) {}
+    Cord();
+    Cord(len_t x_in, len_t y_in);
 
-    Cord(len_t x_in, len_t y_in)
-        : x(x_in), y(y_in) {}
+    Cord& operator = (const Cord &other);
 
-    Cord operator + (const Cord &addend) const{
-        return Cord(x + addend.x, y + addend.y);
-    }
+    Cord operator + (const Cord &addend) const;
+    Cord operator - (const Cord &subtrahend) const;
+    Cord operator * (const len_t &scalar) const;
+    
+    bool operator == (const Cord &comp) const;
+    bool operator != (const Cord &comp) const;
+    bool operator < (const Cord &comp) const;
+    bool operator <= (const Cord &comp) const;
+    bool operator > (const Cord &comp) const;
+    bool operator >= (const Cord &comp) const;
 
-    Cord operator - (const Cord &subtrahend) const{
-        return Cord(x - subtrahend.x, y - subtrahend.y);
-    }
-
-    Cord operator * (const len_t &scalar) const{
-        return Cord(scalar*x, scalar*y);
-    }
-
-    bool operator == (const Cord &comp) const{
-        return ((x == comp.x) && (y == comp.y));
-    }
-
-    bool operator != (const Cord &comp) const{
-        return ((x != comp.x) || (y != comp.y));
-    }
-
-    bool operator < (const Cord &comp) const{
-        return ((x < comp.x) && (y < comp.y));
-    }
-
-    bool operator <= (const Cord &comp) const{
-        return ((x <= comp.x) && (y <= comp.y));
-    }
-
-    bool operator > (const Cord &comp) const{
-        return ((x > comp.x) && (y > comp.y));
-    }
-
-    bool operator >= (const Cord &comp) const{
-        return ((x >= comp.x) && (y >= comp.y));
-    }
-
-    friend std::ostream &operator << (std::ostream &os, const Cord &c) {
-        os << "(" << c.x << ", " << c.y << ")";
-        return os;
-    }
+    // friend std::ostream &operator << (std::ostream &os, const Cord &c);
+    // friend std::ostream &operator << (std::ostream &os, const Cord &c) {
+    //     os << "(" << c.x << ", " << c.y << ")";
+    //     return os;
+    // }
 
 };
 
-
+std::ostream &operator << (std::ostream &os, const Cord &c);
 
 #endif // __LFUNITS_H__

@@ -18,6 +18,51 @@ Tessera::Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft
         calBoundingBox();
     }
 
+Tessera::Tessera(const Tessera &other)
+    : mType(other.getType()), mName(other.getName()), mLegalArea(other.getLegalArea()),
+    mInitLowerLeft(other.getInitLowerLeft()), mInitWidth(other.getInitWidth()), mInitHeight(other.getInitHeight()) {
+        TileArr.assign(other.TileArr.begin(), other.TileArr.end());
+        OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
+    }
+
+Tessera& Tessera::operator = (const Tessera &other){
+    if(this == &other) return (*this);
+
+    this->mType = other.getType();
+    this->mName = other.getName();
+    this->mLegalArea = other.getLegalArea();
+
+    this->mInitLowerLeft = other.getInitLowerLeft();
+    this->mInitWidth = other.getInitWidth();
+    this->mInitHeight = other.getInitHeight();
+
+    TileArr.assign(other.TileArr.begin(), other.TileArr.end());
+    OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
+    
+    return (*this);
+}
+
+bool Tessera::operator ==(const Tessera &tess) const{
+    
+    if(mType != tess.getType()) return false;
+    if(mName != tess.getName()) return false;
+    if(mLegalArea != tess.getLegalArea()) return false;
+    if(mInitLowerLeft != tess.getInitLowerLeft()) return false;
+    if((mInitWidth != tess.getInitWidth()) || (mInitHeight != tess.getInitHeight())) return false;
+
+    if(TileArr.size() != tess.TileArr.size()) return false;
+    for(int i = 0; i < TileArr.size(); ++i){
+        if(TileArr[i] != tess.TileArr[i]) return false;
+    }
+
+    if(OverlapArr.size() != tess.OverlapArr.size()) return false;
+    for(int i = 0; i < OverlapArr.size(); ++i){
+        if(OverlapArr[i] != tess.OverlapArr[i]) return false;
+    }
+    return true;
+}
+
+
 std::string Tessera::getName () const{
     return this->mName;
 }
@@ -46,8 +91,8 @@ void Tessera::calBBCentre(double &CentreX, double &CentreY){
     calBoundingBox();
     Cord LL = getBBLowerLeft();
     Cord UR = getBBUpperRight();
-    CentreX = (LL.x + UR.x)/2;
-    CentreY = (LL.y + UR.y)/2;
+    CentreX = ((double)(LL.x + UR.x))/2;
+    CentreY = ((double)(LL.y + UR.y))/2;
 
 }
 
@@ -439,26 +484,6 @@ void Tessera::printCorners(std::ostream& fout){
     }
 }
 
-bool Tessera::operator ==(const Tessera &tess) const{
-    
-    if(mType != tess.getType()) return false;
-    if(mName != tess.getName()) return false;
-    if(mLegalArea != tess.getLegalArea()) return false;
-    if(mInitLowerLeft != tess.getInitLowerLeft()) return false;
-    if((mInitWidth != tess.getInitWidth()) || (mInitHeight != tess.getInitHeight())) return false;
-
-    if(TileArr.size() != tess.TileArr.size()) return false;
-    for(int i = 0; i < TileArr.size(); ++i){
-        if(TileArr[i] != tess.TileArr[i]) return false;
-    }
-
-    if(OverlapArr.size() != tess.OverlapArr.size()) return false;
-    for(int i = 0; i < OverlapArr.size(); ++i){
-        if(OverlapArr[i] != tess.OverlapArr[i]) return false;
-    }
-    return true;
-}
-
 bool Tessera::isLegal() {
     typedef gtl::polygon_90_with_holes_data<len_t> PolygonHole;
     typedef std::vector<PolygonHole>               PolygonHoleSet;
@@ -469,20 +494,28 @@ bool Tessera::isLegal() {
         Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
         curTessSet += box;
     }
+    for ( auto &tile : this->OverlapArr ) {
+        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
+        curTessSet += box;
+    }
 
     // check whether this Tessera is connected or not
     if ( curTessSet.size() > 1 ) {
+        std::cout << "Fragmented\n";
         return false;
     }
 
     // check whether this Tessera has holes or not
     PolygonHole curTess = curTessSet[0];
     if ( curTess.begin_holes() != curTess.end_holes() ) {
+        std::cout << "Has holes\n";
         return false;
     }
 
     // check whether this Tessera violates area constraint or not
     if ( gtl::area(curTess) < this->mLegalArea ) {
+        std::cout << gtl::area(curTess) << ' ' << this->mLegalArea <<' ';
+        std::cout << "Area not legal\n";
         return false;
     }
 
@@ -491,16 +524,96 @@ bool Tessera::isLegal() {
     gtl::extents(boundingBox, curTessSet);
     len_t width = gtl::xh(boundingBox) - gtl::xl(boundingBox);
     len_t height = gtl::yh(boundingBox) - gtl::yl(boundingBox);
-    double aspectRatio = (double) width / height;
+    double aspectRatio = ((double) width) / ((double) height);
     if ( aspectRatio > 2. || aspectRatio < 0.5 ) {
+        std::cout << aspectRatio << ' ';
+        std::cout << "aspect ratio not legal\n";
         return false;
     }
 
     // check whether this Tessera violates rectangle ratio or not
     double rectRatio = (double) gtl::area(curTess) / gtl::area(boundingBox);
     if ( rectRatio < 0.8 ) {
+        std::cout << "Util not legal\n";
         return false;
     }
 
     return true;
+}
+
+bool Tessera::isLegal(int &errorCode) {
+    typedef gtl::polygon_90_with_holes_data<len_t> PolygonHole;
+    typedef std::vector<PolygonHole>               PolygonHoleSet;
+    using namespace gtl::operators;
+    PolygonHoleSet curTessSet;
+
+    for ( auto &tile : this->TileArr ) {
+        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
+        curTessSet += box;
+    }
+    for ( auto &tile : this->OverlapArr ) {
+        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
+        curTessSet += box;
+    }
+
+    // check whether this Tessera is connected or not
+    if ( curTessSet.size() > 1 ) {
+        std::cout << "Fragmented\n";
+        errorCode = 1;
+        return false;
+    }
+
+    // check whether this Tessera has holes or not
+    PolygonHole curTess = curTessSet[0];
+    if ( curTess.begin_holes() != curTess.end_holes() ) {
+        std::cout << "Has holes\n";
+        errorCode = 2;
+        return false;
+    }
+
+    // check whether this Tessera violates area constraint or not
+    if ( gtl::area(curTess) < this->mLegalArea ) {
+        std::cout << gtl::area(curTess) << ' ' << this->mLegalArea <<' ';
+        std::cout << "Area not legal\n";
+        errorCode = 3;
+        return false;
+    }
+
+    // check whether this Tessera violates aspect ratio or not
+    Rectangle boundingBox;
+    gtl::extents(boundingBox, curTessSet);
+    len_t width = gtl::xh(boundingBox) - gtl::xl(boundingBox);
+    len_t height = gtl::yh(boundingBox) - gtl::yl(boundingBox);
+    double aspectRatio = ((double) width) / ((double) height);
+    if ( aspectRatio > 2. || aspectRatio < 0.5 ) {
+        std::cout << aspectRatio << ' ';
+        std::cout << "aspect ratio not legal\n";
+        errorCode = 4;
+        return false;
+    }
+
+    // check whether this Tessera violates rectangle ratio or not
+    double rectRatio = (double) gtl::area(curTess) / gtl::area(boundingBox);
+    if ( rectRatio < 0.8 ) {
+        std::cout << "Util not legal\n";
+        errorCode = 5;
+        return false;
+    }
+
+    return true;
+}
+
+std::ostream &operator << (std::ostream &os, const Tessera &tes){
+    os << tes.mName << " LA=" << tes.mLegalArea << std::endl;
+
+    os << "TileArr:" << std::endl;
+    for(Tile *t : tes.TileArr){
+        os << (*t) << std::endl;
+    }
+    os << "OverlapArr:" << std::endl;
+    for(Tile *t : tes.OverlapArr){
+        os << (*t) << std::endl;
+    }
+
+    return os;
 }
