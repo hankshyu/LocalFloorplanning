@@ -7,5 +7,6 @@ log/
 *.o*
 *.out
 .DS_Store
-cadd0007
+fprun
 answers/
+utils/verify
