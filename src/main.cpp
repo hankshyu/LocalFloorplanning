@@ -9,7 +9,6 @@
 #include "LFLegaliser.h"
 #include "parser.h"
 #include "ppsolver.h"
-#include "rgparser.h"
 #include "rgsolver.h"
 #include "DFSLegalizer.h"
 #include "monitor.h"
@@ -20,11 +19,13 @@
 
 #define MAX_MINUTE_RUNTIME 26
 
+namespace rg = RectGrad;
+
 int main(int argc, char const *argv[]) {
 
     bool legalSolutionFound = false;
 
-    RGParser rgparser(argv[1]);
+    rg::Parser parser(argv[1]);
 
     
     // std::vector<double> punishmentValues{
@@ -46,7 +47,7 @@ int main(int argc, char const *argv[]) {
         toleranceLengthValues.push_back(0);
     }
     double pushValue = 1;
-    while(pushValue < ((rgparser.getDieWidth() + rgparser.getDieHeight()) * 0.5 * 0.125)){
+    while(pushValue < ((parser.getDieWidth() + parser.getDieHeight()) * 0.5 * 0.125)){
         for(int i = 0; i < punishmentValues.size(); ++i){
             toleranceLengthValues.push_back(pushValue);
         }
@@ -99,8 +100,8 @@ int main(int argc, char const *argv[]) {
             if (legaliser != nullptr){
                 delete legaliser;
             }
-            RGSolver solver;
-            solver.readFromParser(rgparser);
+            rg::GlobalSolver solver;
+            solver.readFromParser(parser);
 
             /* Phase 1: Global Floorplanning */
             std::cout << std::endl << std::endl;
@@ -144,17 +145,17 @@ int main(int argc, char const *argv[]) {
             }
 
             if ( !solver.isAreaLegal() ) {
-                std::cout << "[RGSolver] ERROR: Area Constraint Violated.\n";
+                std::cout << "[GlobalSolver] ERROR: Area Constraint Violated.\n";
             }
             else {
-                std::cout << "[RGSolver] Note: Area Constraint Met.\n";
+                std::cout << "[GlobalSolver] Note: Area Constraint Met.\n";
             }
 
             // solver.currentPosition2txt("outputs/global_test.txt");
             std::cout << std::fixed;
-            std::cout << "[RGSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
+            std::cout << "[GlobalSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
 
-            legaliser = new LFLegaliser((len_t) rgparser.getDieWidth(), (len_t) rgparser.getDieHeight());
+            legaliser = new LFLegaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
             legaliser->translateGlobalFloorplanning(solver);
             legaliser->detectfloorplanningOverlaps();
 
@@ -297,12 +298,13 @@ int main(int argc, char const *argv[]) {
                                 itm, its, true, false, false, -1);
 
                         }else {
-                            double finalScore = calculateHPWL(&(legalizedFloorplan), rgparser.getConnectionList(), false);
+                            double finalScore = calculateHPWL(&(legalizedFloorplan), parser.getConnectionList(), false);
                             printf("Final Score = %12.6f\n", finalScore);
                             if (finalScore < bestHpwl){
                                 bestHpwl = finalScore;
                                 std::cout << "Best Hpwl found\n";
-                                outputFinalAnswer(&(legalizedFloorplan), rgparser, argv[2]);
+                                outputFinalAnswer(&(legalizedFloorplan), parser, argv[2]);
+                                solver.currentPosition2txt("outputs/global_test.txt");
                             }
                             // legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
                             monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,

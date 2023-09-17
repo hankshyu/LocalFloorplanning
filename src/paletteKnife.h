@@ -8,6 +8,8 @@
 #include <vector>
 #include <map>
 
+namespace rg = RectGrad;
+
 class paletteKnife{
 private:
     LFLegaliser *mLegaliser;
@@ -18,12 +20,12 @@ private:
 
     
     // this fills mTessFavorDirection with input connectionList
-    void calAllTessFavorDirection(std::vector <RGConnStruct> *connectionList);
-    bool calTessFavorDirection(Tessera *tessera, std::vector <RGConnStruct> *connectionList, double &direction);
+    void calAllTessFavorDirection(std::vector <rg::ConnStruct> *connectionList);
+    bool calTessFavorDirection(Tessera *tessera, std::vector <rg::ConnStruct> *connectionList, double &direction);
 
 public:
     paletteKnife() = delete;
-    paletteKnife(LFLegaliser *legaliser, std::vector <RGConnStruct> *connectionList);
+    paletteKnife(LFLegaliser *legaliser, std::vector <rg::ConnStruct> *connectionList);
     ~paletteKnife();
     
     std::vector <cake *> pastriesLevel2;
