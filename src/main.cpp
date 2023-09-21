@@ -84,9 +84,6 @@ int main(int argc, char const *argv[]) {
             double punishmentValue = punishmentValues[iter%punishmentValues.size()];
             // double punishmentValue = punishmentValues[iter % punishmentValues.size()];
             // double toleranceValue = toleranceLengthValues[iter / toleranceLengthValues.size()];
-
-            punishmentValue = 0.003750;
-            toleranceValue = 4.0;
             
             std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<"(s)";
             std::cout << ", current best HPWL = " << bestHpwl << std::endl;
