@@ -7,7 +7,7 @@ import time
 import random
 
 
-def draw_block(ax, x, y, width, height, color = "#FFF", aplha = 1.0):
+def draw_block(ax, x, y, width, height, color="#FFF", aplha=1.0):
     ax.add_patch(
         patches.Rectangle(
             (x, y),
@@ -20,24 +20,29 @@ def draw_block(ax, x, y, width, height, color = "#FFF", aplha = 1.0):
         )
     )
 
+
 used_color = ["#FFE", "#FFF", "#F00"]
 
 
 def set_rand_color():
     (R, G, B) = (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
     while R+G+B < 24:
-        (R, G, B) = (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
+        (R, G, B) = (random.randint(0, 15),
+                     random.randint(0, 15), random.randint(0, 15))
     (Rc, Gc, Bc) = (hex(R)[2], hex(G)[2], hex(B)[2])
     color = "#" + Rc + Gc + Bc
-    
+
     while color in used_color:
-        (R, G, B) = (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
+        (R, G, B) = (random.randint(0, 15),
+                     random.randint(0, 15), random.randint(0, 15))
         while R+G+B < 20:
-            (R, G, B) = (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
+            (R, G, B) = (random.randint(0, 15),
+                         random.randint(0, 15), random.randint(0, 15))
         (Rc, Gc, Bc) = (hex(R)[2], hex(G)[2], hex(B)[2])
         color = "#" + Rc + Gc + Bc
 
     return color
+
 
 def blend_color(colors):
     r = []
@@ -72,7 +77,6 @@ def blend_color(colors):
 ########################################################
 #                     main part
 ########################################################
-png_size = (16, 12)
 txt_name = sys.argv[1]
 png_name = sys.argv[2]
 fread = open(txt_name, 'r')
@@ -82,7 +86,9 @@ f = fread.read().split("\n")
 total_block_number = int(f[0].split(" ")[1])
 window_width = int(f[1].split(" ")[0])
 window_height = int(f[1].split(" ")[1])
+aspect_ratio = window_height / window_width
 
+png_size = (16, 15*aspect_ratio)
 fig = plt.figure(figsize=png_size, dpi=300)
 
 ax = fig.add_subplot(111)
@@ -125,13 +131,15 @@ for block in range(total_block_number):
     for subblock in range(subblockCount):
         ss = f[i].split(" ")
         i += 1
-        (sbx, sby, sbw, sbh) = (float(ss[0]), float(ss[1]), float(ss[2]), float(ss[3]))
+        (sbx, sby, sbw, sbh) = (float(ss[0]), float(
+            ss[1]), float(ss[2]), float(ss[3]))
         draw_block(ax, sbx, sby, sbw, sbh, color=color)
 
     for overlap in range(overlapCount):
         ss = f[i].split(" ")
         i += 1
-        (sbx, sby, sbw, sbh) = (float(ss[0]), float(ss[1]), float(ss[2]), float(ss[3]))
+        (sbx, sby, sbw, sbh) = (float(ss[0]), float(
+            ss[1]), float(ss[2]), float(ss[3]))
         #draw_block(ax, sbx, sby, sbw, sbh, color=color, aplha=0.3)
         if (sbx, sby, sbw, sbh) in overlapDict:
             overlapDict[(sbx, sby, sbw, sbh)].append(color)
@@ -148,7 +156,8 @@ for overlap in overlapDict:
 while f[i].split(" ")[0] != "CONNECTION":
     ss = f[i].split(" ")
     i += 1
-    (sbx, sby, sbw, sbh) = (float(ss[0]), float(ss[1]), float(ss[2]), float(ss[3]))
+    (sbx, sby, sbw, sbh) = (float(ss[0]),
+                            float(ss[1]), float(ss[2]), float(ss[3]))
     draw_block(ax, sbx, sby, sbw, sbh, color="#FFE")
 
 

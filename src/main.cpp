@@ -84,6 +84,9 @@ int main(int argc, char const *argv[]) {
             double punishmentValue = punishmentValues[iter%punishmentValues.size()];
             // double punishmentValue = punishmentValues[iter % punishmentValues.size()];
             // double toleranceValue = toleranceLengthValues[iter / toleranceLengthValues.size()];
+
+            punishmentValue = 0.003750;
+            toleranceValue = 4.0;
             
             std::cout << "Starting Iteration " << iter << " Currrent clock time: " << etMin << "(min) " << etSec <<"(s)";
             std::cout << ", current best HPWL = " << bestHpwl << std::endl;
@@ -204,7 +207,7 @@ int main(int argc, char const *argv[]) {
             // Phase 2 Reports
             std::cout << std::endl;
             monitor.printPhaseReport();
-            // legaliser->visualiseArtpiece("outputs/phase2.txt", true);
+            legaliser->visualiseArtpiece("outputs/phase2.txt", true);
 
             
             // // Phase 3: Primitive Overlap Reduction
@@ -306,7 +309,7 @@ int main(int argc, char const *argv[]) {
                                 outputFinalAnswer(&(legalizedFloorplan), parser, argv[2]);
                                 solver.currentPosition2txt("outputs/global_test.txt");
                             }
-                            // legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
+                            legalizedFloorplan.visualiseArtpiece("outputs/legal" + std::to_string(legalIter*3+legalizeMode) + ".txt", true);
                             monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
                                 storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
                                 itm, its, true, true, false, finalScore);
