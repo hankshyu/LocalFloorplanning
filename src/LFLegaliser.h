@@ -13,8 +13,8 @@
 #include "ppsolver.h"
 #include "rgsolver.h"
 
-
-class PPSolver;
+namespace pp = PushPull;
+namespace rg = RectGrad;
 
 class LFLegaliser {
 private:
@@ -54,8 +54,8 @@ public:
     len_t getCanvasWidth() const;
     len_t getCanvasHeight() const;
 
-    void translateGlobalFloorplanning(const PPSolver &solver);
-    void translateGlobalFloorplanning(const RGSolver &solver);
+    void translateGlobalFloorplanning(const pp::GlobalSolver &solver);
+    void translateGlobalFloorplanning(const rg::GlobalSolver &solver);
     void detectfloorplanningOverlaps();
     bool has3overlap();
     void splitTesseraeOverlaps();
@@ -112,8 +112,8 @@ int findVectorInclude(std::vector<Tile *>&vec, Tile *t);
 // return -1 if not found, otherwise index
 int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
 
-double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &connections, bool printReport);
-void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const std::string outputFileName);
+double calculateHPWL(LFLegaliser *legaliser, const std::vector<rg::ConnStruct> &connections, bool printReport);
+void outputFinalAnswer(LFLegaliser *legaliser, const rg::Parser &rgparser, const std::string outputFileName);
 
 struct CPTilePair{
     Tile *father;

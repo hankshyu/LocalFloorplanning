@@ -196,7 +196,7 @@ len_t LFLegaliser::getCanvasHeight() const {
     return this->mCanvasHeight;
 }
 
-void LFLegaliser::translateGlobalFloorplanning(const PPSolver &solver) {
+void LFLegaliser::translateGlobalFloorplanning(const pp::GlobalSolver &solver) {
     // You could define the I/O of this function
     // To create a soft Tessera:
     // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
@@ -207,7 +207,7 @@ void LFLegaliser::translateGlobalFloorplanning(const PPSolver &solver) {
     for ( int i = 0; i < solver.moduleNum; i++ ) {
         //std::cout << solver.modules[i]->name << ": ";
         //std::cout << solver.modules[i]->x << ", " << solver.modules[i]->y << std::endl;
-        PPModule *curModule = solver.modules[i];
+        pp::GlobalModule *curModule = solver.modules[i];
         if ( curModule->fixed ) {
             Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
                 Cord(curModule->fx, curModule->fy), curModule->fw, curModule->fh);
@@ -226,7 +226,7 @@ void LFLegaliser::translateGlobalFloorplanning(const PPSolver &solver) {
 
 }
 
-void LFLegaliser::translateGlobalFloorplanning(const RGSolver &solver) {
+void LFLegaliser::translateGlobalFloorplanning(const rg::GlobalSolver &solver) {
     // You could define the I/O of this function
     // To create a soft Tessera:
     // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
@@ -234,7 +234,7 @@ void LFLegaliser::translateGlobalFloorplanning(const RGSolver &solver) {
     // The constructor would automatically create a default tile for you.
 
     for ( int i = 0; i < solver.moduleNum; i++ ) {
-        RGModule *curModule = solver.modules[i];
+        rg::GlobalModule *curModule = solver.modules[i];
         if ( curModule->fixed ) {
             Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
                 Cord(curModule->x, curModule->y), curModule->width, curModule->height);
@@ -1832,9 +1832,9 @@ void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std
     }
 }
 
-double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &connections, bool printReport){
+double calculateHPWL(LFLegaliser *legaliser, const std::vector<RectGrad::ConnStruct> &connections, bool printReport){
     double HPWL = 0;
-    for(RGConnStruct cs : connections){
+    for(RectGrad::ConnStruct cs : connections){
         
         Tessera *tess0 = nullptr;
         Tessera *tess1 = nullptr;
@@ -1888,7 +1888,7 @@ double calculateHPWL(LFLegaliser *legaliser, const std::vector<RGConnStruct> &co
 }
 
 
-void outputFinalAnswer(LFLegaliser *legaliser, const RGParser &rgparser, const std::string outputFileName){
+void outputFinalAnswer(LFLegaliser *legaliser, const RectGrad::Parser &rgparser, const std::string outputFileName){
     std::cout << "output Final Answer..." <<outputFileName << std::endl;
 
     std::ofstream ofs(outputFileName);

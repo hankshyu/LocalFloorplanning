@@ -5,7 +5,7 @@
 #include "Tessera.h"
 #include "tensor.h"
 
-paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <RGConnStruct> *connectionList){
+paletteKnife::paletteKnife(LFLegaliser *legaliser, std::vector <rg::ConnStruct> *connectionList){
     this->mLegaliser = legaliser;
     calAllTessFavorDirection(connectionList);
 
@@ -23,7 +23,7 @@ paletteKnife::~paletteKnife(){
     }
 }
 
-void paletteKnife::calAllTessFavorDirection(std::vector <RGConnStruct> *connectionList){
+void paletteKnife::calAllTessFavorDirection(std::vector <rg::ConnStruct> *connectionList){
     for(Tessera *tess : mLegaliser->fixedTesserae){
         //this did not process when direction is absent!
         double favor;
@@ -40,12 +40,12 @@ void paletteKnife::calAllTessFavorDirection(std::vector <RGConnStruct> *connecti
     }
 }
 
-bool paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <RGConnStruct> *connectionList, double &direction){
+bool paletteKnife::calTessFavorDirection(Tessera *tessera, std::vector <rg::ConnStruct> *connectionList, double &direction){
     bool metConnections = false;
     double cumulateWeights = 0;
     double favorDirection;
 
-    for(RGConnStruct cs : (*connectionList)){
+    for(rg::ConnStruct cs : (*connectionList)){
         double fromX, fromY;
         double toX, toY;
 

@@ -47,7 +47,6 @@ def draw_polygon(ax, corners, color="#FCC"):
     )
 
 
-png_size = (16, 12)
 case_txt_name = sys.argv[1]
 floorplan_txt_name = sys.argv[2]
 png_name = sys.argv[3]
@@ -61,7 +60,9 @@ fin_floorplan = file_read_floorplan.read().split("\n")
 # total_connection_number = int(f[0].split(" ")[3])
 window_width = int(fin_case[0].split(" ")[1])
 window_height = int(fin_case[0].split(" ")[2])
+aspect_ratio = window_height / window_width
 
+png_size = (16, 15*aspect_ratio)
 fig = plt.figure(figsize=png_size)
 
 ax = fig.add_subplot(111)
