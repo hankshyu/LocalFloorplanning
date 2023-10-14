@@ -7,11 +7,13 @@
 #include <string>
 
 class LFLegaliser;
+class FPManager;
 
 namespace RectGrad {
     class GlobalSolver {
     private:
         friend class ::LFLegaliser;
+        friend class ::FPManager;
         double DieWidth, DieHeight;
         int softModuleNum, fixedModuleNum, moduleNum, connectionNum;
         std::vector<GlobalModule *> modules;
