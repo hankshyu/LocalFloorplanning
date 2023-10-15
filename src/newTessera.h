@@ -92,4 +92,14 @@ std::ostream &operator << (std::ostream &o, const Point &pt);
 std::ostream &operator << (std::ostream &o, const Polygon &poly);
 std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
 
+class Overlap{
+private:
+    Polygon90WithHoles mShape; 
+public:
+    std::vector<int> overlaps;
+    Overlap() = delete;
+    Overlap(Polygon90WithHoles& shape, std::vector<int> overlapIndices);
+    Polygon90WithHoles& getShape();
+};
+
 #endif // __TESSERA_H__

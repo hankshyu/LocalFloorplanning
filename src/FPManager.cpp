@@ -89,14 +89,14 @@ void FPManager::translateGlobalFloorplanning(const rg::GlobalSolver &solver) {
     for ( int i = 0; i < solver.moduleNum; i++ ) {
         rg::GlobalModule *curModule = solver.modules[i];
         if ( curModule->fixed ) {
-            Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
+            Tessera *newTess = new Tessera(*(this), tesseraType::HARD, curModule->name, curModule->area,
                 Cord(curModule->x, curModule->y), curModule->width, curModule->height);
             allTesserae.push_back(newTess);
             fixedTesseraeIndices.push_back(i);
         }
         else {
             curModule->updateCord(mCanvasWidth, mCanvasHeight, 1.);
-            Tessera *newTess = new Tessera(tesseraType::SOFT, curModule->name, curModule->area,
+            Tessera *newTess = new Tessera(*(this), tesseraType::SOFT, curModule->name, curModule->area,
                 Cord((len_t)curModule->x, (len_t) curModule->y), curModule->width, curModule->height);
             allTesserae.push_back(newTess);
             softTesseraeIndices.push_back(i);
@@ -232,30 +232,18 @@ void FPManager::detectfloorplanningOverlaps() {
     }
 
     // add these tiles
-    std::vector<Tile> overlap4TileVec;
+    std::vector<Polygon90WithHoles> overlap4TileVec;
     for ( IntersectionUnit &o4unit: overlap4unit ) {
-        Rectangle intersectBox = o4unit.intersection;
-        len_t x = gtl::xl(intersectBox);
-        len_t y = gtl::yl(intersectBox);
-        len_t w = gtl::xh(intersectBox) - gtl::xl(intersectBox);
-        len_t h = gtl::yh(intersectBox) - gtl::yl(intersectBox);
-        Tile overlapTileRef(tileType::OVERLAP, Cord(x, y), w, h);
-        overlap4TileVec.push_back(overlapTileRef);
-
-        Tile *overlapTile = new Tile(tileType::OVERLAP, Cord(x, y), w, h);
-        for ( int i : o4unit.overlappedIDs ) {
-            bool isSoft = i < softTesseraeIndices.size();
-            int id = ( isSoft ) ? i : i - softTesseraeIndices.size();
-            Tessera *curTess = ( isSoft ) ? softTesseraeIndices[id] : fixedTesseraeIndices[id];
-
-            ( isSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(id)
-                : overlapTile->OverlapFixedTesseraeIdx.push_back(id);
-            curTess->insertTiles(overlapTile);
-        }
+        int overlapIndex = allOverlaps.size();
+        Polygon90WithHoles overlapPoly;
+        bg::assign(overlapPoly, o4unit.intersection);
+        allOverlaps.push_back(Overlap(overlapPoly, o4unit.overlappedIDs));
+        overlap4TileVec.push_back(overlapPoly);
     }
 
     std::vector<Tile> overlap3TileVec;
     for ( IntersectionUnit &o3unit: overlap3unit ) {
+        // TODO: REWRITE FROM HERE!
         Rectangle intersectBox = o3unit.intersection;
         len_t x = gtl::xl(intersectBox);
         len_t y = gtl::yl(intersectBox);
@@ -307,6 +295,19 @@ void FPManager::detectfloorplanningOverlaps() {
         }
     }
 
+}
+
+std::vector<Polygon90WithHoles> FPManager::removeExtraOverlap(Polygon90WithHoles overlap, std::vector<Polygon90WithHoles> toRemove){
+    Polygon90Set poly;
+    poly += overlap;
+
+    for (Polygon90WithHoles& remove: toRemove){
+        poly -= remove;
+    }
+
+    std::vector<Polygon90WithHoles> poly90Container;
+    poly.get(poly90Container);
+    return poly90Container;
 }
 
 bool FPManager::has3overlap() {

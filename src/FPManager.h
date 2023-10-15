@@ -9,7 +9,7 @@
 #include <utility>
 #include "LFUnits.h"
 #include "Tile.h"
-#include "Tessera.h"
+#include "newTessera.h"
 #include "ppsolver.h"
 #include "rgsolver.h"
 #include <boost/polygon/polygon.hpp>
@@ -35,6 +35,9 @@ private:
     bool checkTesseraInCanvas(Cord lowerLeft, len_t width, len_t height) const;
     bool checkTileInCanvas(Tile &tile) const;
 
+    // in detectFloorplanOverlap
+    std::vector<Polygon90WithHoles> FPManager::removeExtraOverlap(Polygon90WithHoles overlap, std::vector<Polygon90WithHoles> toRemove);
+
     void traverseBlank(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
     // void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
     void visualiseDebugDFS(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
@@ -56,7 +59,7 @@ public:
     // std::vector <Tessera *> allOverlaps;
     // std::vector <Pin> allPins;
     Polygon90Set blankTiles;
-    std::vector <Polygon90Set> allOverlaps;
+    std::vector <Overlap> allOverlaps;
     
 
     FPManager() = delete;

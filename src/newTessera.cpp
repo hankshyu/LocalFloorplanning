@@ -61,7 +61,7 @@ void Tessera::getFullShape(Polygon90Set& poly){
     poly.clear();
     poly += mShape;
     for(int overlapIndex : OverlapArr){
-        Polygon90Set& overlap = mFPM.allOverlaps[overlapIndex];
+        Polygon90WithHoles& overlap = mFPM.allOverlaps[overlapIndex].getShape();
         poly += overlap;
     }
 }
@@ -143,7 +143,7 @@ area_t Tessera::calAreaMargin() {
 
 void Tessera::splitRectliearDueToOverlap(){
     for(int overlapIndex : OverlapArr){
-        Polygon90Set& overlap = mFPM.allOverlaps[overlapIndex];
+        Polygon90WithHoles& overlap = mFPM.allOverlaps[overlapIndex].getShape();
         mShape -= overlap;
     }    
 }
@@ -155,7 +155,7 @@ void Tessera::printCorners(std::ostream& fout){
     if (OverlapArr.size() > 0){
         std::cout << "WARNING: Tess " << mName << " still has overlaps (in Tess::printCorners)\n";
         for (int overlapIndex : OverlapArr){
-            Polygon90Set& overlap = mFPM.allOverlaps[overlapIndex];
+            Polygon90WithHoles& overlap = mFPM.allOverlaps[overlapIndex].getShape();
             poly += overlap;
         }   
     }
@@ -302,7 +302,6 @@ void Tessera::_addArea(Cord lowerleft, len_t width, len_t height){
         {lowerleft.x + width, lowerleft.y + height}, 
         {lowerleft.x, lowerleft.y + height}
     };
-    // Add the outer polygon
     bg::set_points(newArea, newAreaVertices.begin(), newAreaVertices.end());
     
     // check for overlaps, output warning if overlap exists
@@ -334,7 +333,7 @@ std::ostream &operator << (std::ostream &os, const Tessera &tes){
 
     os << "OverlapArr:" << std::endl;
     for(int overlapIndex : tes.OverlapArr){
-        Polygon90Set& overlap = tes.mFPM.allOverlaps[overlapIndex];
+        Polygon90WithHoles& overlap = tes.mFPM.allOverlaps[overlapIndex].getShape();
         os << overlap << std::endl;
     }
 
@@ -361,4 +360,11 @@ std::ostream &operator << (std::ostream &o, const PolygonSet &polys) {
         o << poly << "\n";
     }
     return o;
+}
+
+Overlap::Overlap(Polygon90WithHoles& shape, std::vector<int> overlapIndices): 
+mShape(shape), overlaps(overlapIndices) {}
+
+Polygon90WithHoles& Overlap::getShape(){
+    return mShape;
 }
