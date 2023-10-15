@@ -5,17 +5,17 @@
 #include <string>
 #include <iostream>
 #include <boost/polygon/polygon.hpp>
-
+#include "FPManager.h"
 #include "LFUnits.h"
-#include "Tile.h"
+// #include "Tile.h"
 
 namespace bg = boost::polygon;
 using namespace boost::polygon::operators;
 
-typedef bg::polygon_90_data<int> Polygon90;
-typedef bg::polygon_90_set_data<int> Polygon90Set;
-typedef bg::polygon_90_with_holes_data<int> Polygon90WithHoles;
-typedef bg::point_data<int> Point;
+typedef bg::rectangle_data<len_t> Rectangle;
+typedef bg::polygon_90_set_data<len_t> Polygon90Set;
+typedef bg::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
+typedef bg::point_data<len_t> Point;
 
 enum class tesseraType{
     EMPTY ,SOFT, HARD
@@ -37,20 +37,24 @@ private:
     Cord mBBUpperRight;
     
 
-
+    FPManager& mFPM;
     void calBoundingBox();
     area_t calRealArea();
+    void _addArea(Cord lowerleft, len_t width, len_t height);
+    bool _checkHole();
 public:
     std::vector <int> OverlapArr;
 
-    Tessera();
-    Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
+    Tessera() = delete; 
+    Tessera(FPManager& FP, tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
     Tessera(const Tessera &other);
 
     Tessera& operator = (const Tessera &other);
     bool operator == (const Tessera &tess) const;
     friend std::ostream &operator << (std::ostream &os, const Tessera &t);
 
+    // TODO: dirty bit?
+    void getFullShape(Polygon90Set& poly);
     std::string getName () const;
     area_t getLegalArea () const;
     tesseraType getType() const;
@@ -63,14 +67,6 @@ public:
     len_t getBBWidth ();
     len_t getBBHeight ();
     void calBBCentre(double &CentreX, double &CentreY);
-
-    bool checkLegalNoHole();
-    bool checkLegalNoEnclave();
-    bool checkLegalEnoughArea();
-    bool checkLegalAspectRatio();
-    bool checkLegalStuffedRatio();
-
-    int checkLegal();
 
     int insertTiles(Tile *tile);
     void splitRectliearDueToOverlap();
@@ -91,5 +87,9 @@ public:
 };
 
 std::ostream &operator << (std::ostream &os, const Tessera &t);
+
+std::ostream &operator << (std::ostream &o, const Point &pt);
+std::ostream &operator << (std::ostream &o, const Polygon &poly);
+std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
 
 #endif // __TESSERA_H__

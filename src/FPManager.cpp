@@ -121,15 +121,17 @@ void FPManager::detectfloorplanningOverlaps() {
     gtl::connectivity_extraction_90<int> ce;
 
     std::vector<Rectangle> test_data;
-    for ( Tessera *curTes : softTesserae ) {
-        Cord lowerLeft = curTes->TileArr[0]->getLowerLeft();
-        Cord upperRight = curTes->TileArr[0]->getUpperRight();
+    for ( int softIndex: softTesseraeIndices ) {
+        Tessera* softTess = allTesserae[softIndex];
+        Cord lowerLeft = softTess->getBBLowerLeft();
+        Cord upperRight = softTess->getBBUpperRight();
         test_data.push_back(Rectangle(lowerLeft.x, lowerLeft.y, upperRight.x, upperRight.y));
     }
 
-    for ( Tessera *curTes : fixedTesserae ) {
-        Cord lowerLeft = curTes->TileArr[0]->getLowerLeft();
-        Cord upperRight = curTes->TileArr[0]->getUpperRight();
+    for ( int fixedIndex: fixedTesseraeIndices ) {
+        Tessera* fixedTess = allTesserae[fixedIndex];
+        Cord lowerLeft = fixedTess->getBBLowerLeft();
+        Cord upperRight = fixedTess->getBBUpperRight();
         test_data.push_back(Rectangle(lowerLeft.x, lowerLeft.y, upperRight.x, upperRight.y));
     }
 
@@ -242,9 +244,9 @@ void FPManager::detectfloorplanningOverlaps() {
 
         Tile *overlapTile = new Tile(tileType::OVERLAP, Cord(x, y), w, h);
         for ( int i : o4unit.overlappedIDs ) {
-            bool isSoft = i < softTesserae.size();
-            int id = ( isSoft ) ? i : i - softTesserae.size();
-            Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
+            bool isSoft = i < softTesseraeIndices.size();
+            int id = ( isSoft ) ? i : i - softTesseraeIndices.size();
+            Tessera *curTess = ( isSoft ) ? softTesseraeIndices[id] : fixedTesseraeIndices[id];
 
             ( isSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(id)
                 : overlapTile->OverlapFixedTesseraeIdx.push_back(id);
@@ -1374,6 +1376,14 @@ void FPManager::visualiseRemoveAllmark(){
 
 
 void FPManager::arrangeTesseraetoCanvas(){
+    
+    // insert blank tile (dimensions equal to die outline)
+    blankTiles.clear();
+    // create a rectangle
+    Polygon90WithHoles outline;
+    std::vector<Point> outlineVertices = {{0, 0}, {mCanvasWidth, 0}, {mCanvasWidth, mCanvasHeight}, {0, mCanvasHeight}};
+    // Add the outer polygon
+    bg::set_points(outline, outlineVertices.begin(), outlineVertices.end());
 
     std::vector <Cord> record;
     

@@ -2,31 +2,27 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "Tessera.h"
+#include "newTessera.h"
 #include "boost/polygon/polygon.hpp"
 
-namespace gtl = boost::polygon;
-
-Tessera::Tessera()
-    : mType(tesseraType::EMPTY) {}
-
-Tessera::Tessera(tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height)
-    : mType(type), mName(name), mLegalArea(area), 
+Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height)
+    : mFPM(FP), mType(type), mName(name), mLegalArea(area), 
     mInitLowerLeft(lowerleft), mInitWidth(width), mInitHeight(height) {
-        Tile *defaultTess = new Tile(tileType::BLOCK, lowerleft, width, height);
-        TileArr.push_back(defaultTess);
-        calBoundingBox();
+        mShape.clear();
+        _addArea(lowerleft, width, height);
     }
 
 Tessera::Tessera(const Tessera &other)
-    : mType(other.getType()), mName(other.getName()), mLegalArea(other.getLegalArea()),
+    : mFPM(other.mFPM), mType(other.getType()), mName(other.getName()), mLegalArea(other.getLegalArea()),
     mInitLowerLeft(other.getInitLowerLeft()), mInitWidth(other.getInitWidth()), mInitHeight(other.getInitHeight()) {
-        TileArr.assign(other.TileArr.begin(), other.TileArr.end());
+        mShape = Polygon90Set(other.mShape);
         OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
     }
 
 Tessera& Tessera::operator = (const Tessera &other){
     if(this == &other) return (*this);
+
+    this->mFPM = other.mFPM;
 
     this->mType = other.getType();
     this->mName = other.getName();
@@ -36,7 +32,7 @@ Tessera& Tessera::operator = (const Tessera &other){
     this->mInitWidth = other.getInitWidth();
     this->mInitHeight = other.getInitHeight();
 
-    TileArr.assign(other.TileArr.begin(), other.TileArr.end());
+    mShape = Polygon90Set(other.mShape);
     OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
     
     return (*this);
@@ -50,18 +46,25 @@ bool Tessera::operator ==(const Tessera &tess) const{
     if(mInitLowerLeft != tess.getInitLowerLeft()) return false;
     if((mInitWidth != tess.getInitWidth()) || (mInitHeight != tess.getInitHeight())) return false;
 
-    if(TileArr.size() != tess.TileArr.size()) return false;
-    for(int i = 0; i < TileArr.size(); ++i){
-        if(TileArr[i] != tess.TileArr[i]) return false;
-    }
+    if(mShape != tess.mShape) return false;
 
     if(OverlapArr.size() != tess.OverlapArr.size()) return false;
     for(int i = 0; i < OverlapArr.size(); ++i){
+        // TODO: modify this?
         if(OverlapArr[i] != tess.OverlapArr[i]) return false;
     }
     return true;
 }
 
+// returns the entire polygon (non-overlapping areas + overlapping areas)
+void Tessera::getFullShape(Polygon90Set& poly){
+    poly.clear();
+    poly += mShape;
+    for(int overlapIndex : OverlapArr){
+        Polygon90Set& overlap = mFPM.allOverlaps[overlapIndex];
+        poly += overlap;
+    }
+}
 
 std::string Tessera::getName () const{
     return this->mName;
@@ -114,359 +117,62 @@ len_t Tessera::getBBHeight(){
 }
 
 void Tessera::calBoundingBox(){
-    if(TileArr.empty() && OverlapArr.empty()) return;
+    Polygon90Set shape; 
+    getFullShape(shape);
+    if(shape.empty()) return;
 
-    //The lowerleft and upper right tiles
-    Cord BBLL, BBUR;
-
-    if(!TileArr.empty()){
-        BBLL = TileArr[0]->getLowerLeft();
-        BBUR = TileArr[0]->getUpperRight();
-    }else{
-        BBLL = OverlapArr[0]->getLowerLeft();
-        BBUR = OverlapArr[0]->getUpperRight();
-    }
-
-    for(Tile *t : TileArr){
-        Cord tLL = t->getLowerLeft();
-        Cord tUR = t->getUpperRight();
-
-        if(tLL.x < BBLL.x) BBLL.x = tLL.x;
-        if(tLL.y < BBLL.y) BBLL.y = tLL.y;
-        
-        if(tUR.x > BBUR.x) BBUR.x = tUR.x;
-        if(tUR.y > BBUR.y) BBUR.y = tUR.y;
-    }
-    for(Tile *t : OverlapArr){
-        Cord tLL = t->getLowerLeft();
-        Cord tUR = t->getUpperRight();
-
-        if(tLL.x < BBLL.x) BBLL.x = tLL.x;
-        if(tLL.y < BBLL.y) BBLL.y = tLL.y;
-        
-        if(tUR.x > BBUR.x) BBUR.x = tUR.x;
-        if(tUR.y > BBUR.y) BBUR.y = tUR.y;
-    }
+    Rectangle BBox;
+    bg::extents(BBox, shape); 
+    Cord BBLL = Cord(bg::xl(BBox), bg::yl(BBox));
+    Cord BBUR = Cord(bg::xh(BBox), bg::yh(BBox));
 
     this->mBBLowerLeft = BBLL;
     this->mBBUpperRight = BBUR;
 }
 
 area_t Tessera::calRealArea(){
-    area_t realArea = 0;
-    for(Tile *t : this->TileArr){
-        realArea += t->getArea();
-    }
-    for(Tile *t : this->OverlapArr){
-        realArea += t->getArea();
-    }
-    return realArea;
+    Polygon90Set shape; 
+    getFullShape(shape);
+
+    return bg::area(shape);
 }
 
 area_t Tessera::calAreaMargin() {
     return calRealArea() - this->mLegalArea;
 }
 
-// TODO: This may need boost lib...
-bool Tessera::checkLegalNoHole(){
-    return true;
-}
-
-// TODO: This may need boost lib...
-bool Tessera::checkLegalNoEnclave(){
-    return true;
-}
-
-bool Tessera::checkLegalEnoughArea(){
-    return (calRealArea() >= this->mLegalArea);
-}
-
-bool Tessera::checkLegalAspectRatio(){
-    calBoundingBox();
-    double aspectRatio = ((double)this->getBBHeight()) / ((double)this->getBBWidth());
-
-    return (aspectRatio <= 2) && (aspectRatio >= 0.5);
-
-}
-
-bool Tessera::checkLegalStuffedRatio(){
-    calBoundingBox();
-    area_t BBArea = (area_t)getBBHeight() * (area_t)getBBWidth();
-    double stuffedRatio = ((double)this->getLegalArea()) / ((double) BBArea);
-    return (stuffedRatio >= 0.8);
-
-}
-
-int Tessera::checkLegal(){
-    if(!checkLegalNoHole()) return 1;
-    if(!checkLegalNoEnclave()) return 2;
-    if(!checkLegalEnoughArea()) return 3;
-    if(!checkLegalAspectRatio()) return 4;
-    if(!checkLegalStuffedRatio()) return 5;
-    return 0;
-}
-
-int Tessera::insertTiles(Tile *tile){
-    assert(tile->getType() != tileType::BLANK);
-    switch (tile->getType()){
-        case tileType::BLOCK:
-            /* code */
-            TileArr.push_back(tile);
-            break;
-        case tileType::OVERLAP:
-            /* code */
-            OverlapArr.push_back(tile);
-            break;
-        default:
-            break;
-    }
-    calBoundingBox();
-
-    return 1;
-}
-
-
-
-/*
-    Notes for Ryan Lin...
-    We would call translateGlobalFloorplanning() from LFLegaliser.h to translate cirlces from 
-    global floorplanning to Rectangles (Tessera.h), and it would include a default Tile (Tile.h)
-    We would then call detectfloorplanningOverlaps() to detect overlaps. Overlaps would be record as
-    another Tile(label with tileType::OVERLAP)
-    Then call splitFloorplanningOverlaps() from LFLegaliser.h
-    it would :
-    for(Tessera t : all Tesserae vector){
-        t.splitRectliearDueToOverlap()
-    }
-    
-    to acquire the correct tile distribution with overlap tiles correctly split.
-*/
 void Tessera::splitRectliearDueToOverlap(){
-    
-    /*
-    The translated info is stored in:
-    - Cord mInitLowerLeft;
-    - len_t mInitWidth;
-    - len_t mInitHeight;
-
-    There should be "ONE" default Tile in TileArr, which is the default tile(= InitXXX...)
-    Overlap tiles are calculated as pushed into overlapArr
-    You should read the entire overlap Arr and mark off the area indicated, this would lead you to 
-    a rectlinear shape.
-    Then you should further split the acquired rectilinear, and split them into smaller tiles. you "MUST"
-    remove the default tile if new smaller splits are pushed in. GOOD LUCK!!
-
-    p.s. Just insert the smaller tiles like so:
-    Tile *newsmallersplit = new Tile(tileType::BLOCK, Cord(x, y), width, height);
-    
-    You don't have to maintain *up *donw *left right pointers, they will be taken care of when insertion happen
-    */
-
-    // if overlap exists, default tile will always be split
-    // delete default tile, insert tile size of block
-    if (OverlapArr.size() > 0 ){
-        Tile* defaultTile = TileArr.back();
-        Cord lowerLeft = defaultTile->getLowerLeft();
-        len_t width = defaultTile->getWidth();
-        len_t height = defaultTile->getHeight();
-        // Do I need to delete pointer????
-        delete defaultTile; 
-        Tile* newDefault = new Tile(tileType::BLOCK, lowerLeft, width, height);
-        TileArr[0] = newDefault;
-    }
-    
-
-    // iterate thru all overlaps
-    for (int o = 0; o < OverlapArr.size(); o++){
-        std::vector <Tile *> influencedTiles;
-        Tile* currentOverlap = OverlapArr[o];
-        int overlapRightBoundary = currentOverlap->getUpperRight().x;
-        int overlapUpperBoundary = currentOverlap->getUpperRight().y;
-        int overlapLeftBoundary = currentOverlap->getLowerLeft().x;
-        int overlapLowerBoundary = currentOverlap->getLowerLeft().y;
-
-        // step 1: find all block Tiles that will be influenced
-        for (int t = 0; t < TileArr.size(); ++t){
-            // check overlap
-            bool xOverlap = TileArr[t]->getLowerLeft().x < currentOverlap->getUpperRight().x &&
-                            currentOverlap->getLowerLeft().x < TileArr[t]->getUpperRight().x;
-            bool yOverlap = TileArr[t]->getLowerLeft().y < currentOverlap->getUpperRight().y &&
-                            currentOverlap->getLowerLeft().y < TileArr[t]->getUpperRight().y;
-            if (xOverlap && yOverlap){
-                influencedTiles.push_back(TileArr[t]);
-            }
-        }
-
-        // step 2: find Tiles that include the upper/lower boundary of overlap,  
-        // split those tiles
-        for (int i = 0; i < influencedTiles.size(); ++i){
-            Tile* currentTile = influencedTiles[i];
-            int currentRightBoundary = currentTile->getUpperRight().x;
-            int currentUpperBoundary = currentTile->getUpperRight().y;
-            int currentLeftBoundary = currentTile->getLowerLeft().x;
-            int currentLowerBoundary = currentTile->getLowerLeft().y;
-            bool includeUpperBoundary = currentLowerBoundary < overlapUpperBoundary && overlapUpperBoundary < currentUpperBoundary;
-            if (includeUpperBoundary){
-                // change hieght of currentTile, add a new tile to tile array
-                Cord newLL = Cord(currentLeftBoundary, overlapUpperBoundary);
-                int newWidth = currentTile->getWidth();
-                int newHeight = currentUpperBoundary - overlapUpperBoundary;
-                Tile* newTile = new Tile(tileType::BLOCK, newLL, newWidth, newHeight);
-                TileArr.push_back(newTile);
-
-                int alterHeight = overlapUpperBoundary - currentLowerBoundary;
-                currentTile->setHeight(alterHeight);
-                currentUpperBoundary = currentTile->getUpperRight().y;
-            }
-
-            bool includeLowerBoundary = currentLowerBoundary < overlapLowerBoundary && overlapLowerBoundary < currentUpperBoundary;
-            if (includeLowerBoundary){
-                // change LL and height of currentTile, add a new tile to tile array
-                Cord newLL = Cord(currentLeftBoundary, currentLowerBoundary);
-                int newWidth = currentTile->getWidth();
-                int newHeight = overlapLowerBoundary - currentLowerBoundary;
-                Tile* newTile = new Tile(tileType::BLOCK, newLL, newWidth, newHeight);
-                TileArr.push_back(newTile);
-
-                int alterHeight = currentUpperBoundary - overlapLowerBoundary;
-                Cord alterLL = Cord(currentLeftBoundary, overlapLowerBoundary);
-                currentTile->setHeight(alterHeight);
-                currentTile->setLowerLeft(alterLL);
-            }
-        }
-
-        // step 3: split all influenced tiles into 2 segments (left, right) if possible
-        for (int i = 0; i < influencedTiles.size(); ++i){
-            Tile* currentTile = influencedTiles[i];
-            int currentRightBoundary = currentTile->getUpperRight().x;
-            int currentUpperBoundary = currentTile->getUpperRight().y;
-            int currentLeftBoundary = currentTile->getLowerLeft().x;
-            int currentLowerBoundary = currentTile->getLowerLeft().y;
-            bool includeLeftBoundary = currentLeftBoundary < overlapLeftBoundary && overlapLeftBoundary < currentRightBoundary;
-            bool includeRightBoundary = currentLeftBoundary < overlapRightBoundary && overlapRightBoundary < currentRightBoundary;
-
-            // case 1: tile only includes left boundary
-            // shrink tile width
-            if (includeLeftBoundary && !includeRightBoundary){
-                int alterWidth = overlapLeftBoundary - currentLeftBoundary;
-                currentTile->setWidth(alterWidth);
-            }
-            // case 2: tile only includes right boundary
-            // adjust LL and shrink tile width
-            else if (!includeLeftBoundary && includeRightBoundary){
-                Cord alterLL = Cord(overlapRightBoundary, currentLowerBoundary);
-                int alterWidth = currentRightBoundary - overlapRightBoundary;
-                currentTile->setLowerLeft(alterLL);
-                currentTile->setWidth(alterWidth);
-            }
-            // case 3: tile includes entire overlap interval 
-            // shrink tile width, create new tile
-            else if (includeLeftBoundary && includeRightBoundary){
-                int alterWidth = overlapLeftBoundary - currentLeftBoundary;
-                currentTile->setWidth(alterWidth);
-
-                Cord newLL = Cord(overlapRightBoundary, currentLowerBoundary);
-                int newWidth = currentRightBoundary - overlapRightBoundary;
-                int newHeight = currentTile->getHeight();
-                Tile* newTile = new Tile(tileType::BLOCK, newLL, newWidth, newHeight);
-                TileArr.push_back(newTile);
-                // influencedTiles.push_back(newTile);
-            }
-            // case 4: overlap is same size or wider than tile
-            // reduce width to 0, will clean up later
-            else {
-                currentTile->setWidth(0);
-            }
-        }
-
-        // step 4: merge up down neighboring tiles with same width 
-        for (int t1 = 0; t1 < TileArr.size(); ++t1){
-            Tile* tile1 = TileArr[t1];
-            if (tile1->getWidth() == 0){
-                continue;
-            }
-            for (int t2 = 0; t2 < TileArr.size(); ++t2){
-                Tile* tile2 = TileArr[t2];
-                if (tile1 == tile2 || tile2->getWidth() == 0){
-                    continue;
-                }
-                // 1 is on top of 2
-                bool canMerge1 = (tile1->getLowerLeft() == tile2->getUpperLeft()) && (tile1->getLowerRight() == tile2->getUpperRight()); 
-                // 2 is on top of 1
-                bool canMerge2 = (tile1->getUpperLeft() == tile2->getLowerLeft()) && (tile2->getLowerRight() == tile1->getUpperRight()); 
-                
-                // shrink 2, expand 1
-                if (canMerge1){
-                    Cord alterLL = tile2->getLowerLeft();
-                    int alterHeight = tile1->getHeight() + tile2->getHeight();
-                    tile1->setLowerLeft(alterLL);
-                    tile1->setHeight(alterHeight);
-
-                    tile2->setWidth(0);
-                }
-                else if (canMerge2){
-                    int alterHeight = tile1->getHeight() + tile2->getHeight();
-                    tile1->setHeight(alterHeight);
-
-                    tile2->setWidth(0);
-                }
-            }
-        }
-
-        // step 5: clean up, remove tiles with 0 width
-        std::vector<Tile*> deleteTiles;
-        for (auto it = TileArr.begin(); it != TileArr.end(); it++){
-            if ((*it)->getWidth() == 0){
-                deleteTiles.push_back(*it);
-                TileArr.erase(it);
-                it--;
-            }
-        }
-
-        for (int i = 0; i < deleteTiles.size(); i++){
-            delete deleteTiles[i];
-        }
-    }
-    
+    for(int overlapIndex : OverlapArr){
+        Polygon90Set& overlap = mFPM.allOverlaps[overlapIndex];
+        mShape -= overlap;
+    }    
 }
 
 void Tessera::printCorners(std::ostream& fout){
-    typedef gtl::polygon_data<int> Polygon;
-    typedef gtl::polygon_90_data<int> Polygon90;
-    typedef gtl::polygon_traits<Polygon90>::point_type Point;
-    typedef std::vector<gtl::polygon_90_data<int>> Polygon90Set;
-
-    gtl::polygon_90_set_data<int> polygonSet;
-
-    for (int i = 0; i < TileArr.size(); ++i){
-        Tile* currentTile = TileArr[i];
-        gtl::polygon_90_data<int> boxPolygon;
-        const Point box[4] = {
-            gtl::construct<Point>(currentTile->getLowerLeft().x, currentTile->getLowerLeft().y),
-            gtl::construct<Point>(currentTile->getUpperLeft().x, currentTile->getUpperLeft().y),
-            gtl::construct<Point>(currentTile->getUpperRight().x, currentTile->getUpperRight().y),
-            gtl::construct<Point>(currentTile->getLowerRight().x, currentTile->getLowerRight().y)
-        };
-        
-        gtl::set_points(boxPolygon, box, box+4);
-        gtl::operators::operator+=(polygonSet, boxPolygon); 
+    Polygon90Set poly;
+    std::vector<Polygon90WithHoles> poly90Container;
+    poly += mShape;
+    if (OverlapArr.size() > 0){
+        std::cout << "WARNING: Tess " << mName << " still has overlaps (in Tess::printCorners)\n";
+        for (int overlapIndex : OverlapArr){
+            Polygon90Set& overlap = mFPM.allOverlaps[overlapIndex];
+            poly += overlap;
+        }   
     }
 
-    std::vector<gtl::polygon_data<int>> polySetUnionized;
-    polySetUnionized.clear();
-    polygonSet.get_polygons(polySetUnionized);
+    poly.get(poly90Container);
 
-    if (polySetUnionized.size() > 1){
-        std::cout << "WARNING: Some tiles are disjoint\n";
+    if (poly90Container.size() > 1){
+        std::cout << "WARNING: Some tiles are disjoint (in Tess::printCorners)\n";
     }
-    else if (polySetUnionized.size() == 0){
-        std::cout << "ERROR: TileSet unable to union operation\n";
+    else if (poly90Container.size() == 0){
+        std::cout << "ERROR: TileSet unable to union operation (in Tess::printCorners)\n";
         return;
     }
-    bool isCounterClockwise = gtl::winding(polySetUnionized[0]).to_int() == 1; 
+    bool isCounterClockwise = gtl::winding(poly90Container[0]).to_int() == 1; 
 
     std::vector<Point> points;
-    for (auto it = polySetUnionized[0].begin(); it != polySetUnionized[0].end(); ++it){
+    for (auto it = poly90Container[0].begin(); it != poly90Container[0].end(); ++it){
         const Point& point_data = *it;
         points.push_back(point_data);
     }
@@ -485,43 +191,35 @@ void Tessera::printCorners(std::ostream& fout){
 }
 
 bool Tessera::isLegal() {
-    typedef gtl::polygon_90_with_holes_data<len_t> PolygonHole;
-    typedef std::vector<PolygonHole>               PolygonHoleSet;
-    using namespace gtl::operators;
-    PolygonHoleSet curTessSet;
-
-    for ( auto &tile : this->TileArr ) {
-        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
-        curTessSet += box;
-    }
-    for ( auto &tile : this->OverlapArr ) {
-        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
-        curTessSet += box;
-    }
+    Polygon90Set poly;
+    std::vector<Polygon90WithHoles> poly90Container;
+    getFullShape(poly);
+    poly.get(poly90Container);
+    
 
     // check whether this Tessera is connected or not
-    if ( curTessSet.size() > 1 ) {
+    if ( poly90Container.size() > 1 ) {
         std::cout << "Fragmented\n";
         return false;
     }
 
     // check whether this Tessera has holes or not
-    PolygonHole curTess = curTessSet[0];
-    if ( curTess.begin_holes() != curTess.end_holes() ) {
+    Polygon90WithHoles tessPolygon = poly90Container[0];
+    if ( tessPolygon.size_holes() > 0 ) {
         std::cout << "Has holes\n";
         return false;
     }
 
     // check whether this Tessera violates area constraint or not
-    if ( gtl::area(curTess) < this->mLegalArea ) {
-        std::cout << gtl::area(curTess) << ' ' << this->mLegalArea <<' ';
+    if ( gtl::area(tessPolygon) < this->mLegalArea ) {
+        std::cout << gtl::area(tessPolygon) << ' ' << this->mLegalArea <<' ';
         std::cout << "Area not legal\n";
         return false;
     }
 
     // check whether this Tessera violates aspect ratio or not
     Rectangle boundingBox;
-    gtl::extents(boundingBox, curTessSet);
+    gtl::extents(boundingBox, tessPolygon);
     len_t width = gtl::xh(boundingBox) - gtl::xl(boundingBox);
     len_t height = gtl::yh(boundingBox) - gtl::yl(boundingBox);
     double aspectRatio = ((double) width) / ((double) height);
@@ -532,7 +230,7 @@ bool Tessera::isLegal() {
     }
 
     // check whether this Tessera violates rectangle ratio or not
-    double rectRatio = (double) gtl::area(curTess) / gtl::area(boundingBox);
+    double rectRatio = (double) gtl::area(tessPolygon) / gtl::area(boundingBox);
     if ( rectRatio < 0.8 ) {
         std::cout << "Util not legal\n";
         return false;
@@ -542,38 +240,30 @@ bool Tessera::isLegal() {
 }
 
 bool Tessera::isLegal(int &errorCode) {
-    typedef gtl::polygon_90_with_holes_data<len_t> PolygonHole;
-    typedef std::vector<PolygonHole>               PolygonHoleSet;
-    using namespace gtl::operators;
-    PolygonHoleSet curTessSet;
-
-    for ( auto &tile : this->TileArr ) {
-        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
-        curTessSet += box;
-    }
-    for ( auto &tile : this->OverlapArr ) {
-        Rectangle box = Rectangle(tile->getLowerLeft().x, tile->getLowerLeft().y, tile->getUpperRight().x, tile->getUpperRight().y);
-        curTessSet += box;
-    }
+    Polygon90Set poly;
+    std::vector<Polygon90WithHoles> poly90Container;
+    getFullShape(poly);
+    poly.get(poly90Container);
+    
 
     // check whether this Tessera is connected or not
-    if ( curTessSet.size() > 1 ) {
+    if ( poly90Container.size() > 1 ) {
         std::cout << "Fragmented\n";
         errorCode = 1;
         return false;
     }
 
     // check whether this Tessera has holes or not
-    PolygonHole curTess = curTessSet[0];
-    if ( curTess.begin_holes() != curTess.end_holes() ) {
+    Polygon90WithHoles tessPolygon = poly90Container[0];
+    if ( tessPolygon.size_holes() > 0 ) {
         std::cout << "Has holes\n";
         errorCode = 2;
         return false;
     }
 
     // check whether this Tessera violates area constraint or not
-    if ( gtl::area(curTess) < this->mLegalArea ) {
-        std::cout << gtl::area(curTess) << ' ' << this->mLegalArea <<' ';
+    if ( gtl::area(tessPolygon) < this->mLegalArea ) {
+        std::cout << gtl::area(tessPolygon) << ' ' << this->mLegalArea <<' ';
         std::cout << "Area not legal\n";
         errorCode = 3;
         return false;
@@ -581,7 +271,7 @@ bool Tessera::isLegal(int &errorCode) {
 
     // check whether this Tessera violates aspect ratio or not
     Rectangle boundingBox;
-    gtl::extents(boundingBox, curTessSet);
+    gtl::extents(boundingBox, tessPolygon);
     len_t width = gtl::xh(boundingBox) - gtl::xl(boundingBox);
     len_t height = gtl::yh(boundingBox) - gtl::yl(boundingBox);
     double aspectRatio = ((double) width) / ((double) height);
@@ -593,7 +283,7 @@ bool Tessera::isLegal(int &errorCode) {
     }
 
     // check whether this Tessera violates rectangle ratio or not
-    double rectRatio = (double) gtl::area(curTess) / gtl::area(boundingBox);
+    double rectRatio = (double) gtl::area(tessPolygon) / gtl::area(boundingBox);
     if ( rectRatio < 0.8 ) {
         std::cout << "Util not legal\n";
         errorCode = 5;
@@ -603,17 +293,72 @@ bool Tessera::isLegal(int &errorCode) {
     return true;
 }
 
+
+void Tessera::_addArea(Cord lowerleft, len_t width, len_t height){
+    Polygon90WithHoles newArea;
+    std::vector<Point> newAreaVertices = {
+        {lowerleft.x, lowerleft.y}, 
+        {lowerleft.x + width, lowerleft.y }, 
+        {lowerleft.x + width, lowerleft.y + height}, 
+        {lowerleft.x, lowerleft.y + height}
+    };
+    // Add the outer polygon
+    bg::set_points(newArea, newAreaVertices.begin(), newAreaVertices.end());
+    
+    // check for overlaps, output warning if overlap exists
+    Polygon90Set overlap = newArea & mShape;
+    if (overlap.empty())
+
+    mShape += newArea;
+    if (_checkHole()){
+        std::cout << "WARNING: Hole in Tessera " << getName() << std::endl;
+    }
+}
+
+bool Tessera::_checkHole(){
+    std::vector<Polygon90WithHoles> poly90Container;
+    mShape.get_polygons(poly90Container);
+    for (auto it = poly90Container.begin(); it != poly90Container.end(); ++it) {
+        if (it->size_holes() > 0){
+            return true;
+        }
+    }
+    return false;
+}
+
 std::ostream &operator << (std::ostream &os, const Tessera &tes){
     os << tes.mName << " LA=" << tes.mLegalArea << std::endl;
 
-    os << "TileArr:" << std::endl;
-    for(Tile *t : tes.TileArr){
-        os << (*t) << std::endl;
-    }
+    os << "mShape:" << std::endl;
+    os << tes.mShape << std::endl;
+
     os << "OverlapArr:" << std::endl;
-    for(Tile *t : tes.OverlapArr){
-        os << (*t) << std::endl;
+    for(int overlapIndex : tes.OverlapArr){
+        Polygon90Set& overlap = tes.mFPM.allOverlaps[overlapIndex];
+        os << overlap << std::endl;
     }
 
     return os;
+}
+
+std::ostream &operator << (std::ostream &o, const Point &pt) {
+    o << "(" << gtl::x(pt) << ", " << gtl::y(pt) << ")";
+    return o;
+}
+
+std::ostream &operator << (std::ostream &o, const Polygon &poly) {
+    o << "poly (";
+
+    for ( Point pt : poly ) {
+        o << pt << ", ";
+    }
+    o << ")";
+    return o;
+}
+
+std::ostream &operator << (std::ostream &o, const PolygonSet &polys) {
+    for ( const Polygon &poly : polys ) {
+        o << poly << "\n";
+    }
+    return o;
 }
