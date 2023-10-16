@@ -73,19 +73,24 @@ name2pos = {}
 for block in range(total_block_number):
     ss = f[i].split(" ")
     if ss[1] == "SOFT":
-        draw_block(ax, float(ss[2]), float(ss[3]),
-                   float(ss[4]), float(ss[5]), color="#FCC")
-        plt.text(float(ss[2])+float(ss[4])/2-20,
-                 float(ss[3])+float(ss[5])/2-20, ss[0])
-        name2pos[ss[0]] = (float(ss[2])+float(ss[4])/2,
-                           float(ss[3])+float(ss[5])/2)
+        x, y, w, h = float(ss[2]), float(ss[3]), float(ss[4]), float(ss[5])
+        draw_block(ax, x, y, w, h, color="#FCC")
+        plt.text(x + 5, y + 5, ss[0])
+        name2pos[ss[0]] = (x + w / 2, y + h / 2)
     else:
-        draw_block(ax, float(ss[2]), float(ss[3]),
-                   float(ss[4]), float(ss[5]), color="#BBB")
-        plt.text(float(ss[2])+float(ss[4])/2-20,
-                 float(ss[3])+float(ss[5])/2-20, ss[0])
-        name2pos[ss[0]] = (float(ss[2])+float(ss[4])/2,
-                           float(ss[3])+float(ss[5])/2)
+        x, y, w, h = float(ss[2]), float(ss[3]), float(ss[4]), float(ss[5])
+        draw_block(ax, x, y, w, h, color="#BBB")
+        x_offset, y_offset = 0, 0
+        if x == 0:
+            x_offset -= 20
+        elif x == window_width:
+            x_offset += 3
+        if y == 0:
+            y_offset -= 13
+        elif y == window_height:
+            y_offset += 3
+        plt.text(x + x_offset, y + y_offset, ss[0])
+        name2pos[ss[0]] = (x + w / 2, y + h / 2)
     i += 1
 
 j = i

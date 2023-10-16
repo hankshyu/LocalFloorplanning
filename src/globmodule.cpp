@@ -67,7 +67,7 @@ namespace RectGrad {
     }
 
     void GlobalModule::addConnection(GlobalModule *in_module, double in_value) {
-        RGConnection *nc = new RGConnection;
+        Connection *nc = new Connection;
         nc->module = in_module;
         nc->value = in_value;
         connections.push_back(nc);

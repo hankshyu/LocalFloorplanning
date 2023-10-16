@@ -1,0 +1,740 @@
+CHIP 2058 1463
+SOFTMODULE 33
+bk1 44688
+bk10a 44982
+bk10b 22540
+bk10c 5831
+bk11 20825
+bk12 56840
+bk13 69580
+bk14a 23324
+bk14b 34986
+bk14c 19159
+bk15a 31654
+bk15b 39984
+bk16 14994
+bk17a 67522
+bk17b 36946
+bk18 36946
+bk19 9996
+bk2 39102
+bk20 63700
+bk21 44100
+bk3 41895
+bk4 74480
+bk5a 18620
+bk5b 23275
+bk5c 30723
+bk6 41895
+bk7 17836
+bk8a 44100
+bk8b 47628
+bk9a 21658
+bk9b 14161
+bk9c 42483
+bk9d 9996
+FIXEDMODULE 42
+VSS 1281 1463 0 0
+VDD 1687 0 0 0
+P9 266 0 0 0
+P8 168 0 0 0
+P7 924 0 0 0
+P6 826 0 0 0
+P5 721 0 0 0
+P4 1022 0 0 0
+P37 945 1463 0 0
+P36 714 1463 0 0
+POW 1960 0 0 0
+POW 1960 0 0 0
+P35 0 483 0 0
+P34 0 343 0 0
+P33 0 196 0 0
+P32 0 623 0 0
+P31 0 1225 0 0
+P30 518 1463 0 0
+P3 1176 1463 0 0
+P29 616 1463 0 0
+P28 1484 0 0 0
+P27 336 1463 0 0
+P26 1267 0 0 0
+P25 553 0 0 0
+P24 2058 168 0 0
+P23 2058 861 0 0
+P22 2058 728 0 0
+P21 1400 1463 0 0
+P20 1645 1463 0 0
+P2 1127 0 0 0
+P19 2058 1421 0 0
+P18 2058 1365 0 0
+P17 2058 1106 0 0
+GND 0 1120 0 0
+GND 0 1120 0 0
+P16 0 763 0 0
+P15 0 994 0 0
+P14 2058 343 0 0
+P13 2058 602 0 0
+P12 2058 476 0 0
+P11 455 0 0 0
+P10 364 0 0 0
+CONNECTION 661
+GND bk1 1
+GND bk10a 1
+GND bk10b 1
+GND bk10c 1
+GND bk11 1
+GND bk12 1
+GND bk13 1
+GND bk14a 1
+GND bk14b 1
+GND bk14c 1
+GND bk15a 1
+GND bk15b 1
+GND bk16 1
+GND bk17a 1
+GND bk17b 1
+GND bk18 1
+GND bk19 1
+GND bk2 1
+GND bk20 1
+GND bk21 1
+GND bk3 1
+GND bk4 1
+GND bk5a 1
+GND bk5b 1
+GND bk5c 1
+GND bk6 1
+GND bk7 1
+GND bk8a 1
+GND bk8b 1
+GND bk9a 1
+GND bk9b 1
+GND bk9c 1
+GND bk9d 1
+bk1 bk10a 18
+bk1 bk10b 18
+bk1 bk10c 16
+bk1 bk11 18
+bk1 bk12 14
+bk1 bk13 14
+bk1 bk14a 10
+bk1 bk14b 18
+bk1 bk14c 10
+bk1 bk15a 8
+bk1 bk15b 10
+bk1 bk16 6
+bk1 bk17a 18
+bk1 bk17b 14
+bk1 bk18 18
+bk1 bk19 2
+bk1 bk2 18
+bk1 bk20 16
+bk1 bk21 18
+bk1 bk3 18
+bk1 bk4 18
+bk1 bk5a 14
+bk1 bk5b 21
+bk1 bk5c 12
+bk1 bk6 16
+bk1 bk7 14
+bk1 bk8a 2
+bk1 bk8b 2
+bk1 bk9a 18
+bk1 bk9b 18
+bk1 bk9c 18
+bk1 bk9d 10
+bk10a bk10b 21
+bk10a bk10c 17
+bk10a bk11 18
+bk10a bk12 14
+bk10a bk13 14
+bk10a bk14a 10
+bk10a bk14b 18
+bk10a bk14c 10
+bk10a bk15a 8
+bk10a bk15b 10
+bk10a bk16 6
+bk10a bk17a 18
+bk10a bk17b 14
+bk10a bk18 18
+bk10a bk19 2
+bk10a bk2 18
+bk10a bk20 16
+bk10a bk21 18
+bk10a bk3 18
+bk10a bk4 18
+bk10a bk5a 14
+bk10a bk5b 18
+bk10a bk5c 12
+bk10a bk6 16
+bk10a bk7 14
+bk10a bk8a 2
+bk10a bk8b 2
+bk10a bk9a 18
+bk10a bk9b 20
+bk10a bk9c 18
+bk10a bk9d 11
+bk10b bk10c 17
+bk10b bk11 20
+bk10b bk12 16
+bk10b bk13 14
+bk10b bk14a 10
+bk10b bk14b 20
+bk10b bk14c 10
+bk10b bk15a 8
+bk10b bk15b 10
+bk10b bk16 6
+bk10b bk17a 18
+bk10b bk17b 14
+bk10b bk18 18
+bk10b bk19 2
+bk10b bk2 18
+bk10b bk20 18
+bk10b bk21 18
+bk10b bk3 18
+bk10b bk4 18
+bk10b bk5a 14
+bk10b bk5b 18
+bk10b bk5c 12
+bk10b bk6 16
+bk10b bk7 14
+bk10b bk8a 2
+bk10b bk8b 2
+bk10b bk9a 18
+bk10b bk9b 22
+bk10b bk9c 22
+bk10b bk9d 10
+bk10c bk11 16
+bk10c bk12 12
+bk10c bk13 13
+bk10c bk14a 8
+bk10c bk14b 16
+bk10c bk14c 8
+bk10c bk15a 7
+bk10c bk15b 8
+bk10c bk16 6
+bk10c bk17a 16
+bk10c bk17b 13
+bk10c bk18 16
+bk10c bk19 2
+bk10c bk2 16
+bk10c bk20 15
+bk10c bk21 16
+bk10c bk3 16
+bk10c bk4 16
+bk10c bk5a 12
+bk10c bk5b 16
+bk10c bk5c 11
+bk10c bk6 14
+bk10c bk7 13
+bk10c bk8a 2
+bk10c bk8b 2
+bk10c bk9a 17
+bk10c bk9b 16
+bk10c bk9c 16
+bk10c bk9d 9
+bk11 bk12 15
+bk11 bk13 14
+bk11 bk14a 10
+bk11 bk14b 19
+bk11 bk14c 10
+bk11 bk15a 8
+bk11 bk15b 10
+bk11 bk16 6
+bk11 bk17a 18
+bk11 bk17b 14
+bk11 bk18 18
+bk11 bk19 2
+bk11 bk2 18
+bk11 bk20 17
+bk11 bk21 18
+bk11 bk3 18
+bk11 bk4 18
+bk11 bk5a 14
+bk11 bk5b 18
+bk11 bk5c 12
+bk11 bk6 16
+bk11 bk7 14
+bk11 bk8a 2
+bk11 bk8b 2
+bk11 bk9a 18
+bk11 bk9b 19
+bk11 bk9c 20
+bk11 bk9d 10
+bk12 bk13 10
+bk12 bk14a 10
+bk12 bk14b 15
+bk12 bk14c 10
+bk12 bk15a 8
+bk12 bk15b 10
+bk12 bk16 6
+bk12 bk17a 14
+bk12 bk17b 10
+bk12 bk18 14
+bk12 bk19 2
+bk12 bk2 14
+bk12 bk20 13
+bk12 bk21 14
+bk12 bk3 14
+bk12 bk4 14
+bk12 bk5a 11
+bk12 bk5b 14
+bk12 bk5c 10
+bk12 bk6 13
+bk12 bk7 11
+bk12 bk8a 2
+bk12 bk8b 2
+bk12 bk9a 14
+bk12 bk9b 15
+bk12 bk9c 16
+bk12 bk9d 8
+bk13 bk14a 6
+bk13 bk14b 14
+bk13 bk14c 6
+bk13 bk15a 5
+bk13 bk15b 6
+bk13 bk16 4
+bk13 bk17a 14
+bk13 bk17b 12
+bk13 bk18 14
+bk13 bk19 2
+bk13 bk2 14
+bk13 bk20 13
+bk13 bk21 14
+bk13 bk3 14
+bk13 bk4 14
+bk13 bk5a 11
+bk13 bk5b 14
+bk13 bk5c 9
+bk13 bk6 12
+bk13 bk7 11
+bk13 bk8a 2
+bk13 bk8b 2
+bk13 bk9a 14
+bk13 bk9b 14
+bk13 bk9c 14
+bk13 bk9d 8
+bk14a bk14b 11
+bk14a bk14c 10
+bk14a bk15a 9
+bk14a bk15b 10
+bk14a bk16 6
+bk14a bk17a 10
+bk14a bk17b 6
+bk14a bk18 10
+bk14a bk19 2
+bk14a bk2 10
+bk14a bk20 8
+bk14a bk21 10
+bk14a bk3 10
+bk14a bk4 10
+bk14a bk5a 8
+bk14a bk5b 10
+bk14a bk5c 8
+bk14a bk6 10
+bk14a bk7 8
+bk14a bk8a 2
+bk14a bk8b 2
+bk14a bk9a 10
+bk14a bk9b 10
+bk14a bk9c 10
+bk14a bk9d 6
+bk14b bk14c 12
+bk14b bk15a 8
+bk14b bk15b 10
+bk14b bk16 8
+bk14b bk17a 18
+bk14b bk17b 14
+bk14b bk18 18
+bk14b bk19 2
+bk14b bk2 18
+bk14b bk20 17
+bk14b bk21 18
+bk14b bk3 18
+bk14b bk4 18
+bk14b bk5a 14
+bk14b bk5b 18
+bk14b bk5c 12
+bk14b bk6 16
+bk14b bk7 14
+bk14b bk8a 2
+bk14b bk8b 2
+bk14b bk9a 18
+bk14b bk9b 19
+bk14b bk9c 20
+bk14b bk9d 10
+bk14c bk15a 8
+bk14c bk15b 11
+bk14c bk16 7
+bk14c bk17a 10
+bk14c bk17b 6
+bk14c bk18 10
+bk14c bk19 2
+bk14c bk2 10
+bk14c bk20 8
+bk14c bk21 10
+bk14c bk3 10
+bk14c bk4 10
+bk14c bk5a 8
+bk14c bk5b 10
+bk14c bk5c 8
+bk14c bk6 10
+bk14c bk7 8
+bk14c bk8a 2
+bk14c bk8b 2
+bk14c bk9a 10
+bk14c bk9b 10
+bk14c bk9c 10
+bk14c bk9d 6
+bk15a bk15b 9
+bk15a bk16 6
+bk15a bk17a 8
+bk15a bk17b 5
+bk15a bk18 8
+bk15a bk19 2
+bk15a bk2 8
+bk15a bk20 7
+bk15a bk21 8
+bk15a bk3 9
+bk15a bk4 8
+bk15a bk5a 6
+bk15a bk5b 8
+bk15a bk5c 7
+bk15a bk6 8
+bk15a bk7 7
+bk15a bk8a 2
+bk15a bk8b 2
+bk15a bk9a 8
+bk15a bk9b 8
+bk15a bk9c 8
+bk15a bk9d 5
+bk15b bk16 7
+bk15b bk17a 10
+bk15b bk17b 6
+bk15b bk18 10
+bk15b bk19 2
+bk15b bk2 10
+bk15b bk20 8
+bk15b bk21 10
+bk15b bk3 10
+bk15b bk4 10
+bk15b bk5a 8
+bk15b bk5b 10
+bk15b bk5c 8
+bk15b bk6 10
+bk15b bk7 8
+bk15b bk8a 3
+bk15b bk8b 2
+bk15b bk9a 10
+bk15b bk9b 10
+bk15b bk9c 10
+bk15b bk9d 6
+bk16 bk17a 6
+bk16 bk17b 5
+bk16 bk18 6
+bk16 bk19 4
+bk16 bk2 6
+bk16 bk20 7
+bk16 bk21 6
+bk16 bk3 6
+bk16 bk4 6
+bk16 bk5a 4
+bk16 bk5b 6
+bk16 bk5c 6
+bk16 bk6 6
+bk16 bk7 6
+bk16 bk8a 10
+bk16 bk8b 4
+bk16 bk9a 6
+bk16 bk9b 6
+bk16 bk9c 6
+bk16 bk9d 4
+bk17a bk17b 15
+bk17a bk18 22
+bk17a bk19 2
+bk17a bk2 18
+bk17a bk20 22
+bk17a bk21 18
+bk17a bk3 18
+bk17a bk4 18
+bk17a bk5a 14
+bk17a bk5b 18
+bk17a bk5c 12
+bk17a bk6 16
+bk17a bk7 14
+bk17a bk8a 2
+bk17a bk8b 2
+bk17a bk9a 18
+bk17a bk9b 18
+bk17a bk9c 18
+bk17a bk9d 10
+bk17b bk18 16
+bk17b bk19 2
+bk17b bk2 14
+bk17b bk20 15
+bk17b bk21 14
+bk17b bk3 14
+bk17b bk4 15
+bk17b bk5a 11
+bk17b bk5b 14
+bk17b bk5c 9
+bk17b bk6 12
+bk17b bk7 12
+bk17b bk8a 2
+bk17b bk8b 2
+bk17b bk9a 14
+bk17b bk9b 14
+bk17b bk9c 14
+bk17b bk9d 8
+bk18 bk19 2
+bk18 bk2 18
+bk18 bk20 19
+bk18 bk21 18
+bk18 bk3 18
+bk18 bk4 18
+bk18 bk5a 14
+bk18 bk5b 18
+bk18 bk5c 12
+bk18 bk6 16
+bk18 bk7 14
+bk18 bk8a 2
+bk18 bk8b 2
+bk18 bk9a 18
+bk18 bk9b 18
+bk18 bk9c 18
+bk18 bk9d 10
+bk19 bk2 2
+bk19 bk20 2
+bk19 bk21 2
+bk19 bk3 2
+bk19 bk4 2
+bk19 bk5a 2
+bk19 bk5b 2
+bk19 bk5c 2
+bk19 bk6 2
+bk19 bk7 2
+bk19 bk8a 2
+bk19 bk8b 8
+bk19 bk9a 2
+bk19 bk9b 2
+bk19 bk9c 2
+bk19 bk9d 2
+bk2 bk20 16
+bk2 bk21 18
+bk2 bk3 18
+bk2 bk4 18
+bk2 bk5a 16
+bk2 bk5b 19
+bk2 bk5c 12
+bk2 bk6 16
+bk2 bk7 14
+bk2 bk8a 2
+bk2 bk8b 2
+bk2 bk9a 18
+bk2 bk9b 18
+bk2 bk9c 18
+bk2 bk9d 10
+bk20 bk21 16
+bk20 bk3 16
+bk20 bk4 16
+bk20 bk5a 12
+bk20 bk5b 16
+bk20 bk5c 11
+bk20 bk6 14
+bk20 bk7 13
+bk20 bk8a 3
+bk20 bk8b 2
+bk20 bk9a 16
+bk20 bk9b 17
+bk20 bk9c 18
+bk20 bk9d 9
+bk21 bk3 18
+bk21 bk4 18
+bk21 bk5a 14
+bk21 bk5b 18
+bk21 bk5c 12
+bk21 bk6 16
+bk21 bk7 14
+bk21 bk8a 2
+bk21 bk8b 2
+bk21 bk9a 18
+bk21 bk9b 18
+bk21 bk9c 18
+bk21 bk9d 10
+bk3 bk4 20
+bk3 bk5a 14
+bk3 bk5b 18
+bk3 bk5c 13
+bk3 bk6 17
+bk3 bk7 14
+bk3 bk8a 2
+bk3 bk8b 2
+bk3 bk9a 18
+bk3 bk9b 18
+bk3 bk9c 18
+bk3 bk9d 10
+bk4 bk5a 15
+bk4 bk5b 18
+bk4 bk5c 12
+bk4 bk6 18
+bk4 bk7 14
+bk4 bk8a 2
+bk4 bk8b 2
+bk4 bk9a 18
+bk4 bk9b 18
+bk4 bk9c 18
+bk4 bk9d 10
+bk5a bk5b 17
+bk5a bk5c 9
+bk5a bk6 13
+bk5a bk7 11
+bk5a bk8a 2
+bk5a bk8b 2
+bk5a bk9a 14
+bk5a bk9b 14
+bk5a bk9c 14
+bk5a bk9d 8
+bk5b bk5c 14
+bk5b bk6 18
+bk5b bk7 14
+bk5b bk8a 2
+bk5b bk8b 2
+bk5b bk9a 18
+bk5b bk9b 18
+bk5b bk9c 18
+bk5b bk9d 10
+bk5c bk6 15
+bk5c bk7 10
+bk5c bk8a 2
+bk5c bk8b 2
+bk5c bk9a 12
+bk5c bk9b 12
+bk5c bk9c 12
+bk5c bk9d 7
+bk6 bk7 13
+bk6 bk8a 2
+bk6 bk8b 2
+bk6 bk9a 16
+bk6 bk9b 16
+bk6 bk9c 16
+bk6 bk9d 9
+bk7 bk8a 2
+bk7 bk8b 2
+bk7 bk9a 14
+bk7 bk9b 14
+bk7 bk9c 14
+bk7 bk9d 8
+bk8a bk8b 16
+bk8a bk9a 2
+bk8a bk9b 2
+bk8a bk9c 2
+bk8a bk9d 2
+bk8b bk9a 2
+bk8b bk9b 2
+bk8b bk9c 2
+bk8b bk9d 2
+bk9a bk9b 18
+bk9a bk9c 19
+bk9a bk9d 10
+bk9b bk9c 21
+bk9b bk9d 11
+bk9c bk9d 11
+bk1 bk1 4
+bk10a bk10a 4
+bk10b bk10b 6
+bk10c bk10c 3
+bk11 bk11 4
+bk12 bk12 2
+bk14a bk14a 2
+bk14b bk14b 4
+bk14c bk14c 2
+bk15a bk15a 1
+bk15b bk15b 2
+bk16 bk16 1
+bk17a bk17a 4
+bk18 bk18 4
+bk2 bk2 4
+bk20 bk20 3
+bk21 bk21 4
+bk3 bk3 4
+bk4 bk4 4
+bk5b bk5b 5
+bk5c bk5c 1
+bk6 bk6 3
+bk7 bk7 2
+bk9a bk9a 4
+bk9b bk9b 4
+bk9c bk9c 5
+bk13 bk13 2
+bk17b bk17b 2
+bk5a bk5a 2
+POW bk1 1
+POW bk10a 1
+POW bk10b 1
+POW bk10c 1
+POW bk11 1
+POW bk12 1
+POW bk13 1
+POW bk14a 1
+POW bk14b 1
+POW bk14c 1
+POW bk15a 1
+POW bk15b 1
+POW bk16 1
+POW bk17a 1
+POW bk17b 1
+POW bk18 1
+POW bk19 1
+POW bk2 1
+POW bk20 1
+POW bk21 1
+POW bk3 1
+POW bk4 1
+POW bk5a 1
+POW bk5b 1
+POW bk5c 1
+POW bk6 1
+POW bk7 1
+POW bk8a 1
+POW bk8b 1
+POW bk9a 1
+POW bk9b 1
+POW bk9c 1
+POW bk9d 1
+P30 bk9c 1
+P27 bk9c 1
+VSS bk7 1
+VDD bk7 1
+P23 bk7 1
+P22 bk7 1
+P21 bk6 1
+P20 bk6 1
+P19 bk6 1
+P18 bk6 1
+P17 bk6 1
+P14 bk4 1
+P13 bk4 1
+P12 bk4 1
+P16 bk3 1
+P15 bk3 1
+P3 bk21 1
+P24 bk20 1
+P28 bk2 1
+P35 bk19 1
+P34 bk19 1
+P33 bk19 1
+P32 bk19 1
+P37 bk18 1
+P36 bk18 1
+P9 bk15b 1
+P8 bk15b 1
+P25 bk15b 1
+P11 bk15b 1
+P10 bk15b 1
+P7 bk15a 1
+P6 bk15a 1
+P5 bk15a 1
+P4 bk13 1
+P26 bk13 1
+P2 bk13 1
+P31 bk11 1
+P29 bk10a 1

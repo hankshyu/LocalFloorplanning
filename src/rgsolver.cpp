@@ -1,13 +1,5 @@
 #include "rgsolver.h"
 
-#include <fstream>
-#include <iostream>
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
-#include <ctime>
-#include <cassert>
-
 namespace RectGrad {
     GlobalSolver::GlobalSolver() {
         std::srand(std::time(NULL));
@@ -16,9 +8,9 @@ namespace RectGrad {
         sizeScalar = 1;
         punishment = 1e4;
         overlapTolaranceLen = 0;
-        momentum = 0;
         pullWhileOverlap = false;
         overlapped = true;
+        timeStep = 0;
     }
 
     GlobalSolver::~GlobalSolver() {
@@ -39,8 +31,10 @@ namespace RectGrad {
         moduleNum = softModuleNum + fixedModuleNum;
         xGradient.resize(moduleNum);
         yGradient.resize(moduleNum);
-        xGradientPrev.resize(moduleNum);
-        yGradientPrev.resize(moduleNum);
+        xFirstMoment.resize(moduleNum, 0.);
+        yFirstMoment.resize(moduleNum, 0.);
+        xSecondMoment.resize(moduleNum, 0.);
+        ySecondMoment.resize(moduleNum, 0.);
     }
 
     void GlobalSolver::setFixedModuleNum(int num) {
@@ -48,8 +42,10 @@ namespace RectGrad {
         moduleNum = softModuleNum + fixedModuleNum;
         xGradient.resize(moduleNum);
         yGradient.resize(moduleNum);
-        xGradientPrev.resize(moduleNum);
-        yGradientPrev.resize(moduleNum);
+        xFirstMoment.resize(moduleNum, 0.);
+        yFirstMoment.resize(moduleNum, 0.);
+        xSecondMoment.resize(moduleNum, 0.);
+        ySecondMoment.resize(moduleNum, 0.);
     }
 
     void GlobalSolver::setConnectionNum(int num) {
@@ -89,8 +85,6 @@ namespace RectGrad {
                 newModule = new GlobalModule(copy.name, copy.x, copy.y, copy.width, copy.height, copy.area, copy.fixed);
             }
             else {
-                // double turbX = (double) ( std::rand() - RAND_MAX / 2 ) / RAND_MAX * 1e-8 * DieWidth;
-                // double turbY = (double) ( std::rand() - RAND_MAX / 2 ) / RAND_MAX * 1e-8 * DieHeight;
                 newModule = new GlobalModule(copy.name, copy.centerX, copy.centerY, copy.area, copy.fixed);
             }
             this->modules.push_back(newModule);
@@ -119,7 +113,7 @@ namespace RectGrad {
         }
     }
 
-    void GlobalSolver::currentPosition2txt(std::string file_name) {
+    void GlobalSolver::currentPosition2txt(Parser parser, std::string file_name) {
         for ( auto &mod : modules ) {
             mod->updateCord((int) this->DieWidth, (int) this->DieHeight, sizeScalar);
         }
@@ -137,16 +131,11 @@ namespace RectGrad {
                 ostream << modules[i]->width * sizeScalar << " " << modules[i]->height * sizeScalar << std::endl;
             }
         }
-        std::vector<GlobalModule *> added;
-        for ( int i = 0; i < moduleNum; i++ ) {
-            added.push_back(modules[i]);
-            for ( int j = 0; j < modules[i]->connections.size(); j++ ) {
-                if ( std::find(added.begin(), added.end(), modules[i]->connections[j]->module) != added.end() )
-                    continue;
-                ostream << modules[i]->name << " ";
-                ostream << modules[i]->connections[j]->module->name << " ";
-                ostream << modules[i]->connections[j]->value << std::endl;
-            }
+        for ( int i = 0; i < connectionNum; i++ ) {
+            ConnStruct conn = parser.getConnection(i);
+            ostream << conn.m0 << " ";
+            ostream << conn.m1 << " ";
+            ostream << conn.value << std::endl;
         }
         ostream.close();
     }
@@ -226,26 +215,26 @@ namespace RectGrad {
                     continue;
                 }
 
-                // if ( overlappedWidth > curModule->width ) {
-                //     overlappedWidth = (double) curModule->width;
-                // }
-                // else if ( overlappedWidth > pushModule->width ) {
-                //     overlappedWidth = (double) pushModule->width;
-                // }
+                if ( overlappedWidth > curModule->width ) {
+                    overlappedWidth = (double) curModule->width;
+                }
+                else if ( overlappedWidth > pushModule->width ) {
+                    overlappedWidth = (double) pushModule->width;
+                }
 
-                // if ( overlappedHeight > curModule->height ) {
-                //     overlappedHeight = (double) curModule->height;
-                // }
-                // else if ( overlappedHeight > pushModule->height ) {
-                //     overlappedHeight = (double) pushModule->height;
-                // }
+                if ( overlappedHeight > curModule->height ) {
+                    overlappedHeight = (double) curModule->height;
+                }
+                else if ( overlappedHeight > pushModule->height ) {
+                    overlappedHeight = (double) pushModule->height;
+                }
 
                 double x_sign = ( x_diff == 0 ) ? 0 : ( x_diff > 0 ) ? 1. : -1.;
                 double y_sign = ( y_diff == 0 ) ? 0 : ( y_diff > 0 ) ? 1. : -1.;
+                // x_grad += -punishment * x_sign * overlappedHeight / (curModule->width * curModule->height);
+                // y_grad += -punishment * y_sign * overlappedWidth / (curModule->width * curModule->height);
                 x_grad += -punishment * x_sign * overlappedHeight;
                 y_grad += -punishment * y_sign * overlappedWidth;
-                // x_grad += -punishment * x_sign * std::abs(10);
-                // y_grad += -punishment * y_sign * std::abs(10);
 
             }
 
@@ -259,7 +248,7 @@ namespace RectGrad {
     }
 
     void GlobalSolver::gradientDescent(double lr) {
-        // saturated = true;
+        timeStep += 1;
         // move soft modules
         GlobalModule *curModule;
         for ( int i = 0; i < moduleNum; i++ ) {
@@ -268,18 +257,20 @@ namespace RectGrad {
 
             curModule = modules[i];
 
-            // double xMovement = ( xGradient[i] + xGradientPrev[i] ) * lr * DieWidth;
-            // double yMovement = ( yGradient[i] + yGradientPrev[i] ) * lr * DieHeight;
+            xFirstMoment[i] = 0.9 * xFirstMoment[i] + 0.1 * xGradient[i];
+            yFirstMoment[i] = 0.9 * yFirstMoment[i] + 0.1 * yGradient[i];
 
-            double xMovement = ( xGradient[i] ) * lr * DieWidth;
-            double yMovement = ( yGradient[i] ) * lr * DieHeight;
+            xSecondMoment[i] = 0.999 * xSecondMoment[i] + 0.001 * xGradient[i] * xGradient[i];
+            ySecondMoment[i] = 0.999 * ySecondMoment[i] + 0.001 * yGradient[i] * yGradient[i];
 
-            xGradientPrev[i] = momentum * xGradient[i];
-            yGradientPrev[i] = momentum * yGradient[i];
+            double xFirstMomentHat = xFirstMoment[i] / (1 - std::pow(0.9, timeStep));
+            double yFirstMomentHat = yFirstMoment[i] / (1 - std::pow(0.9, timeStep));
 
-            // if ( xGradient[i] > 1. || yGradient[i] > 1. ) {
-            //     saturated = false;
-            // }
+            double xSecondMomentHat = xSecondMoment[i] / (1 - std::pow(0.999, timeStep));
+            double ySecondMomentHat = ySecondMoment[i] / (1 - std::pow(0.999, timeStep));
+
+            double xMovement = ( lr * xFirstMomentHat / ( std::sqrt(xSecondMomentHat) + 1e-8 )) * DieWidth;
+            double yMovement = ( lr * yFirstMomentHat / ( std::sqrt(ySecondMomentHat) + 1e-8 )) * DieHeight;
 
             if ( std::abs(xMovement) > xMaxMovement ) {
                 xMovement = ( xMovement > 0 ) ? xMaxMovement : -xMaxMovement;
@@ -352,15 +343,6 @@ namespace RectGrad {
 
     void GlobalSolver::setOverlapTolaranceLen(double len) {
         this->overlapTolaranceLen = len;
-    }
-
-    bool GlobalSolver::isSaturated() {
-        // return saturated;
-        return false;
-    }
-
-    void GlobalSolver::setMomentum(double momentum) {
-        this->momentum = momentum;
     }
 
     void GlobalSolver::setPullWhileOverlap(bool onoff) {
@@ -518,5 +500,13 @@ namespace RectGrad {
             }
         }
         return true;
+    }
+
+    void GlobalSolver::resetOptimizer() {
+        xFirstMoment.resize(moduleNum, 0.);
+        yFirstMoment.resize(moduleNum, 0.);
+        xSecondMoment.resize(moduleNum, 0.);
+        ySecondMoment.resize(moduleNum, 0.);
+        timeStep = 0;
     }
 } // namespace RectGrad

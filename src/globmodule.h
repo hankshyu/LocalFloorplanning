@@ -31,7 +31,7 @@ namespace PushPull {
 namespace RectGrad {
     struct GlobalModule;
 
-    struct RGConnection {
+    struct Connection {
         GlobalModule *module;
         double value;
     };
@@ -43,7 +43,7 @@ namespace RectGrad {
         int area;
         int width, height;
         bool fixed;
-        std::vector<RGConnection *> connections;
+        std::vector<Connection *> connections;
         GlobalModule(std::string in_name, double centerX, double centerY, int in_area, bool in_fixed);
         GlobalModule(std::string in_name, int x, int y, int width, int height, int in_area, bool in_fixed);
         ~GlobalModule();

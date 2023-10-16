@@ -235,6 +235,9 @@ void LFLegaliser::translateGlobalFloorplanning(const rg::GlobalSolver &solver) {
 
     for ( int i = 0; i < solver.moduleNum; i++ ) {
         rg::GlobalModule *curModule = solver.modules[i];
+        if (curModule->area == 0) {
+            continue;
+        }
         if ( curModule->fixed ) {
             Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
                 Cord(curModule->x, curModule->y), curModule->width, curModule->height);
