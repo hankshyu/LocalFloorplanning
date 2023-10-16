@@ -27,47 +27,37 @@ int main(int argc, char const *argv[]) {
 
     rg::Parser parser(argv[1]);
 
+    // For your convenience, punishment value is set to one value only. Note that this parameter may not give a legal solution for all cases.
+    std::vector<double> punishmentValues{
+        1.0
+    };
     
+    // If you want to play with parameters, here are the original parameters:
     // std::vector<double> punishmentValues{
     //     0.000001, 0.00001, 0.0001 ,0.001, 0.01, 0.1, 1.0 ,10.0, 100.0 ,1000.0, 10000.0, 100000.0, 1000000
     // };
 
-    std::vector<double> punishmentValues{
-        10E-5,
-        10E-4, 2.5E-4,
-        10E-3, 8.75E-2, 7.5E-3, 6.25E-3, 5E-3, 3.75E-3, 2.5E-3, 1.25E-3,
-        10E-2, 8.75E-2, 7.5E-2, 6.25E-2, 5E-2, 3.75E-2, 2.5E-2, 1.25E-2,
-        10E-1, 8.75E-2, 7.5E-1, 6.25E-1, 5E-1, 3.75E-1, 2.5E-1, 1.25E-1,
-        1.0,
-        10E+1, 10E+2, 10E+4
+
+    // For your convenience, tolerance length is set to one value only
+    std::vector<double> toleranceLengthValues{
+        12.0
     };
 
-    std::vector<double> toleranceLengthValues;
-    for(int i = 0; i < punishmentValues.size(); ++i){
-        toleranceLengthValues.push_back(0);
-    }
-    double pushValue = 1;
-    while(pushValue < ((parser.getDieWidth() + parser.getDieHeight()) * 0.5 * 0.125)){
-        for(int i = 0; i < punishmentValues.size(); ++i){
-            toleranceLengthValues.push_back(pushValue);
-        }
-        pushValue = pushValue * 2;
+    // If you want to play with parameters, here are the original parameters:
+    // std::vector<double> toleranceLengthValues;
+    // for(int i = 0; i < punishmentValues.size(); ++i){
+    //     toleranceLengthValues.push_back(0);
+    // }
+    // double pushValue = 1;
+    // while(pushValue < ((parser.getDieWidth() + parser.getDieHeight()) * 0.5 * 0.125)){
+    //     for(int i = 0; i < punishmentValues.size(); ++i){
+    //         toleranceLengthValues.push_back(pushValue);
+    //     }
+    //     pushValue = pushValue * 2;
 
-    }
+    // }
     const int MAX_ITER = toleranceLengthValues.size();
     std::cout << "MAX_ITER: " << MAX_ITER << std::endl;
-
-    // toleranceLengthValues.push_back()
-
-    // std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+4, 0);
-    // std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 12800);
-    // std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
-    // std::fill(toleranceLengthValues.begin()+7, toleranceLengthValues.begin()+10, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 200);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 50);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 200);
-
     
     mnt::Monitor monitor;
     LFLegaliser *legaliser = nullptr;
@@ -305,8 +295,9 @@ int main(int argc, char const *argv[]) {
                                 std::cout << "Best Hpwl found\n";
                                 outputFinalAnswer(&(legalizedFloorplan), parser, argv[2]);
                                 solver.currentPosition2txt("outputs/global_test.txt");
+                                legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
                             }
-                            legalizedFloorplan.visualiseArtpiece("outputs/legal" + std::to_string(legalIter*3+legalizeMode) + ".txt", true);
+                            // legalizedFloorplan.visualiseArtpiece("outputs/legal" + std::to_string(legalIter*3+legalizeMode) + ".txt", true);
                             monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
                                 storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
                                 itm, its, true, true, false, finalScore);
