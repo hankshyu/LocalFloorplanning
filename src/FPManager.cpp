@@ -239,59 +239,36 @@ void FPManager::detectfloorplanningOverlaps() {
         bg::assign(overlapPoly, o4unit.intersection);
         allOverlaps.push_back(Overlap(overlapPoly, o4unit.overlappedIDs));
         overlap4TileVec.push_back(overlapPoly);
+        for (int index: o4unit.overlappedIDs){
+            allTesserae[index]->OverlapArr.push_back(overlapIndex);
+        }   
     }
 
-    std::vector<Tile> overlap3TileVec;
+    std::vector<Polygon90WithHoles> overlap3TileVec;
     for ( IntersectionUnit &o3unit: overlap3unit ) {
-        // TODO: REWRITE FROM HERE!
-        Rectangle intersectBox = o3unit.intersection;
-        len_t x = gtl::xl(intersectBox);
-        len_t y = gtl::yl(intersectBox);
-        len_t w = gtl::xh(intersectBox) - gtl::xl(intersectBox);
-        len_t h = gtl::yh(intersectBox) - gtl::yl(intersectBox);
-        Tile overlapTileRef(tileType::OVERLAP, Cord(x, y), w, h);
-        overlap3TileVec.push_back(overlapTileRef);
-
-        std::vector<Tile> interection3TileVec;
-        interection3TileVec.push_back(Tile(tileType::OVERLAP, Cord(x, y), w, h));
-        std::vector<Tile> cuttedTiles = mergeCutTiles(interection3TileVec, overlap4TileVec);
-
-        for ( auto &tile : cuttedTiles ) {
-            Tile *overlapTile = new Tile(tileType::OVERLAP, tile.getLowerLeft(), tile.getWidth(), tile.getHeight());
-            for ( int i : o3unit.overlappedIDs ) {
-                bool isSoft = i < softTesserae.size();
-                int id = ( isSoft ) ? i : i - softTesserae.size();
-                Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
-
-                ( isSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(id)
-                    : overlapTile->OverlapFixedTesseraeIdx.push_back(id);
-                curTess->insertTiles(overlapTile);
-            }
+        Polygon90WithHoles overlapPoly;
+        bg::assign(overlapPoly, o3unit.intersection);
+        std::vector<Polygon90WithHoles> overlaps = removeExtraOverlap(overlapPoly, overlap4TileVec);
+        for (Polygon90WithHoles& overlap: overlaps){
+            int overlapIndex = allOverlaps.size();
+            allOverlaps.push_back(Overlap(overlap, o3unit.overlappedIDs));
+            overlap3TileVec.push_back(overlap);
+            for (int index: o3unit.overlappedIDs){
+                allTesserae[index]->OverlapArr.push_back(overlapIndex);
+            }   
         }
     }
 
     for ( IntersectionUnit &o2unit: overlap2unit ) {
-        Rectangle intersectBox = o2unit.intersection;
-        len_t x = gtl::xl(intersectBox);
-        len_t y = gtl::yl(intersectBox);
-        len_t w = gtl::xh(intersectBox) - gtl::xl(intersectBox);
-        len_t h = gtl::yh(intersectBox) - gtl::yl(intersectBox);
-
-        std::vector<Tile> interection2TileVec;
-        interection2TileVec.push_back(Tile(tileType::OVERLAP, Cord(x, y), w, h));
-        std::vector<Tile> cuttedTiles = mergeCutTiles(interection2TileVec, overlap3TileVec);
-
-        for ( auto &tile : cuttedTiles ) {
-            Tile *overlapTile = new Tile(tileType::OVERLAP, tile.getLowerLeft(), tile.getWidth(), tile.getHeight());
-            for ( int i : o2unit.overlappedIDs ) {
-                bool isSoft = i < softTesserae.size();
-                int id = ( isSoft ) ? i : i - softTesserae.size();
-                Tessera *curTess = ( isSoft ) ? softTesserae[id] : fixedTesserae[id];
-
-                ( isSoft ) ? overlapTile->OverlapSoftTesseraeIdx.push_back(id)
-                    : overlapTile->OverlapFixedTesseraeIdx.push_back(id);
-                curTess->insertTiles(overlapTile);
-            }
+        Polygon90WithHoles overlapPoly;
+        bg::assign(overlapPoly, o2unit.intersection);
+        std::vector<Polygon90WithHoles> overlaps = removeExtraOverlap(overlapPoly, overlap3TileVec);
+        for (Polygon90WithHoles& overlap: overlaps){
+            int overlapIndex = allOverlaps.size();
+            allOverlaps.push_back(Overlap(overlap, o2unit.overlappedIDs));
+            for (int index: o2unit.overlappedIDs){
+                allTesserae[index]->OverlapArr.push_back(overlapIndex);
+            }   
         }
     }
 
@@ -318,12 +295,12 @@ void FPManager::splitTesseraeOverlaps(){
     // Soft&Hard block overlap are located and split if necessary in OverlapArr of each Tessera
     // now cut rectlinear blank space of each Tessera into multiple blank tiles.
 
-    for(Tessera *fixedTess : this->fixedTesserae){
-        fixedTess->splitRectliearDueToOverlap();
+    for(int index : fixedTesseraeIndices){
+        allTesserae[index]->splitRectliearDueToOverlap();
     }
 
-    for(Tessera *softTess : this->softTesserae){
-        softTess->splitRectliearDueToOverlap();
+    for(int index: softTesseraeIndices){
+        allTesserae[index]->splitRectliearDueToOverlap();
     }
 }
 
