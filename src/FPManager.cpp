@@ -41,6 +41,25 @@ bool FPManager::checkTileInCanvas(Tile &tile) const{
     return (x_valid && y_valid);
 }
 
+Tile* FPManager::getRandomTile() const{
+    assert(!(fixedTesseraeIndices.empty() && softTesseraeIndices.empty()));
+    
+    if(!fixedTesseraeIndices.empty()){
+        for (int i: fixedTesseraeIndices){
+            if(!allTesserae[i]->TileArr.empty()){
+                return allTesserae[i]->TileArr[0];        
+            }
+        }
+    }
+    else {
+        for (int i: softTesseraeIndices){
+            if(!allTesserae[i]->TileArr.empty()){
+                return allTesserae[i]->TileArr[0];        
+            }
+        }
+    }
+}
+
 len_t FPManager::getCanvasWidth() const{
     return this->mCanvasWidth;
 }
@@ -232,59 +251,86 @@ void FPManager::detectfloorplanningOverlaps() {
     }
 
     // add these tiles
-    std::vector<Polygon90WithHoles> overlap4TileVec;
+    std::vector<Polygon90Set> overlap4TileVec;
     for ( IntersectionUnit &o4unit: overlap4unit ) {
-        int overlapIndex = allOverlaps.size();
-        Polygon90WithHoles overlapPoly;
+        int overlapIndex = allTesserae.size();
+        std::string overlapName = "OVERLAP_";
+        for (int tessIndex: o4unit.overlappedIDs){
+            overlapName += allTesserae[tessIndex]->getName();
+            overlapName += "_";
+        }
+        Polygon90Set overlapPoly;
         bg::assign(overlapPoly, o4unit.intersection);
-        allOverlaps.push_back(Overlap(overlapPoly, o4unit.overlappedIDs));
-        overlap4TileVec.push_back(overlapPoly);
+        Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly);
         for (int index: o4unit.overlappedIDs){
             allTesserae[index]->OverlapArr.push_back(overlapIndex);
+            overlap->OverlapArr.push_back(index);
         }   
+        allTesserae.push_back(overlap);
+        overlap4TileVec.push_back(overlapPoly);
     }
 
-    std::vector<Polygon90WithHoles> overlap3TileVec;
+    std::vector<Polygon90Set> overlap3TileVec;
     for ( IntersectionUnit &o3unit: overlap3unit ) {
-        Polygon90WithHoles overlapPoly;
+        Polygon90Set overlapPoly;
         bg::assign(overlapPoly, o3unit.intersection);
-        std::vector<Polygon90WithHoles> overlaps = removeExtraOverlap(overlapPoly, overlap4TileVec);
-        for (Polygon90WithHoles& overlap: overlaps){
-            int overlapIndex = allOverlaps.size();
-            allOverlaps.push_back(Overlap(overlap, o3unit.overlappedIDs));
-            overlap3TileVec.push_back(overlap);
+        std::vector<Polygon90Set> overlaps = removeExtraOverlap(overlapPoly, overlap4TileVec);
+        for (Polygon90Set& overlapPoly: overlaps){
+            int overlapIndex = allTesserae.size();
+            std::string overlapName = "OVERLAP_";
+            for (int tessIndex: o3unit.overlappedIDs){
+                overlapName += allTesserae[tessIndex]->getName();
+                overlapName += "_";
+            }
+            Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly);
             for (int index: o3unit.overlappedIDs){
                 allTesserae[index]->OverlapArr.push_back(overlapIndex);
+                overlap->OverlapArr.push_back(index);
             }   
+            allTesserae.push_back(overlap);
+            overlap3TileVec.push_back(overlapPoly);
         }
     }
 
     for ( IntersectionUnit &o2unit: overlap2unit ) {
-        Polygon90WithHoles overlapPoly;
+        Polygon90Set overlapPoly;
         bg::assign(overlapPoly, o2unit.intersection);
-        std::vector<Polygon90WithHoles> overlaps = removeExtraOverlap(overlapPoly, overlap3TileVec);
-        for (Polygon90WithHoles& overlap: overlaps){
-            int overlapIndex = allOverlaps.size();
-            allOverlaps.push_back(Overlap(overlap, o2unit.overlappedIDs));
+        std::vector<Polygon90Set> overlaps = removeExtraOverlap(overlapPoly, overlap3TileVec);
+        for (Polygon90Set& overlapPoly: overlaps){
+            int overlapIndex = allTesserae.size();
+            std::string overlapName = "OVERLAP_";
+            for (int tessIndex: o2unit.overlappedIDs){
+                overlapName += allTesserae[tessIndex]->getName();
+                overlapName += "_";
+            }
+            Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly);
             for (int index: o2unit.overlappedIDs){
                 allTesserae[index]->OverlapArr.push_back(overlapIndex);
+                overlap->OverlapArr.push_back(index);
             }   
+            allTesserae.push_back(overlap);
         }
     }
 
 }
 
-std::vector<Polygon90WithHoles> FPManager::removeExtraOverlap(Polygon90WithHoles overlap, std::vector<Polygon90WithHoles> toRemove){
+std::vector<Polygon90Set> FPManager::removeExtraOverlap(Polygon90Set overlap, std::vector<Polygon90Set> toRemove){
     Polygon90Set poly;
     poly += overlap;
 
-    for (Polygon90WithHoles& remove: toRemove){
+    for (Polygon90Set& remove: toRemove){
         poly -= remove;
     }
 
     std::vector<Polygon90WithHoles> poly90Container;
     poly.get(poly90Container);
-    return poly90Container;
+    std::vector<Polygon90Set> poly90SetContainer;
+    for (Polygon90WithHoles poly: poly90Container){
+        Polygon90Set poly90Set;
+        bg::assign(poly90Set, poly);
+        poly90SetContainer.push_back(poly90Set);
+    }
+    return poly90SetContainer;
 }
 
 bool FPManager::has3overlap() {

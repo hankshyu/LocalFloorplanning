@@ -36,7 +36,7 @@ private:
     bool checkTileInCanvas(Tile &tile) const;
 
     // in detectFloorplanOverlap
-    std::vector<Polygon90WithHoles> FPManager::removeExtraOverlap(Polygon90WithHoles overlap, std::vector<Polygon90WithHoles> toRemove);
+    std::vector<Polygon90Set> FPManager::removeExtraOverlap(Polygon90Set overlap, std::vector<Polygon90Set> toRemove);
 
     void traverseBlank(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
     // void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
@@ -56,10 +56,11 @@ public:
     std::vector <Tessera *> allTesserae;
     std::vector <int> fixedTesseraeIndices;
     std::vector <int> softTesseraeIndices;
+    std::vector <int> overlapTesseraeIndices;
     // std::vector <Tessera *> allOverlaps;
     // std::vector <Pin> allPins;
     Polygon90Set blankTiles;
-    std::vector <Overlap> allOverlaps;
+    // std::vector <Overlap> allOverlaps;
     
 
     FPManager() = delete;

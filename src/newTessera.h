@@ -9,16 +9,16 @@
 #include "LFUnits.h"
 // #include "Tile.h"
 
-namespace bg = boost::polygon;
+namespace gtl = boost::polygon;
 using namespace boost::polygon::operators;
 
-typedef bg::rectangle_data<len_t> Rectangle;
-typedef bg::polygon_90_set_data<len_t> Polygon90Set;
-typedef bg::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
-typedef bg::point_data<len_t> Point;
+typedef gtl::rectangle_data<len_t> Rectangle;
+typedef gtl::polygon_90_set_data<len_t> Polygon90Set;
+typedef gtl::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
+typedef gtl::point_data<len_t> Point;
 
 enum class tesseraType{
-    EMPTY ,SOFT, HARD
+    EMPTY ,SOFT, HARD, OVERLAP
 };
 
 class Tessera{
@@ -35,7 +35,8 @@ private:
     
     Cord mBBLowerLeft;
     Cord mBBUpperRight;
-    
+
+    int index;
 
     FPManager& mFPM;
     void calBoundingBox();
@@ -43,10 +44,14 @@ private:
     void _addArea(Cord lowerleft, len_t width, len_t height);
     bool _checkHole();
 public:
-    std::vector <int> OverlapArr;
+    std::vector <Tile*> TileArr;
+    // for mType==OVERLAP: stores indexes of tesseras that it overlaps
+    // for mType==SOFT or HARD: stores indexes of OVERLAP Tesseras that it belongs to 
+    std::vector <int> OverlapArr; 
 
     Tessera() = delete; 
     Tessera(FPManager& FP, tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
+    Tessera(FPManager& FP, tesseraType type, std::string name, Polygon90Set& shape);
     Tessera(const Tessera &other);
 
     Tessera& operator = (const Tessera &other);
@@ -55,6 +60,7 @@ public:
 
     // TODO: dirty bit?
     void getFullShape(Polygon90Set& poly);
+    void getNonOverlapShape(Polygon90Set& poly);
     std::string getName () const;
     area_t getLegalArea () const;
     tesseraType getType() const;
@@ -67,6 +73,8 @@ public:
     len_t getBBWidth ();
     len_t getBBHeight ();
     void calBBCentre(double &CentreX, double &CentreY);
+    int getIndex();
+    void rectilinearToMinimumTiles();
 
     int insertTiles(Tile *tile);
     void splitRectliearDueToOverlap();
@@ -92,14 +100,14 @@ std::ostream &operator << (std::ostream &o, const Point &pt);
 std::ostream &operator << (std::ostream &o, const Polygon &poly);
 std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
 
-class Overlap{
-private:
-    Polygon90WithHoles mShape; 
-public:
-    std::vector<int> overlaps;
-    Overlap() = delete;
-    Overlap(Polygon90WithHoles& shape, std::vector<int> overlapIndices);
-    Polygon90WithHoles& getShape();
-};
+// class Overlap{
+// private:
+//     Polygon90WithHoles mShape; 
+// public:
+//     std::vector<int> overlaps;
+//     Overlap() = delete;
+//     Overlap(Polygon90WithHoles& shape, std::vector<int> overlapIndices);
+//     Polygon90WithHoles& getShape();
+// };
 
 #endif // __TESSERA_H__

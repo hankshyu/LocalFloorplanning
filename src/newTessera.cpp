@@ -12,12 +12,25 @@ Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, area_t area,
         _addArea(lowerleft, width, height);
     }
 
+Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, Polygon90Set& shape):
+    mFPM(FP), mType(type), mName(name) {
+        gtl::assign(mShape, shape);
+        mLegalArea = 0;
+        Rectangle extentsRectangle;
+        gtl::extents(extentsRectangle, mShape);
+        mInitLowerLeft = Cord(gtl::xl(extentsRectangle), gtl::yl(extentsRectangle));
+        mInitHeight = gtl::yh(extentsRectangle) - gtl::yl(extentsRectangle); 
+        mInitWidth = gtl::xh(extentsRectangle) - gtl::xl(extentsRectangle); 
+    }
+
 Tessera::Tessera(const Tessera &other)
     : mFPM(other.mFPM), mType(other.getType()), mName(other.getName()), mLegalArea(other.getLegalArea()),
     mInitLowerLeft(other.getInitLowerLeft()), mInitWidth(other.getInitWidth()), mInitHeight(other.getInitHeight()) {
-        mShape = Polygon90Set(other.mShape);
+        gtl::assign(mShape, other.mShape);
         OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
+        TileArr.assign(other.TileArr.begin(), other.TileArr.end());
     }
+
 
 Tessera& Tessera::operator = (const Tessera &other){
     if(this == &other) return (*this);
@@ -34,6 +47,7 @@ Tessera& Tessera::operator = (const Tessera &other){
 
     mShape = Polygon90Set(other.mShape);
     OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
+    TileArr.assign(other.TileArr.begin(), other.TileArr.end());
     
     return (*this);
 }
@@ -48,6 +62,11 @@ bool Tessera::operator ==(const Tessera &tess) const{
 
     if(mShape != tess.mShape) return false;
 
+    if(TileArr.size() != tess.TileArr.size()) return false;
+    for(int i = 0; i < TileArr.size(); ++i){
+        if(TileArr[i] != tess.TileArr[i]) return false;
+    }
+
     if(OverlapArr.size() != tess.OverlapArr.size()) return false;
     for(int i = 0; i < OverlapArr.size(); ++i){
         // TODO: modify this?
@@ -60,10 +79,18 @@ bool Tessera::operator ==(const Tessera &tess) const{
 void Tessera::getFullShape(Polygon90Set& poly){
     poly.clear();
     poly += mShape;
-    for(int overlapIndex : OverlapArr){
-        Polygon90WithHoles& overlap = mFPM.allOverlaps[overlapIndex].getShape();
-        poly += overlap;
+    if (mType == tesseraType::SOFT || mType == tesseraType::HARD){
+        for(int overlapIndex : OverlapArr){
+            Polygon90Set overlap;
+            mFPM.allTesserae[overlapIndex]->getFullShape(overlap);
+            poly += overlap;
+        }
     }
+}
+
+void Tessera::getNonOverlapShape(Polygon90Set& poly){
+    poly.clear();
+    poly += mShape;
 }
 
 std::string Tessera::getName () const{
@@ -122,9 +149,9 @@ void Tessera::calBoundingBox(){
     if(shape.empty()) return;
 
     Rectangle BBox;
-    bg::extents(BBox, shape); 
-    Cord BBLL = Cord(bg::xl(BBox), bg::yl(BBox));
-    Cord BBUR = Cord(bg::xh(BBox), bg::yh(BBox));
+    gtl::extents(BBox, shape); 
+    Cord BBLL = Cord(gtl::xl(BBox), gtl::yl(BBox));
+    Cord BBUR = Cord(gtl::xh(BBox), gtl::yh(BBox));
 
     this->mBBLowerLeft = BBLL;
     this->mBBUpperRight = BBUR;
@@ -134,7 +161,7 @@ area_t Tessera::calRealArea(){
     Polygon90Set shape; 
     getFullShape(shape);
 
-    return bg::area(shape);
+    return gtl::area(shape);
 }
 
 area_t Tessera::calAreaMargin() {
@@ -143,9 +170,19 @@ area_t Tessera::calAreaMargin() {
 
 void Tessera::splitRectliearDueToOverlap(){
     for(int overlapIndex : OverlapArr){
-        Polygon90WithHoles& overlap = mFPM.allOverlaps[overlapIndex].getShape();
+        Polygon90Set overlap;
+        mFPM.allTesserae[overlapIndex]->getFullShape(overlap);
         mShape -= overlap;
     }    
+}
+
+void Tessera::rectilinearToMinimumTiles(){
+    std::vector<Rectangle> allRectangles;
+    
+    gtl::get_max_rectangles(allRectangles, mShape);
+    for (Rectangle& rect: allRectangles){
+        Tile* newTile = new Tile(tileType::BLOCK, rect);
+    }
 }
 
 void Tessera::printCorners(std::ostream& fout){
@@ -302,7 +339,7 @@ void Tessera::_addArea(Cord lowerleft, len_t width, len_t height){
         {lowerleft.x + width, lowerleft.y + height}, 
         {lowerleft.x, lowerleft.y + height}
     };
-    bg::set_points(newArea, newAreaVertices.begin(), newAreaVertices.end());
+    gtl::set_points(newArea, newAreaVertices.begin(), newAreaVertices.end());
     
     // check for overlaps, output warning if overlap exists
     Polygon90Set overlap = newArea & mShape;
