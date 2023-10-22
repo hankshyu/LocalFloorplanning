@@ -17,13 +17,13 @@
 
 namespace pp = PushPull;
 namespace rg = RectGrad;
-namespace bg = boost::polygon;
+namespace gtl = boost::polygon;
 using namespace boost::polygon::operators;
 
-typedef bg::polygon_90_data<int> Polygon90;
-typedef bg::polygon_90_set_data<int> Polygon90Set;
-typedef bg::polygon_90_with_holes_data<int> Polygon90WithHoles;
-typedef bg::point_data<int> Point;
+typedef gtl::polygon_90_data<int> Polygon90;
+typedef gtl::polygon_90_set_data<int> Polygon90Set;
+typedef gtl::polygon_90_with_holes_data<int> Polygon90WithHoles;
+typedef gtl::point_data<int> Point;
 
 class FPManager {
 private:

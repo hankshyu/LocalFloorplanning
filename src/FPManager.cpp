@@ -260,7 +260,7 @@ void FPManager::detectfloorplanningOverlaps() {
             overlapName += "_";
         }
         Polygon90Set overlapPoly;
-        bg::assign(overlapPoly, o4unit.intersection);
+        gtl::assign(overlapPoly, o4unit.intersection);
         Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly);
         for (int index: o4unit.overlappedIDs){
             allTesserae[index]->OverlapArr.push_back(overlapIndex);
@@ -273,7 +273,7 @@ void FPManager::detectfloorplanningOverlaps() {
     std::vector<Polygon90Set> overlap3TileVec;
     for ( IntersectionUnit &o3unit: overlap3unit ) {
         Polygon90Set overlapPoly;
-        bg::assign(overlapPoly, o3unit.intersection);
+        gtl::assign(overlapPoly, o3unit.intersection);
         std::vector<Polygon90Set> overlaps = removeExtraOverlap(overlapPoly, overlap4TileVec);
         for (Polygon90Set& overlapPoly: overlaps){
             int overlapIndex = allTesserae.size();
@@ -294,7 +294,7 @@ void FPManager::detectfloorplanningOverlaps() {
 
     for ( IntersectionUnit &o2unit: overlap2unit ) {
         Polygon90Set overlapPoly;
-        bg::assign(overlapPoly, o2unit.intersection);
+        gtl::assign(overlapPoly, o2unit.intersection);
         std::vector<Polygon90Set> overlaps = removeExtraOverlap(overlapPoly, overlap3TileVec);
         for (Polygon90Set& overlapPoly: overlaps){
             int overlapIndex = allTesserae.size();
@@ -327,7 +327,7 @@ std::vector<Polygon90Set> FPManager::removeExtraOverlap(Polygon90Set overlap, st
     std::vector<Polygon90Set> poly90SetContainer;
     for (Polygon90WithHoles poly: poly90Container){
         Polygon90Set poly90Set;
-        bg::assign(poly90Set, poly);
+        gtl::assign(poly90Set, poly);
         poly90SetContainer.push_back(poly90Set);
     }
     return poly90SetContainer;
@@ -1407,7 +1407,7 @@ void FPManager::arrangeTesseraetoCanvas(){
     Polygon90WithHoles outline;
     std::vector<Point> outlineVertices = {{0, 0}, {mCanvasWidth, 0}, {mCanvasWidth, mCanvasHeight}, {0, mCanvasHeight}};
     // Add the outer polygon
-    bg::set_points(outline, outlineVertices.begin(), outlineVertices.end());
+    gtl::set_points(outline, outlineVertices.begin(), outlineVertices.end());
 
     std::vector <Cord> record;
     

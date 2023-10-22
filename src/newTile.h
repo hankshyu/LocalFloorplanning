@@ -7,10 +7,10 @@
 
 namespace gtl = boost::polygon;
 
-typedef gtl::rectangle_data<len_t> Rectangle;
-typedef gtl::polygon_90_set_data<len_t> Polygon90Set;
-typedef gtl::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
-typedef gtl::point_data<len_t> Point;
+typedef gtl::rectangle_data<int> Rectangle;
+typedef gtl::polygon_90_set_data<int> Polygon90Set;
+typedef gtl::polygon_90_with_holes_data<int> Polygon90WithHoles;
+typedef gtl::point_data<int> Point;
 
 enum class tileType{
     BLOCK, BLANK, OVERLAP
@@ -32,13 +32,17 @@ public:
     
     Tile();
     // Tile(tileType t, Cord LL, len_t w, len_t h);
-    Tile(tileType t, Rectangle& r);
+    // indicates the tesseraIndex to which tile belongs, leave index empty for blank tiles
+    Tile(tileType t, Rectangle& r, int tessIndex = -1);
     Tile(const Tile &other);
 
     Tile& operator = (const Tile &other);
     friend std::ostream &operator << (std::ostream &os, const Tile &t);
     
     tileType getType() const;
+    int getTessIndex() const;
+
+    Rectangle getRectangle() const;
 
     Cord getLowerLeft() const;
     Cord getUpperLeft() const;
@@ -50,6 +54,7 @@ public:
     len_t getHeight() const;
 
     void setType(tileType type);
+    void setTessOwnership(int tessIndex);
     void setCord(Cord cord);
     void setWidth(len_t width);
     void setHeight(len_t height);
@@ -59,15 +64,9 @@ public:
     
     bool operator == (const Tile &comp) const;
 
-    inline bool checkXCordInTile(const Cord &point) const{
-        return (point.x >= this->mLowerLeft.x) && (point.x < this->mLowerLeft.x + this->mWidth);
-    }
-    inline bool checkYCordInTile(const Cord &point) const{
-        return (point.y >= this->mLowerLeft.y) && (point.y < this->mLowerLeft.y + this->mHeight);
-    }
-    inline bool checkCordInTile(const Cord &point) const{
-        return (checkXCordInTile(point) && checkYCordInTile(point));
-    }
+    inline bool checkXCordInTile(const Cord &point) const;
+    inline bool checkYCordInTile(const Cord &point) const;
+    inline bool checkCordInTile(const Cord &point) const;
 
     // if input Tile's lower-left touches the right edge of current tile (used in Directed Area Enumeration)
     bool checkTRLLTouch(Tile *right) const;
@@ -83,8 +82,8 @@ public:
 std::ostream &operator << (std::ostream &os, const Tile &t);
 
 std::ostream &operator << (std::ostream &o, const Point &pt);
-std::ostream &operator << (std::ostream &o, const Polygon &poly);
-std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
+std::ostream &operator << (std::ostream &o, const Polygon90WithHoles &poly);
+std::ostream &operator << (std::ostream &o, const Polygon90Set &polys);
 
 // * These are new added functions for tile manipulation
 std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
