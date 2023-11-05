@@ -5,13 +5,6 @@
 #include "boost/polygon/polygon.hpp"
 #include "LFUnits.h"
 
-namespace gtl = boost::polygon;
-
-typedef gtl::rectangle_data<int> Rectangle;
-typedef gtl::polygon_90_set_data<int> Polygon90Set;
-typedef gtl::polygon_90_with_holes_data<int> Polygon90WithHoles;
-typedef gtl::point_data<int> Point;
-
 enum class tileType{
     BLOCK, BLANK, OVERLAP
 };
@@ -31,9 +24,9 @@ public:
     Tile *rt, *tr, *bl, *lb;
     
     Tile();
-    // Tile(tileType t, Cord LL, len_t w, len_t h);
+    Tile(tileType t, Cord LL, len_t w, len_t h, int tessIndex);
     // indicates the tesseraIndex to which tile belongs, leave index empty for blank tiles
-    Tile(tileType t, Rectangle& r, int tessIndex = -1);
+    Tile(tileType t, Rectangle& r, int tessIndex);
     Tile(const Tile &other);
 
     Tile& operator = (const Tile &other);
@@ -88,6 +81,6 @@ std::ostream &operator << (std::ostream &o, const Polygon90Set &polys);
 // * These are new added functions for tile manipulation
 std::vector<Tile> cutTile(Tile bigTile, Tile smallTile);
 std::vector<Tile> mergeTile(Tile tile1, Tile tile2);
-std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut);
+std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut, int outputTessIndex);
 
 #endif // __TILE_H__

@@ -7,11 +7,12 @@ Tile::Tile()
             mRectangle = gtl::construct<Rectangle,int>(0, 0, 0, 0);
         }
 
-// Tile::Tile(tileType t, Cord LL, len_t w, len_t h) 
-//     : type(t), mLowerLeft(LL), mWidth(w), mHeight(h),
-//         rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {}
+Tile::Tile(tileType t, Cord LL, len_t w, len_t h, int tessIndex) 
+    : type(t), mTessIndex(tessIndex), rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {
+        mRectangle = Rectangle(LL.x, LL.y, LL.x + w, LL.y + h);
+    }
 
-Tile::Tile(tileType t, Rectangle& r, int tessIndex = -1) 
+Tile::Tile(tileType t, Rectangle& r, int tessIndex) 
     : type(t), mTessIndex(tessIndex), rt(nullptr), tr(nullptr), bl(nullptr), lb(nullptr) {
         mRectangle = r;
     }
@@ -214,7 +215,7 @@ std::vector<Tile> cutTile(Tile bigTile, Tile smallTile) {
     gtl::get_rectangles(rectangleContainer, cutPoly);
 
     for (Rectangle& rect : rectangleContainer){
-        cuttedTiles.push_back(Tile(tileType::OVERLAP, rect));
+        cuttedTiles.push_back(Tile(tileType::OVERLAP, rect, bigTile.getTessIndex()));
     }
 
     // for ( Polygon &poly : cutPoly ) {
@@ -240,6 +241,7 @@ std::vector<Tile> cutTile(Tile bigTile, Tile smallTile) {
     return cuttedTiles;
 }
 
+// sets index to that of tile1
 std::vector<Tile> mergeTile(Tile tile1, Tile tile2) {
     using namespace boost::polygon::operators;
     
@@ -252,7 +254,7 @@ std::vector<Tile> mergeTile(Tile tile1, Tile tile2) {
     gtl::get_rectangles(rectangleContainer, mergePoly);
 
     for (Rectangle& rect : rectangleContainer){
-        mergedTiles.push_back(Tile(tileType::OVERLAP, rect));
+        mergedTiles.push_back(Tile(tileType::OVERLAP, rect, tile1.getTessIndex()));
     }
 
     // for ( Polygon &poly : mergePoly ) {
@@ -277,7 +279,7 @@ std::vector<Tile> mergeTile(Tile tile1, Tile tile2) {
     return mergedTiles;
 }
 
-std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut) {
+std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toCut, int outputTessIndex) {
     using namespace boost::polygon::operators;
 
     Polygon90Set manipPoly;
@@ -294,7 +296,7 @@ std::vector<Tile> mergeCutTiles(std::vector<Tile> toMerge, std::vector<Tile> toC
     gtl::get_rectangles(rectangleContainer, manipPoly);
 
     for (Rectangle& rect : rectangleContainer){
-        manipTiles.push_back(Tile(tileType::OVERLAP, rect));
+        manipTiles.push_back(Tile(tileType::OVERLAP, rect, outputTessIndex));
     }
 
     return manipTiles;

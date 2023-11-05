@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <utility>
 #include "LFUnits.h"
-#include "Tile.h"
+#include "newTile.h"
 #include "newTessera.h"
 #include "ppsolver.h"
 #include "rgsolver.h"
@@ -17,13 +17,7 @@
 
 namespace pp = PushPull;
 namespace rg = RectGrad;
-namespace gtl = boost::polygon;
 using namespace boost::polygon::operators;
-
-typedef gtl::polygon_90_data<int> Polygon90;
-typedef gtl::polygon_90_set_data<int> Polygon90Set;
-typedef gtl::polygon_90_with_holes_data<int> Polygon90WithHoles;
-typedef gtl::point_data<int> Point;
 
 class FPManager {
 private:
@@ -36,7 +30,7 @@ private:
     bool checkTileInCanvas(Tile &tile) const;
 
     // in detectFloorplanOverlap
-    std::vector<Polygon90Set> FPManager::removeExtraOverlap(Polygon90Set overlap, std::vector<Polygon90Set> toRemove);
+    std::vector<Polygon90Set> removeExtraOverlap(Polygon90Set overlap, std::vector<Polygon90Set> toRemove);
 
     void traverseBlank(std::ofstream &ofs, Tile &t, std::vector <Cord> &record);
     // void visualiseResetDFS(Tile &t, std::vector <Cord> &record);
@@ -119,6 +113,7 @@ public:
     void combineVerticalMergeableBlanks(Tile *upTile, Tile *downTile);
 
     bool searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &inTessera) const;
+    bool searchTesseraeIncludeTile(Tile *tile, std::vector<int> &inTessera) const;
 
     void printOutput(std::string outputFileName);
     void collectAllTiles(std::vector<Tile *> &allTiles) const;
@@ -134,10 +129,6 @@ int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
 double calculateHPWL(FPManager *legaliser, const std::vector<rg::ConnStruct> &connections, bool printReport);
 void outputFinalAnswer(FPManager *legaliser, const rg::Parser &rgparser, const std::string outputFileName);
 
-struct CPTilePair{
-    Tile *father;
-    Tile *baby;
-};
 
 
 #endif // __FPMANAGER_H__

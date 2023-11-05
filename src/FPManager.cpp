@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <iomanip>
 #include "FPManager.h"
 
 FPManager::FPManager(len_t chipWidth, len_t chipHeight)
@@ -42,7 +43,7 @@ bool FPManager::checkTileInCanvas(Tile &tile) const{
 }
 
 Tile* FPManager::getRandomTile() const{
-    assert(!(fixedTesseraeIndices.empty() && softTesseraeIndices.empty()));
+    assert(!(fixedTesseraeIndices.empty() && softTesseraeIndices.empty() && overlapTesseraeIndices.empty()));
     
     if(!fixedTesseraeIndices.empty()){
         for (int i: fixedTesseraeIndices){
@@ -51,8 +52,17 @@ Tile* FPManager::getRandomTile() const{
             }
         }
     }
-    else {
+
+    if(!softTesseraeIndices.empty()){
         for (int i: softTesseraeIndices){
+            if(!allTesserae[i]->TileArr.empty()){
+                return allTesserae[i]->TileArr[0];        
+            }
+        }
+    }
+    
+    if(!overlapTesseraeIndices.empty()){
+        for (int i: overlapTesseraeIndices){
             if(!allTesserae[i]->TileArr.empty()){
                 return allTesserae[i]->TileArr[0];        
             }
@@ -109,14 +119,14 @@ void FPManager::translateGlobalFloorplanning(const rg::GlobalSolver &solver) {
         rg::GlobalModule *curModule = solver.modules[i];
         if ( curModule->fixed ) {
             Tessera *newTess = new Tessera(*(this), tesseraType::HARD, curModule->name, curModule->area,
-                Cord(curModule->x, curModule->y), curModule->width, curModule->height);
+                Cord(curModule->x, curModule->y), curModule->width, curModule->height, allTesserae.size());
             allTesserae.push_back(newTess);
             fixedTesseraeIndices.push_back(i);
         }
         else {
             curModule->updateCord(mCanvasWidth, mCanvasHeight, 1.);
             Tessera *newTess = new Tessera(*(this), tesseraType::SOFT, curModule->name, curModule->area,
-                Cord((len_t)curModule->x, (len_t) curModule->y), curModule->width, curModule->height);
+                Cord((len_t)curModule->x, (len_t) curModule->y), curModule->width, curModule->height, allTesserae.size());
             allTesserae.push_back(newTess);
             softTesseraeIndices.push_back(i);
         }
@@ -182,7 +192,7 @@ void FPManager::detectfloorplanningOverlaps() {
             if ( n < i ) {
                 continue;
             }
-            PolygonSet intersections;
+            Polygon90Set intersections;
             intersections += test_data[i] & test_data[n];
             if ( intersections.empty() ) {
                 continue;
@@ -205,7 +215,7 @@ void FPManager::detectfloorplanningOverlaps() {
             if ( n <= olID1 ) {
                 continue;
             }
-            PolygonSet intersections;
+            Polygon90Set intersections;
             intersections += o2unit.intersection & test_data[n];
             if ( intersections.empty() ) {
                 continue;
@@ -231,7 +241,7 @@ void FPManager::detectfloorplanningOverlaps() {
             if ( n <= olID2 ) {
                 continue;
             }
-            PolygonSet intersections;
+            Polygon90Set intersections;
             intersections += o3unit.intersection & test_data[n];
             if ( intersections.empty() ) {
                 continue;
@@ -261,7 +271,7 @@ void FPManager::detectfloorplanningOverlaps() {
         }
         Polygon90Set overlapPoly;
         gtl::assign(overlapPoly, o4unit.intersection);
-        Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly);
+        Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly, allTesserae.size());
         for (int index: o4unit.overlappedIDs){
             allTesserae[index]->OverlapArr.push_back(overlapIndex);
             overlap->OverlapArr.push_back(index);
@@ -282,7 +292,7 @@ void FPManager::detectfloorplanningOverlaps() {
                 overlapName += allTesserae[tessIndex]->getName();
                 overlapName += "_";
             }
-            Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly);
+            Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly, allTesserae.size());
             for (int index: o3unit.overlappedIDs){
                 allTesserae[index]->OverlapArr.push_back(overlapIndex);
                 overlap->OverlapArr.push_back(index);
@@ -303,7 +313,7 @@ void FPManager::detectfloorplanningOverlaps() {
                 overlapName += allTesserae[tessIndex]->getName();
                 overlapName += "_";
             }
-            Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly);
+            Tessera* overlap = new Tessera((*this), tesseraType::OVERLAP, overlapName, overlapPoly, allTesserae.size());
             for (int index: o2unit.overlappedIDs){
                 allTesserae[index]->OverlapArr.push_back(overlapIndex);
                 overlap->OverlapArr.push_back(index);
@@ -573,19 +583,19 @@ void FPManager::insertFirstTile(Tile &newTile){
 
     if(hasDownTile){
         tdown = new Tile(tileType::BLANK, Cord(0,0),
-                            this->mCanvasWidth, newTile.getLowerLeft().y);
+                            this->mCanvasWidth, newTile.getLowerLeft().y, -1);
         newTile.lb = tdown;
     }
 
     if(hasUpTile){
         tup = new Tile(tileType::BLANK, Cord(0,newTile.getUpperRight().y), 
-                            this->mCanvasWidth, (this->mCanvasHeight - newTile.getUpperRight().y));
+                            this->mCanvasWidth, (this->mCanvasHeight - newTile.getUpperRight().y), -1);
         newTile.rt = tup;
     }
 
     if(hasLeftTile){
         tleft = new Tile(tileType::BLANK, Cord(0, newTile.getLowerLeft().y),
-                            newTile.getLowerLeft().x, (newTile.getUpperLeft().y - newTile.getLowerLeft().y));
+                            newTile.getLowerLeft().x, (newTile.getUpperLeft().y - newTile.getLowerLeft().y), -1);
         newTile.bl = tleft;
         tleft->tr = &newTile;
 
@@ -600,7 +610,7 @@ void FPManager::insertFirstTile(Tile &newTile){
 
     if(hasRightTile){
         tright = new Tile(tileType::BLANK, newTile.getLowerRight(), 
-                            (this->mCanvasWidth - newTile.getUpperRight().x), (newTile.getUpperLeft().y - newTile.getLowerLeft().y));
+                            (this->mCanvasWidth - newTile.getUpperRight().x), (newTile.getUpperLeft().y - newTile.getLowerLeft().y), -1);
         newTile.tr = tright;
         tright->bl = &newTile;
 
@@ -639,7 +649,7 @@ void FPManager::insertTile(Tile &tile){
     if((!tileTouchesSky)&&(!cleanTopCut)){
 
         
-        Tile *newDown = new Tile(tileType::BLANK, origTop->getLowerLeft(),origTop->getWidth(), (tile.getUpperLeft().y - origTop->getLowerLeft().y));
+        Tile *newDown = new Tile(tileType::BLANK, origTop->getLowerLeft(),origTop->getWidth(), (tile.getUpperLeft().y - origTop->getLowerLeft().y), -1);
         newDown->rt = origTop;
         newDown->lb = origTop->lb;
         newDown->bl = origTop->bl;
@@ -714,7 +724,7 @@ void FPManager::insertTile(Tile &tile){
     if((!tileTouchesGround) && (!cleanBottomCut)){
         
         Tile *newUp = new Tile(tileType::BLANK, Cord(origBottom->getLowerLeft().x, tile.getLowerLeft().y)
-                                , origBottom->getWidth(), (origBottom->getUpperLeft().y - tile.getLowerLeft().y));         
+                                , origBottom->getWidth(), (origBottom->getUpperLeft().y - tile.getLowerLeft().y), -1);         
         
         newUp->rt = origBottom->rt;
         newUp->lb = origBottom;
@@ -803,7 +813,7 @@ void FPManager::insertTile(Tile &tile){
 
         // The middle piece (must have)
         // This should change to tile.type
-        Tile *newMid = new Tile(tileType::BLANK, Cord(tileLeftBorder, splitTile->getLowerLeft().y), tile.getWidth(), splitTile->getHeight());
+        Tile *newMid = new Tile(tileType::BLANK, Cord(tileLeftBorder, splitTile->getLowerLeft().y), tile.getWidth(), splitTile->getHeight(), -1);
         newMid->bl = splitTile->bl;
         newMid->tr = splitTile->tr;
 
@@ -819,7 +829,7 @@ void FPManager::insertTile(Tile &tile){
         // split the left piece if necessary, maintain tr, bl pointer integrity
         bool leftSplitNecessary = (blankLeftBorder != tileLeftBorder);
         if(leftSplitNecessary){
-            Tile *newLeft = new Tile(tileType::BLANK, splitTile->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,splitTile->getHeight());
+            Tile *newLeft = new Tile(tileType::BLANK, splitTile->getLowerLeft(),(tileLeftBorder - blankLeftBorder) ,splitTile->getHeight(), -1);
             // visualiseAddMark(newLeft);
             newLeft->tr = newMid;
             newLeft->bl = splitTile->bl;
@@ -878,7 +888,7 @@ void FPManager::insertTile(Tile &tile){
         // split the right piece if necessary, maintain tr, bl pointer integrity
         bool rightSplitNecessary = (tileRightBorder != blankRightBorder);
         if(rightSplitNecessary){
-            Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(),(blankRightBorder- tileRightBorder) ,newMid->getHeight());
+            Tile *newRight = new Tile(tileType::BLANK, newMid->getLowerRight(),(blankRightBorder- tileRightBorder) ,newMid->getHeight(), -1);
             // visualiseAddMark(newRight);
             newRight->tr = splitTile->tr;
             newRight->bl = newMid;
@@ -1285,16 +1295,17 @@ void FPManager::visualiseArtpiece(const std::string outputFileName, bool checkBl
     std::cout << "print to file..."<< outputFileName <<std::endl;
 
     std::ofstream ofs(outputFileName);
-    ofs << "BLOCK " << fixedTesserae.size() + softTesserae.size() << std::endl;
+    ofs << "BLOCK " << fixedTesseraeIndices.size() + softTesseraeIndices.size() << std::endl;
     ofs << this->mCanvasWidth << " " << this->mCanvasHeight << std::endl;
 
-    if(fixedTesserae.size() == 0 && softTesserae.size() == 0){
+    if(fixedTesseraeIndices.size() == 0 && softTesseraeIndices.size() == 0){
         //there is no blocks
         ofs.close();
         return;
     }
 
-    for(Tessera *tess : softTesserae){
+    for(int softIndex: softTesseraeIndices){
+        Tessera* tess = allTesserae[softIndex];
         ofs << tess->getName() << " " << tess->getLegalArea() << " ";
         ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
         ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " " << "SOFT_BLOCK" << std::endl;
@@ -1302,12 +1313,10 @@ void FPManager::visualiseArtpiece(const std::string outputFileName, bool checkBl
         for(Tile *t : tess->TileArr){
             ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
         }
-        for(Tile *t : tess->OverlapArr){
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" <<std::endl;
-        }
     }
 
-    for(Tessera *tess : fixedTesserae){
+    for(int fixedIndex: fixedTesseraeIndices){
+        Tessera* tess = allTesserae[fixedIndex];
         ofs << tess->getName() << " " << tess->getLegalArea() << " ";
         ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
         ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " " << "HARD_BLOCK" << std::endl;
@@ -1315,8 +1324,16 @@ void FPManager::visualiseArtpiece(const std::string outputFileName, bool checkBl
         for(Tile *t : tess->TileArr){
             ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " BLOCK" << std::endl;
         }
-        for(Tile *t : tess->OverlapArr){
-            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" <<std::endl;
+    }
+    
+    for(int overlapIndex: overlapTesseraeIndices){
+        Tessera* tess = allTesserae[overlapIndex];
+        ofs << tess->getName() << " " << tess->getLegalArea() << " ";
+        ofs << tess->getBBLowerLeft().x << " " << tess->getBBLowerLeft().y << " ";
+        ofs << tess->getBBWidth() << " " << tess->getBBHeight() << " " << "OVERLAP" << std::endl;
+        ofs << tess->TileArr.size() << " " << tess->OverlapArr.size() << std::endl;
+        for(Tile *t : tess->TileArr){
+            ofs << t->getLowerLeft().x << " " << t->getLowerLeft().y << " " << t->getWidth() << " " << t->getHeight() << " OVERLAP" << std::endl;
         }
     }
 
@@ -1328,17 +1345,27 @@ void FPManager::visualiseArtpiece(const std::string outputFileName, bool checkBl
     std::vector <Cord> record;
 
     if(checkBlankTile){
-        if(fixedTesserae.size() !=0 ){
-            if(this->fixedTesserae[0]->TileArr.size() != 0){
-                traverseBlank(ofs, *(this->fixedTesserae[0]->TileArr[0]), record);
-            }else{
-                traverseBlank(ofs, *(this->fixedTesserae[0]->OverlapArr[0]), record);
+        if(fixedTesseraeIndices.size() !=0 ){
+            for (int fixedIndex : fixedTesseraeIndices){
+                if(allTesserae[fixedIndex]->TileArr.size() != 0){
+                    traverseBlank(ofs, *(allTesserae[fixedIndex]->TileArr[0]), record);
+                    break;
+                }
             }
-        }else{
-            if(softTesserae.size() != 0){
-                traverseBlank(ofs, *(this->softTesserae[0]->TileArr[0]), record);
-            }else{
-                traverseBlank(ofs, *(this->softTesserae[0]->OverlapArr[0]), record);
+        }else if (softTesseraeIndices.size() !=0 ) {
+            for (int softIndex : softTesseraeIndices){
+                if(allTesserae[softIndex]->TileArr.size() != 0){
+                    traverseBlank(ofs, *(allTesserae[softIndex]->TileArr[0]), record);
+                    break;
+                }
+            }
+        }
+        else {
+            for (int overlapIndex : overlapTesseraeIndices){
+                if(allTesserae[overlapIndex]->TileArr.size() != 0){
+                    traverseBlank(ofs, *(allTesserae[overlapIndex]->TileArr[0]), record);
+                    break;
+                }
             }
         }
     }
@@ -1412,8 +1439,9 @@ void FPManager::arrangeTesseraetoCanvas(){
     std::vector <Cord> record;
     
     std::cout << "Painting Fixed Tessera to Canvas:" << std::endl;
-    for(Tessera *tess : this->fixedTesserae){
-        std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << ", Overlaps->" << tess->OverlapArr.size() << std::endl;
+    for(int fixedIndex : this->fixedTesseraeIndices){
+        Tessera* tess = allTesserae[fixedIndex];
+        std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << " (Overlaps->" << tess->OverlapArr.size() << ")" << std::endl;
         
         for(Tile *tile : tess->TileArr){
             assert(!checkVectorInclude(record, tile->getLowerLeft()));
@@ -1423,30 +1451,16 @@ void FPManager::arrangeTesseraetoCanvas(){
 
             record.push_back(tile->getLowerLeft());
         }
-        
-        for(Tile *tile : tess->OverlapArr){
-            // for overlap tiles, only push when it's never met
-            if(!checkVectorInclude(record, tile->getLowerLeft()) && (tile->getWidth() != 0) && (tile->getHeight() != 0)){
-                
-                if(record.empty()) insertFirstTile(*tile);
-                else insertTile(*tile);
-                
-                record.push_back(tile->getLowerLeft());
-            }
-        }
+    
     }
 
     // visualiseDebug("outputs/debug.txt");
     std::cout << "Painting Soft Tessera to Canvas:" << std::endl;
-    Tessera *tess;
-    for(int i = 0; i < this->softTesserae.size(); ++i){
-        tess = this->softTesserae[i];
-
-        std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << ", Overlaps->" << tess->OverlapArr.size() << std::endl;
+    for(int softIndex : this->softTesseraeIndices){
+        Tessera* tess = allTesserae[softIndex];
+        std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << " (Overlaps->" << tess->OverlapArr.size() << ")" << std::endl;
         
-        Tile *tile;
-        for(int j = 0; j < tess->TileArr.size(); ++j){
-            tile = tess->TileArr[j];
+        for(Tile *tile : tess->TileArr){
             assert(!checkVectorInclude(record, tile->getLowerLeft()));
 
             if(record.empty()) insertFirstTile(*tile);
@@ -1454,17 +1468,21 @@ void FPManager::arrangeTesseraetoCanvas(){
 
             record.push_back(tile->getLowerLeft());
         }
-        for(int j = 0; j < tess->OverlapArr.size(); ++j){
-            // for overlap tiles, only push when it's never met
-            tile = tess->OverlapArr[j];
-            if(!checkVectorInclude(record, tile->getLowerLeft()) && (tile->getWidth() != 0) && (tile->getHeight() != 0)){
-                if(record.empty()) insertFirstTile(*tile);
-                else insertTile(*tile);
+    }
 
-                record.push_back(tile->getLowerLeft());
-            }
+    std::cout << "Painting Overlaps to Canvas:" << std::endl;
+    for(int overlapIndex : this->overlapTesseraeIndices){
+        Tessera* tess = allTesserae[overlapIndex];
+        std::cout << tess->getName()<<": Tiles->" << tess->TileArr.size() << " (Overlaps->" << tess->OverlapArr.size() << ")" << std::endl;
+        
+        for(Tile *tile : tess->TileArr){
+            assert(!checkVectorInclude(record, tile->getLowerLeft()));
+
+            if(record.empty()) insertFirstTile(*tile);
+            else insertTile(*tile);
+
+            record.push_back(tile->getLowerLeft());
         }
-
     }
 }
 
@@ -1476,23 +1494,27 @@ void FPManager::visualiseDebug(const std::string outputFileName){
     std::ofstream ofs(outputFileName);
     ofs << this->mCanvasWidth << " " << this->mCanvasHeight << std::endl;
 
-    if(fixedTesserae.size() == 0 && softTesserae.size() == 0){
-        //there is no blocks
-        ofs.close();
-        return;
-    }
-
-    if(fixedTesserae.size() !=0 ){
-        if(this->fixedTesserae[0]->TileArr.size() != 0){
-            visualiseDebugDFS(ofs, *(this->fixedTesserae[0]->TileArr[0]), record);
-        }else{
-            visualiseDebugDFS(ofs, *(this->fixedTesserae[0]->OverlapArr[0]), record);
+    if(fixedTesseraeIndices.size() !=0 ){
+        for (int fixedIndex : fixedTesseraeIndices){
+            if(allTesserae[fixedIndex]->TileArr.size() != 0){
+                visualiseDebugDFS(ofs, *(allTesserae[fixedIndex]->TileArr[0]), record);
+                break;
+            }
         }
-    }else{
-        if(softTesserae.size() != 0){
-            visualiseDebugDFS(ofs, *(this->softTesserae[0]->TileArr[0]), record);
-        }else{
-            visualiseDebugDFS(ofs, *(this->softTesserae[0]->OverlapArr[0]), record);
+    }else if (softTesseraeIndices.size() !=0 ) {
+        for (int softIndex : softTesseraeIndices){
+            if(allTesserae[softIndex]->TileArr.size() != 0){
+                visualiseDebugDFS(ofs, *(allTesserae[softIndex]->TileArr[0]), record);
+                break;
+            }
+        }
+    }
+    else {
+        for (int overlapIndex : overlapTesseraeIndices){
+            if(allTesserae[overlapIndex]->TileArr.size() != 0){
+                visualiseDebugDFS(ofs, *(allTesserae[overlapIndex]->TileArr[0]), record);
+                break;
+            }
         }
     }
     ofs.close();
@@ -1547,21 +1569,26 @@ void FPManager::visualiseDebugDFS(std::ofstream &ofs, Tile &t, std::vector <Cord
 void FPManager::detectCombinableBlanks(std::vector <std::pair<Tile *, Tile *>> &candidateTile){
     
     std::vector <Cord> record;
-
-    if(fixedTesserae.size() !=0 ){
-        if(this->fixedTesserae[0]->TileArr.size() != 0){
-            detectCombinableBlanksDFS(candidateTile, *(this->fixedTesserae[0]->TileArr[0]), record);
-        }else{
-            detectCombinableBlanksDFS(candidateTile, *(this->fixedTesserae[0]->OverlapArr[0]), record);
-        }
-    }else{
-        if(softTesserae.size() != 0){
-            detectCombinableBlanksDFS(candidateTile, *(this->softTesserae[0]->TileArr[0]), record);
-        }else{
-            detectCombinableBlanksDFS(candidateTile, *(this->softTesserae[0]->OverlapArr[0]), record);
+            
+    for (int fixedIndex : fixedTesseraeIndices){
+        if(allTesserae[fixedIndex]->TileArr.size() != 0){
+            detectCombinableBlanksDFS(candidateTile, *(allTesserae[fixedIndex]->TileArr[0]), record);
+            break;
         }
     }
-
+    for (int softIndex : softTesseraeIndices){
+        if(allTesserae[softIndex]->TileArr.size() != 0){
+            detectCombinableBlanksDFS(candidateTile, *(allTesserae[softIndex]->TileArr[0]), record);
+            break;
+        }
+    }
+    for (int overlapIndex : overlapTesseraeIndices){
+        if(allTesserae[overlapIndex]->TileArr.size() != 0){
+            detectCombinableBlanksDFS(candidateTile, *(allTesserae[overlapIndex]->TileArr[0]), record);
+            break;
+        }
+    }
+    
 }
 
 void FPManager::detectCombinableBlanksDFS(std::vector <std::pair<Tile *, Tile *>> &candidateTile, Tile &t, std::vector <Cord> &record){
@@ -1637,15 +1664,9 @@ bool FPManager::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &i
     if(tile->getType() == tileType::BLANK) return false;
     bool answer = false;
     
-    for(Tessera *tess : this->softTesserae){
-        if(tile->getType() == tileType::OVERLAP){
-            for(Tile *t : tess->OverlapArr){
-                if((*tile) == (*t)){
-                    inTessera.push_back(tess);
-                    answer = true;
-                }
-            }
-        }else{ //tileType::block
+    if (tile->getType() == tileType::OVERLAP){
+        for(int overlapIndex: this->overlapTesseraeIndices){
+            Tessera* tess = this->allTesserae[overlapIndex];
             for(Tile *t : tess->TileArr){
                 if((*tile) == (*t)){
                     inTessera.push_back(tess);
@@ -1654,16 +1675,19 @@ bool FPManager::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &i
             }
         }
     }
+    else if (tile->getType() == tileType::BLOCK){
+        for(int softIndex: this->softTesseraeIndices){
+            Tessera* tess = this->allTesserae[softIndex];
+            for(Tile *t : tess->TileArr){
+                if((*tile) == (*t)){
+                    inTessera.push_back(tess);
+                    answer = true;
+                }
+            }
+        }
 
-    for(Tessera *tess : this->fixedTesserae){
-        if(tile->getType() == tileType::OVERLAP){
-            for(Tile *t : tess->OverlapArr){
-                if((*tile) == (*t)){
-                    inTessera.push_back(tess);
-                    answer = true;
-                }
-            }
-        }else{ //tileType::block
+        for(int fixedIndex: this->fixedTesseraeIndices){
+            Tessera* tess = this->allTesserae[fixedIndex];
             for(Tile *t : tess->TileArr){
                 if((*tile) == (*t)){
                     inTessera.push_back(tess);
@@ -1672,8 +1696,14 @@ bool FPManager::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &i
             }
         }
     }
+ 
     assert(answer);
     return answer;  
+}
+
+bool FPManager::searchTesseraeIncludeTile(Tile *tile, std::vector<int> &inTessera) const {
+    inTessera.push_back(tile->getTessIndex());
+    return true;
 }
 
 // void FPManager::printOutput(std::string outputFileName){
@@ -1687,7 +1717,7 @@ bool FPManager::searchTesseraeIncludeTile(Tile *tile, std::vector <Tessera *> &i
 // }
 void FPManager::collectAllTiles(std::vector<Tile *> &allTiles) const{
     allTiles.clear();
-    if(fixedTesserae.empty() && softTesserae.empty()) return;
+    if(fixedTesseraeIndices.empty() && softTesseraeIndices.empty() && overlapTesseraeIndices.empty()) return;
 
     Tile *seed = getRandomTile();
     std::vector <Cord> record; // This records which Tile has been visited;
@@ -1728,7 +1758,8 @@ double calculateHPWL(FPManager *legaliser, const std::vector<RectGrad::ConnStruc
         Tessera *tess0 = nullptr;
         Tessera *tess1 = nullptr;
 
-        for(Tessera *t : legaliser->fixedTesserae){
+        for(int fixedIndex : legaliser->fixedTesseraeIndices){
+            Tessera* t = legaliser->allTesserae[fixedIndex];
             std::string tName = t->getName();
             if(tName == cs.m0){
                 tess0 = t;
@@ -1738,7 +1769,8 @@ double calculateHPWL(FPManager *legaliser, const std::vector<RectGrad::ConnStruc
             }
             if((tess0 != nullptr) && (tess1 != nullptr)) break;
         }
-        for(Tessera *t : legaliser->softTesserae){
+        for(int softIndex : legaliser->softTesseraeIndices){
+            Tessera* t = legaliser->allTesserae[softIndex];
             std::string tName = t->getName();
             if(tName == cs.m0){
                 tess0 = t;
@@ -1782,8 +1814,9 @@ void outputFinalAnswer(FPManager *legaliser, const RectGrad::Parser &rgparser, c
 
     std::ofstream ofs(outputFileName);
     ofs << "HPWL " << std::fixed << std::setprecision(1) << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
-    ofs << "SOFTMODULE " << legaliser->softTesserae.size() << std::endl;
-    for(Tessera *softTess : legaliser->softTesserae){
+    ofs << "SOFTMODULE " << legaliser->softTesseraeIndices.size() << std::endl;
+    for(int softIndex : legaliser->softTesseraeIndices){
+        Tessera* softTess = legaliser->allTesserae[softIndex];
         assert(!softTess->TileArr.empty());
         assert(softTess->OverlapArr.empty());
         softTess->printCorners(ofs);

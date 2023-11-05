@@ -7,15 +7,7 @@
 #include <boost/polygon/polygon.hpp>
 #include "FPManager.h"
 #include "LFUnits.h"
-// #include "Tile.h"
-
-namespace gtl = boost::polygon;
-using namespace boost::polygon::operators;
-
-typedef gtl::rectangle_data<len_t> Rectangle;
-typedef gtl::polygon_90_set_data<len_t> Polygon90Set;
-typedef gtl::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
-typedef gtl::point_data<len_t> Point;
+#include "newTile.h"
 
 enum class tesseraType{
     EMPTY ,SOFT, HARD, OVERLAP
@@ -36,12 +28,13 @@ private:
     Cord mBBLowerLeft;
     Cord mBBUpperRight;
 
-    int index;
+    int mIndex;
 
     FPManager& mFPM;
     void calBoundingBox();
     area_t calRealArea();
     void _addArea(Cord lowerleft, len_t width, len_t height);
+    void _addArea(Tile* newTile);
     bool _checkHole();
 public:
     std::vector <Tile*> TileArr;
@@ -50,8 +43,8 @@ public:
     std::vector <int> OverlapArr; 
 
     Tessera() = delete; 
-    Tessera(FPManager& FP, tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height);
-    Tessera(FPManager& FP, tesseraType type, std::string name, Polygon90Set& shape);
+    Tessera(FPManager& FP, tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height, int index);
+    Tessera(FPManager& FP, tesseraType type, std::string name, Polygon90Set& shape, int index);
     Tessera(const Tessera &other);
 
     Tessera& operator = (const Tessera &other);
@@ -97,8 +90,8 @@ public:
 std::ostream &operator << (std::ostream &os, const Tessera &t);
 
 std::ostream &operator << (std::ostream &o, const Point &pt);
-std::ostream &operator << (std::ostream &o, const Polygon &poly);
-std::ostream &operator << (std::ostream &o, const PolygonSet &polys);
+std::ostream &operator << (std::ostream &o, const Polygon90WithHoles &poly);
+std::ostream &operator << (std::ostream &o, const Polygon90Set &polys);
 
 // class Overlap{
 // private:

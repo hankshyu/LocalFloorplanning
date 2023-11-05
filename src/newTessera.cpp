@@ -5,15 +5,15 @@
 #include "newTessera.h"
 #include "boost/polygon/polygon.hpp"
 
-Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height)
+Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, area_t area, Cord lowerleft, len_t width, len_t height, int index)
     : mFPM(FP), mType(type), mName(name), mLegalArea(area), 
-    mInitLowerLeft(lowerleft), mInitWidth(width), mInitHeight(height) {
+    mInitLowerLeft(lowerleft), mInitWidth(width), mInitHeight(height), mIndex(index) {
         mShape.clear();
         _addArea(lowerleft, width, height);
     }
 
-Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, Polygon90Set& shape):
-    mFPM(FP), mType(type), mName(name) {
+Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, Polygon90Set& shape, int index):
+    mFPM(FP), mType(type), mName(name), mIndex(index) {
         gtl::assign(mShape, shape);
         mLegalArea = 0;
         Rectangle extentsRectangle;
@@ -25,7 +25,7 @@ Tessera::Tessera(FPManager& FP, tesseraType type, std::string name, Polygon90Set
 
 Tessera::Tessera(const Tessera &other)
     : mFPM(other.mFPM), mType(other.getType()), mName(other.getName()), mLegalArea(other.getLegalArea()),
-    mInitLowerLeft(other.getInitLowerLeft()), mInitWidth(other.getInitWidth()), mInitHeight(other.getInitHeight()) {
+    mInitLowerLeft(other.getInitLowerLeft()), mInitWidth(other.getInitWidth()), mInitHeight(other.getInitHeight()), mIndex(other.mIndex) {
         gtl::assign(mShape, other.mShape);
         OverlapArr.assign(other.OverlapArr.begin(), other.OverlapArr.end());
         TileArr.assign(other.TileArr.begin(), other.TileArr.end());
@@ -174,14 +174,27 @@ void Tessera::splitRectliearDueToOverlap(){
         mFPM.allTesserae[overlapIndex]->getFullShape(overlap);
         mShape -= overlap;
     }    
+    std::vector<Rectangle> rectContainer;
+    mShape.get_rectangles(rectContainer);
+    for (Rectangle rect : rectContainer){
+        Tile* newTile;
+        if (this->mType == tesseraType::OVERLAP){
+            newTile = new Tile(tileType::OVERLAP, rect, this->mIndex);
+        }
+        else {
+            newTile = new Tile(tileType::BLOCK, rect, this->mIndex);
+        }
+        this->TileArr.push_back(newTile);
+    }
 }
 
 void Tessera::rectilinearToMinimumTiles(){
+    // TODO : erase orignal tiles and draw new tiles
     std::vector<Rectangle> allRectangles;
     
     gtl::get_max_rectangles(allRectangles, mShape);
     for (Rectangle& rect: allRectangles){
-        Tile* newTile = new Tile(tileType::BLOCK, rect);
+        Tile* newTile = new Tile(tileType::BLOCK, rect, this->mIndex);
     }
 }
 
@@ -192,7 +205,8 @@ void Tessera::printCorners(std::ostream& fout){
     if (OverlapArr.size() > 0){
         std::cout << "WARNING: Tess " << mName << " still has overlaps (in Tess::printCorners)\n";
         for (int overlapIndex : OverlapArr){
-            Polygon90WithHoles& overlap = mFPM.allOverlaps[overlapIndex].getShape();
+            Polygon90Set overlap;
+            mFPM.allTesserae[overlapIndex]->getNonOverlapShape(overlap);
             poly += overlap;
         }   
     }
@@ -340,15 +354,22 @@ void Tessera::_addArea(Cord lowerleft, len_t width, len_t height){
         {lowerleft.x, lowerleft.y + height}
     };
     gtl::set_points(newArea, newAreaVertices.begin(), newAreaVertices.end());
-    
-    // check for overlaps, output warning if overlap exists
-    Polygon90Set overlap = newArea & mShape;
-    if (overlap.empty())
+
+    Rectangle newRect = Rectangle(lowerleft.x, lowerleft.y, lowerleft.x + width, lowerleft.y + height);
+    Tile* newTile = new Tile(tileType::BLOCK, lowerleft, width, height, this->mIndex);
+    TileArr.push_back(newTile);
 
     mShape += newArea;
-    if (_checkHole()){
-        std::cout << "WARNING: Hole in Tessera " << getName() << std::endl;
-    }
+}
+
+int Tessera::getIndex(){
+    return mIndex;
+}
+
+void Tessera::_addArea(Tile* newTile){
+    mShape += newTile->getRectangle();
+    newTile->setTessOwnership(this->mIndex);
+    TileArr.push_back(newTile);
 }
 
 bool Tessera::_checkHole(){
@@ -370,7 +391,8 @@ std::ostream &operator << (std::ostream &os, const Tessera &tes){
 
     os << "OverlapArr:" << std::endl;
     for(int overlapIndex : tes.OverlapArr){
-        Polygon90WithHoles& overlap = tes.mFPM.allOverlaps[overlapIndex].getShape();
+        Polygon90Set overlap;
+        tes.mFPM.allTesserae[overlapIndex]->getNonOverlapShape(overlap);
         os << overlap << std::endl;
     }
 
@@ -382,7 +404,7 @@ std::ostream &operator << (std::ostream &o, const Point &pt) {
     return o;
 }
 
-std::ostream &operator << (std::ostream &o, const Polygon &poly) {
+std::ostream &operator << (std::ostream &o, const Polygon90WithHoles &poly) {
     o << "poly (";
 
     for ( Point pt : poly ) {
@@ -392,16 +414,11 @@ std::ostream &operator << (std::ostream &o, const Polygon &poly) {
     return o;
 }
 
-std::ostream &operator << (std::ostream &o, const PolygonSet &polys) {
-    for ( const Polygon &poly : polys ) {
+std::ostream &operator << (std::ostream &o, const Polygon90Set &polys) {
+    std::vector<Polygon90WithHoles> poly90Container;
+    polys.get_polygons(poly90Container);
+    for ( const Polygon90WithHoles &poly : poly90Container ) {
         o << poly << "\n";
     }
     return o;
-}
-
-Overlap::Overlap(Polygon90WithHoles& shape, std::vector<int> overlapIndices): 
-mShape(shape), overlaps(overlapIndices) {}
-
-Polygon90WithHoles& Overlap::getShape(){
-    return mShape;
 }

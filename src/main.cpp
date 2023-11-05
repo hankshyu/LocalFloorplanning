@@ -4,15 +4,18 @@
 #include <cfloat>
 #include <stdio.h>
 #include "LFUnits.h"
-#include "Tile.h"
-#include "Tessera.h"
-#include "LFLegaliser.h"
+// #include "Tile.h"
+// #include "Tessera.h"
+// #include "LFLegaliser.h"
 #include "parser.h"
 #include "ppsolver.h"
 #include "rgsolver.h"
 #include "DFSLegalizer.h"
 #include "monitor.h"
 #include "paletteKnife.h"
+#include "newTile.h"
+#include "newTessera.h"
+#include "FPManager.h"
 
 // #define MAX_ITER 12
 #define LEGAL_MAX_ITER 4
