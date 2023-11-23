@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "maxflow.h"
 #include "LFLegaliser.h"
 
 namespace DFSL {
