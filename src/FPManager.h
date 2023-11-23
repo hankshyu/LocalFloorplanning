@@ -19,6 +19,8 @@ namespace pp = PushPull;
 namespace rg = RectGrad;
 using namespace boost::polygon::operators;
 
+class Tessera;
+
 class FPManager {
 private:
     len_t mCanvasWidth;
