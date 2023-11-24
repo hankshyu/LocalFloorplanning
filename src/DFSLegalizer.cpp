@@ -226,9 +226,7 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
     DFSLNode& fromNode = mAllNodes[fromIndex];
     DFSLNode& toNode = mAllNodes[toIndex];
 
-    int bestLength = 0;
-    int bestDirection = 0;
-    std::vector<Segment> bestTangent;
+    std::vector<Segment> allTangentSegments;
     for (int dir = 0; dir < 4; dir++){
         // find Top, right, bottom, left neighbros
         std::vector<Segment> currentSegment;
@@ -264,6 +262,7 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
                             fromEnd = tile->getUpperRight();
                             toStart = neighbor->getLowerLeft(); 
                             toEnd = neighbor->getLowerRight();
+                            tangent.direction = DIRECTION::TOP;
                         }
                         else if (dir == 1){
                             // neighbor is right of fromNode 
@@ -271,6 +270,7 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
                             fromEnd = tile->getUpperRight();
                             toStart = neighbor->getLowerLeft(); 
                             toEnd = neighbor->getUpperLeft();
+                            tangent.direction = DIRECTION::RIGHT;
                         }
                         else if (dir == 2){
                             // neighbor is bottom of fromNode 
@@ -278,6 +278,7 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
                             fromEnd = tile->getLowerRight();
                             toStart = neighbor->getUpperLeft(); 
                             toEnd = neighbor->getUpperRight();
+                            tangent.direction = DIRECTION::DOWN;
                         }
                         else {
                             // neighbor is left of fromNode 
@@ -285,6 +286,7 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
                             fromEnd = tile->getUpperLeft();
                             toStart = neighbor->getLowerRight(); 
                             toEnd = neighbor->getUpperRight();
+                            tangent.direction = DIRECTION::LEFT;
                         }
                         tangent.segStart = fromStart <= toStart ? toStart : fromStart;
                         tangent.segEnd = fromEnd <= toEnd ? fromEnd : toEnd;
@@ -294,11 +296,15 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
             }
         }
         
-        // check segment, splice segments together to one large segment
+        // check segment, splice touching segments together and add to allTangentSegments
         int segLength = 0;
-        std::vector<Segment> splicedSegments;
         if (currentSegment.size() > 0){
-            std::sort(currentSegment.begin(), currentSegment.end(), compareSegment);
+            if (dir == 0 || dir == 2){
+                std::sort(currentSegment.begin(), currentSegment.end(), compareXSegment);
+            }
+            else {
+                std::sort(currentSegment.begin(), currentSegment.end(), compareXSegment);
+            }
             Cord segBegin = currentSegment.front().segStart;
             for (int j = 1; j < currentSegment.size(); j++){
                 if (currentSegment[j].segStart != currentSegment[j-1].segEnd){
@@ -306,7 +312,8 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
                     Segment splicedSegment;
                     splicedSegment.segStart = segBegin;
                     splicedSegment.segEnd = segEnd;
-                    splicedSegments.push_back(splicedSegment);
+                    splicedSegment.direction = currentSegment[j-1].direction;
+                    allTangentSegments.push_back(splicedSegment);
                     segLength += (segEnd.x - segBegin.x) + (segEnd.y - segBegin.y);  
 
                     segBegin = currentSegment[j].segStart;
@@ -316,41 +323,15 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
             Segment splicedSegment;
             splicedSegment.segStart = segBegin;
             splicedSegment.segEnd = segEnd;
-            splicedSegments.push_back(splicedSegment);
+            splicedSegment.direction = currentSegment.back().direction;
+            allTangentSegments.push_back(splicedSegment);
             segLength += (segEnd.x - segBegin.x) + (segEnd.y - segBegin.y);  
-        }
-
-        if (segLength > bestLength){
-            bestDirection = dir;
-            bestTangent = splicedSegments;
-            bestLength = segLength;
         }
     }
 
     // construct edge in graph
     DFSLEdge newEdge;
-    if (bestTangent.size() == 0){
-        Segment dummySeg;
-        dummySeg.segStart = Cord(-1,-1);
-        dummySeg.segEnd = Cord(-1,-1);
-        newEdge.commonEdge = dummySeg;
-        newEdge.direction = DIRECTION::NONE;
-    }
-    else {
-        newEdge.commonEdge = bestTangent[0];
-        if (bestDirection == 0){
-            newEdge.direction = DIRECTION::TOP;
-        } 
-        else if (bestDirection == 1){
-            newEdge.direction = DIRECTION::RIGHT;
-        }
-        else if (bestDirection == 2){
-            newEdge.direction = DIRECTION::DOWN;
-        }
-        else {
-            newEdge.direction = DIRECTION::LEFT;
-        }
-    }
+    newEdge.tangentSegments = allTangentSegments;
     newEdge.fromIndex = fromIndex;
     newEdge.toIndex = toIndex; 
     mAllNodes[fromIndex].edgeList.push_back(newEdge);
@@ -500,7 +481,7 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     mMigratingArea = mAllNodes[overlapIndex].area;
 
     std::cout << "[DFSL] Info: Migrating Overlap: " << mAllNodes[overlapIndex].nodeName << '\n';
-    for (DFSLEdge edge: mAllNodes[overlapIndex].edgeList){
+    for (DFSLEdge& edge: mAllNodes[overlapIndex].edgeList){
         dfs(edge, 0.0);
     }
 
@@ -509,10 +490,10 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
         return false;
     }
 
-    for (DFSLEdge& edge: mBestPath){
+    for (MigrationEdge& edge: mBestPath){
         if (mAllNodes[edge.toIndex].nodeType == DFSLTessType::BLANK){
             std::string direction;
-            switch (edge.direction)
+            switch (edge.segment.direction)
             {
             case DIRECTION::TOP:
                 direction = "above";
@@ -542,7 +523,7 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     // start changing physical layout
     int resolvableArea = 0;
     for (int i = mBestPath.size() - 1; i >= 0; i--){
-        DFSLEdge edge = mBestPath[i];
+        MigrationEdge& edge = mBestPath[i];
         DFSLNode& fromNode = mAllNodes[edge.fromIndex];
         DFSLNode& toNode = mAllNodes[edge.toIndex];
 
@@ -603,44 +584,13 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
         }
             // todo: deal with block -> block
         else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::BLANK){
-            Cord BL;
-            int width;
-            int height;
-            if (edge.direction == DIRECTION::TOP){
-                width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
-                int requiredHeight = ceil((double) mMigratingArea / (double) width);
-                height = toNode.tileList[0]->getHeight() > requiredHeight ? requiredHeight : toNode.tileList[0]->getHeight();
-                BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
-                BL.y = edge.commonEdge.segStart.y;
-            }
-            else if (edge.direction == DIRECTION::RIGHT){
-                height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
-                int requiredWidth = ceil((double) mMigratingArea / (double) height);
-                width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
-                BL.x = edge.commonEdge.segStart.x;
-                BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
-            }
-            else if (edge.direction == DIRECTION::DOWN){
-                width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
-                int requiredHeight = ceil((double) mMigratingArea / (double) width);
-                height = toNode.tileList[0]->getHeight() > requiredHeight ? requiredHeight : toNode.tileList[0]->getHeight();
-                BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
-                BL.y = edge.commonEdge.segStart.y - height;
-            }
-            else if (edge.direction == DIRECTION::LEFT){
-                height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
-                int requiredWidth = ceil((double) mMigratingArea / (double) height);
-                width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
-                BL.x = edge.commonEdge.segStart.x - width;
-                BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
-            }
-            else {
+            if (edge.segment.direction == DIRECTION::NONE) {
                 std::cout << "[DFSL] ERROR: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
                 return false;
             }
 
-            resolvableArea = width * height;    
-            Tile* newTile = new Tile(tileType::BLOCK, BL, width, height);
+            resolvableArea = edge.migratedArea.getArea();   
+            Tile* newTile = new Tile(edge.migratedArea);
             std::cout << "Placing new Tile: ";
             newTile->show(std::cout, true);
 
@@ -658,7 +608,7 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     }
 
     std::cout << "\n";
-    // mLF->visualiseArtpiece("debug_DFSL.txt", true);
+    mLF->visualiseArtpiece("debug_DFSL.txt", true);
     return true;
 }
 
@@ -683,11 +633,12 @@ bool removeFromVector(Tile* a, std::vector<Tile*>& vec){
     return false;
 }
 
-void DFSLegalizer::dfs(DFSLEdge edge, double currentCost){
+void DFSLegalizer::dfs(DFSLEdge& edge, double currentCost){
     int toIndex = edge.toIndex;
-    double edgeCost = getEdgeCost(edge);
+    MigrationEdge edgeResult = getEdgeCost(edge);
+    double edgeCost = edgeResult.edgeCost;
     currentCost += edgeCost;
-    mCurrentPath.push_back(edge);
+    mCurrentPath.push_back(edgeResult);
     int blankStart = mFixedTessNum + mSoftTessNum + mOverlapNum;
     int blankEnd = blankStart + mBlankNum;
     if (blankStart <= toIndex && toIndex < blankEnd){
@@ -698,17 +649,20 @@ void DFSLegalizer::dfs(DFSLEdge edge, double currentCost){
     }
 
     if (currentCost < config.maxCostCutoff){
-        for (DFSLEdge nextEdge: mAllNodes[toIndex].edgeList){
-            if (!inVector(nextEdge.toIndex, mCurrentPath)){
-                dfs(nextEdge, currentCost);
+        for (DFSLEdge& nextEdge: mAllNodes[toIndex].edgeList){
+            for (MigrationEdge& edge: mCurrentPath){
+                if (edge.fromIndex == nextEdge.toIndex || edge.toIndex == nextEdge.toIndex) {
+                    continue;
+                }
             }
+            dfs(nextEdge, currentCost);
         }
     }
 
     mCurrentPath.pop_back();
 }
 
-double DFSLegalizer::getEdgeCost(DFSLEdge edge){
+MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
     enum class EDGETYPE : unsigned char { OB, BB, BW, WW, BAD_EDGE };
     EDGETYPE edgeType; 
 
@@ -732,11 +686,14 @@ double DFSLegalizer::getEdgeCost(DFSLEdge edge){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
     double edgeCost = 0.0;
+    Tile returnTile;
+    Segment bestSegment;
     
     switch (edgeType)
     {
     case EDGETYPE::OB:
     {
+        // TODO: predict overlap to block migration (may not be entire overlap that migrates)
         Tessera* toTess = mLF->softTesserae[edge.toIndex - mFixedTessNum];
         std::set<Tile*> overlap;
         std::set<Tile*> withoutOverlap;
@@ -780,71 +737,89 @@ double DFSLegalizer::getEdgeCost(DFSLEdge edge){
     }
 
     case EDGETYPE::BB:
+        // DO THIS DO THAT JERMA
         edgeCost += config.BBFlatCost;
         break;
 
     case EDGETYPE::BW:
     {
-        std::set<Tile*> oldBlock;
-        std::set<Tile*> newBlock;
+        std::vector<Tile*> oldBlock;
+        std::vector<Tile*> newBlock;
 
         for (Tile* tile: fromNode.tileList){
-            oldBlock.insert(tile);
-            newBlock.insert(tile);
+            oldBlock.push_back(tile);
+            newBlock.push_back(tile);
         }
+        LegalInfo oldBlockInfo = getLegalInfo(oldBlock);
 
         // predict new tile
-        Cord BL;
-        int width;
-        int height;
-        if (edge.direction == DIRECTION::TOP){
-            width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
-            int requiredHeight = ceil((double) mMigratingArea / (double) width);
-            height = toNode.tileList[0]->getHeight() > requiredHeight ? requiredHeight : toNode.tileList[0]->getHeight();
-            BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
-            BL.y = edge.commonEdge.segStart.y;
-        }
-        else if (edge.direction == DIRECTION::RIGHT){
-            height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
-            int requiredWidth = ceil((double) mMigratingArea / (double) height);
-            width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
-            BL.x = edge.commonEdge.segStart.x;
-            BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
-        }
-        else if (edge.direction == DIRECTION::DOWN){
-            width = abs(edge.commonEdge.segEnd.x - edge.commonEdge.segStart.x); 
-            int requiredHeight = ceil((double) mMigratingArea / (double) width);
-            height = toNode.tileList[0]->getHeight() > requiredHeight ? requiredHeight : toNode.tileList[0]->getHeight();
-            BL.x = edge.commonEdge.segStart.x < edge.commonEdge.segEnd.x ? edge.commonEdge.segStart.x : edge.commonEdge.segEnd.x ;
-            BL.y = edge.commonEdge.segStart.y - height;
-        }
-        else if (edge.direction == DIRECTION::LEFT) {
-            height = abs(edge.commonEdge.segEnd.y - edge.commonEdge.segStart.y); 
-            int requiredWidth = ceil((double) mMigratingArea / (double) height);
-            width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
-            BL.x = edge.commonEdge.segStart.x - width;
-            BL.y = edge.commonEdge.segStart.y < edge.commonEdge.segEnd.y ? edge.commonEdge.segStart.y : edge.commonEdge.segEnd.y ;
-        }
-        else {
-            std::cout << "[DFSL] ERROR: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
-            return (double) INT_MAX;
+        double lowestCost = (double) LONG_MAX;
+        Tile bestTile;
+        int bestSegmentIndex = -1;
+        for (int s = 0; s < edge.tangentSegments.size(); s++){
+            Segment seg = edge.tangentSegments[s];
+            Cord BL;
+            int width;
+            int height;
+            if (seg.direction == DIRECTION::TOP){
+                width = abs(seg.segEnd.x - seg.segStart.x); 
+                int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                height = toNode.tileList[0]->getHeight() > requiredHeight ? requiredHeight : toNode.tileList[0]->getHeight();
+                BL.x = seg.segStart.x < seg.segEnd.x ? seg.segStart.x : seg.segEnd.x ;
+                BL.y = seg.segStart.y;
+            }
+            else if (seg.direction == DIRECTION::RIGHT){
+                height = abs(seg.segEnd.y - seg.segStart.y); 
+                int requiredWidth = ceil((double) mMigratingArea / (double) height);
+                width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
+                BL.x = seg.segStart.x;
+                BL.y = seg.segStart.y < seg.segEnd.y ? seg.segStart.y : seg.segEnd.y ;
+            }
+            else if (seg.direction == DIRECTION::DOWN){
+                width = abs(seg.segEnd.x - seg.segStart.x); 
+                int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                height = toNode.tileList[0]->getHeight() > requiredHeight ? requiredHeight : toNode.tileList[0]->getHeight();
+                BL.x = seg.segStart.x < seg.segEnd.x ? seg.segStart.x : seg.segEnd.x ;
+                BL.y = seg.segStart.y - height;
+            }
+            else if (seg.direction == DIRECTION::LEFT) {
+                height = abs(seg.segEnd.y - seg.segStart.y); 
+                int requiredWidth = ceil((double) mMigratingArea / (double) height);
+                width = toNode.tileList[0]->getWidth() > requiredWidth ? requiredWidth : toNode.tileList[0]->getWidth();
+                BL.x = seg.segStart.x - width;
+                BL.y = seg.segStart.y < seg.segEnd.y ? seg.segStart.y : seg.segEnd.y ;
+            }
+            else {
+                std::cout << "[DFSL] WARNING: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) has no DIRECTION\n";
+            }
+
+            Tile newTile(tileType::BLOCK, BL, width, height);
+            newBlock.push_back(&newTile);
+
+            LegalInfo newBlockInfo = getLegalInfo(newBlock);
+
+            newBlock.pop_back();
+
+            // get util
+            double oldBlockUtil = oldBlockInfo.util;
+            double newBlockUtil = newBlockInfo.util;
+
+            // get aspect ratio with new area
+            double aspectRatio = newBlockInfo.aspectRatio;
+
+            double cost = (oldBlockUtil - newBlockUtil) * config.OBUtilWeight +
+                            tan(pow(aspectRatio - 1.0, 4.0) * PI / 180.0) * config.OBAspWeight;
+
+            if (cost < lowestCost){
+                lowestCost = cost;
+                bestSegmentIndex = s;
+                bestTile = newTile;
+            }
         }
 
-        Tile newTile(tileType::BLOCK, BL, width, height);
-        newBlock.insert(&newTile);
-
-        LegalInfo oldBlockInfo = getLegalInfo(oldBlock);
-        LegalInfo newBlockInfo = getLegalInfo(newBlock);
-
-        // get util
-        double oldBlockUtil = oldBlockInfo.util;
-        double newBlockUtil = newBlockInfo.util;
-
-        // get aspect ratio with new area
-        double aspectRatio = newBlockInfo.aspectRatio;
-
-        edgeCost += (oldBlockUtil - newBlockUtil) * config.OBUtilWeight +
-                    tan(pow(aspectRatio - 1.0, 4.0) * PI / 180.0) * config.OBAspWeight; 
+        bestSegment = edge.tangentSegments[bestSegmentIndex];
+        returnTile = bestTile;
+        edgeCost += lowestCost; 
 
         break;
     }
@@ -858,18 +833,8 @@ double DFSLegalizer::getEdgeCost(DFSLEdge edge){
         break;
     }
 
-    return edgeCost;
+    return MigrationEdge(edge.fromIndex, edge.toIndex, returnTile, bestSegment, edgeCost);
 }
-
-
-inline bool inVector(int a, std::vector<DFSLEdge>& vec){
-    for (DFSLEdge& edge: vec){
-        if (edge.fromIndex == a || edge.toIndex == a) {
-            return true;
-        }
-    }
-    return false;
-} 
 
 Config::Config(): maxCostCutoff(1000000.0),
                     OBAreaWeight(750.0),
@@ -944,8 +909,20 @@ LegalInfo DFSLegalizer::getLegalInfo(std::set<Tile*>& tiles){
     return legal;
 } 
 
-static bool compareSegment(Segment a, Segment b){
-    return (a.segStart.x < b.segStart.x || a.segStart.y < b.segStart.y);
+
+MigrationEdge::MigrationEdge(int from, int to, Tile& area, Segment& seg, double cost):
+    fromIndex(from), toIndex(to), segment(seg), migratedArea(area), edgeCost(cost){ ; }
+
+MigrationEdge::MigrationEdge():
+    fromIndex(-1), toIndex(-1), segment(Segment()), migratedArea(Tile()), edgeCost(0.0) { ; }
+
+
+static bool compareXSegment(Segment a, Segment b){
+    return a.segStart.y == b.segStart.y ? a.segStart.x < b.segStart.x : a.segStart.y < b.segStart.y ;
+}
+
+static bool compareYSegment(Segment a, Segment b){
+    return a.segStart.x == b.segStart.x ? a.segStart.y < b.segStart.y : a.segStart.x < b.segStart.x ;
 }
 
 }
