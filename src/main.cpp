@@ -108,17 +108,22 @@ int main(int argc, char const *argv[]) {
             monitor.printPhase("Global Floorplanning Phase", iter);
             // auto clockCounterbegin = std::chrono::steady_clock::now();
 
-            int iteration = 20000;
-            double lr = 5. / iteration;
+            int iteration = 1000;
+            double lr = 5e-4;
             solver.setMaxMovement(0.001);
 
         
             // ! These parameters can be modified to meet your needs
+            solver.setPullWhileOverlap(true);
+            punishmentValue = 0.05;
+            toleranceValue = 0.;
             solver.setPunishment(punishmentValue);
 
             for ( int phase = 1; phase <= 50; phase++ ) {
+                std::cout << "Phase " << phase << std::endl;
                 solver.setSizeScalar(phase * 0.02);
                 solver.setOverlapTolaranceLen(toleranceValue * phase * 0.02);
+                solver.resetOptimizer();
                 for ( int i = 0; i < iteration; i++ ) {
                     solver.calcGradient();
                     solver.gradientDescent(lr);
@@ -126,15 +131,16 @@ int main(int argc, char const *argv[]) {
             }
 
             solver.setPullWhileOverlap(false);
-            solver.setMaxMovement(1e-6);
+            solver.setMaxMovement(1e-4);
             solver.setPunishment(1e6);
             solver.setOverlapTolaranceLen(0.);
             solver.setSizeScalar(1.);
-            lr = 1e-8;
+            lr = 1e-4;
             int count = 0;
             while ( solver.hasOverlap() ) {
                 solver.squeezeToFit();
-                for ( int i = 0; i < 5000; i++ ) {
+                solver.resetOptimizer();
+                for ( int i = 0; i < 50; i++ ) {
                     solver.calcGradient();
                     solver.gradientDescent(lr);
                 }
@@ -151,9 +157,11 @@ int main(int argc, char const *argv[]) {
                 std::cout << "[GlobalSolver] Note: Area Constraint Met.\n";
             }
 
-            // solver.currentPosition2txt("outputs/global_test.txt");
+            solver.currentPosition2txt(parser, "outputs/global_test.txt");
             std::cout << std::fixed;
             std::cout << "[GlobalSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
+
+            return 0;
 
             legaliser = new LFLegaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
             legaliser->translateGlobalFloorplanning(solver);
@@ -304,7 +312,7 @@ int main(int argc, char const *argv[]) {
                                 bestHpwl = finalScore;
                                 std::cout << "Best Hpwl found\n";
                                 outputFinalAnswer(&(legalizedFloorplan), parser, argv[2]);
-                                solver.currentPosition2txt("outputs/global_test.txt");
+                                solver.currentPosition2txt(parser, "outputs/global_test.txt");
                             }
                             legalizedFloorplan.visualiseArtpiece("outputs/legal" + std::to_string(legalIter*3+legalizeMode) + ".txt", true);
                             monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
