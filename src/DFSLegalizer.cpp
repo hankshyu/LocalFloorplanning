@@ -5,8 +5,16 @@
 #include <utility>
 #include <cstdint>
 #include <numeric>
+#include "boost/polygon/polygon.hpp"
 
 namespace DFSL {
+
+namespace gtl = boost::polygon;
+typedef gtl::rectangle_data<len_t> Rectangle;
+typedef gtl::polygon_90_set_data<len_t> Polygon90Set;
+typedef gtl::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
+typedef gtl::point_data<len_t> Point;
+using namespace boost::polygon::operators;
 
 DFSLNode::DFSLNode(): area(0), index(0) {}
 
@@ -29,9 +37,6 @@ void DFSLegalizer::addBlockNode(Tessera* tess, bool isFixed){
     newNode.nodeName = tess->getName();
     newNode.nodeType = isFixed ? DFSLTessType::FIXED : DFSLTessType::SOFT;
     newNode.index = mAllNodes.size();
-    if (!isFixed && tess->TileArr.size() == 0){
-        throw "Soft tessera: assert(tess->TileArr.size() > 0)";
-    }
     for(Tile* tile : tess->TileArr){
         newNode.tileList.push_back(tile); 
         newNode.area += tile->getArea();
@@ -226,6 +231,11 @@ void DFSLegalizer::findEdge(int fromIndex, int toIndex){
     DFSLNode& fromNode = mAllNodes[fromIndex];
     DFSLNode& toNode = mAllNodes[toIndex];
 
+    // this takes care of the case where a block is completely covered by overlap tiles,
+    // no edge from overlap to block
+    if (fromNode.tileList.size() == 0 || toNode.tileList.size() == 0){
+        return;
+    }
     std::vector<Segment> allTangentSegments;
     for (int dir = 0; dir < 4; dir++){
         // find Top, right, bottom, left neighbros
@@ -474,6 +484,194 @@ RESULT DFSLegalizer::legalize(int mode){
     return result;
 }
 
+bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
+    DFSLNode& fromNode = mAllNodes[edge.fromIndex];
+    DFSLNode& toNode = mAllNodes[edge.toIndex];
+    if (!(fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT)){
+        return;
+    }
+
+    // Find union of overlap
+    // chances are it is a rectangle
+    Polygon90Set overlapPolygonSet, blockPolygonSet;
+    std::vector<Rectangle> rectangleContainer;
+    overlapPolygonSet.clear();
+    for (Tile* overlapTile: fromNode.tileList){
+        Polygon90WithHoles tileRectangle;
+        std::vector<Point> newAreaVertices = {
+            {overlapTile->getLowerLeft().x, overlapTile->getLowerLeft().y}, 
+            {overlapTile->getLowerRight().x, overlapTile->getLowerRight().y }, 
+            {overlapTile->getUpperRight().x, overlapTile->getUpperRight().y}, 
+            {overlapTile->getUpperLeft().x, overlapTile->getUpperLeft().y}
+        };
+        overlapPolygonSet += tileRectangle;
+    }
+    overlapPolygonSet.get_rectangles(rectangleContainer);
+    if (rectangleContainer.size() == 0){
+        std::cout << "[DFSL] Error: Unable to find overlap area\n";
+        return false;
+    }
+    if (rectangleContainer.size() != 1){
+        std::cout << "[DFSL] Warning: Overlap not rectangle, reverting to default method.\n";
+        return false; 
+    }
+    
+    Rectangle overlapRec = rectangleContainer[0];
+    
+    // find segment directions
+    // if overlap flows x area to A, then x amount of area should be assigned to B in overlap
+    DFSLEdge* fullEdge = NULL;
+    for (DFSLEdge& fromEdge: fromNode.edgeList){
+        if (fromEdge.fromIndex == edge.fromIndex && fromEdge.toIndex == edge.toIndex){
+            fullEdge = &fromEdge;
+        }
+    }
+    if (fullEdge == NULL){
+        std::cout << "[DFSL] Error: OB edge not found.\n";
+        return false;
+    }
+
+    std::vector<bool> sideOccupied(4, false);
+    for (Segment& segment: fullEdge->tangentSegments){
+        switch (segment.direction){
+        case DIRECTION::TOP:
+            sideOccupied[0] = true;
+            break;
+        case DIRECTION::RIGHT:
+            sideOccupied[1] = true;
+            break;
+        case DIRECTION::DOWN:
+            sideOccupied[2] = true;
+            break;
+        case DIRECTION::LEFT:
+            sideOccupied[3] = true;
+            break;
+        default:
+            std::cout << "[DFSL] Warning: OB edge segment has no direction\n";
+            break;
+        }
+    }
+
+    // for each unoccupied side of the rectangle,
+    // calculate the area of the rectangle extending from B
+    // keep the one with the area closest to the actual resolvableArea
+    int closestArea = -1;
+    DIRECTION bestDirection = DIRECTION::NONE;
+    Rectangle bestRectangle;
+    if (!sideOccupied[0]){
+        // grow from top side
+        int width = gtl::delta(overlapRec, gtl::orientation_2d_enum::HORIZONTAL);
+        int height = (int) floor((double) resolvableArea / (double) width);
+        int thisArea = width * height;
+        if (thisArea > closestArea){
+            closestArea = thisArea;
+            bestDirection = DIRECTION::TOP;
+            int newYl = gtl::yh(overlapRec) - height;
+            gtl::assign(bestRectangle, overlapRec);
+            gtl::yl(bestRectangle, newYl);
+        }
+    }
+    if (!sideOccupied[1]){
+        // grow from right side
+        int height = gtl::delta(overlapRec, gtl::orientation_2d_enum::VERTICAL);
+        int width = (int) floor((double) resolvableArea / (double) height);
+        int thisArea = width * height;
+        if (thisArea > closestArea){
+            closestArea = thisArea;
+            bestDirection = DIRECTION::RIGHT;
+            int newXl = gtl::xh(overlapRec) - width;
+            gtl::assign(bestRectangle, overlapRec);
+            gtl::xl(bestRectangle, newXl);
+        }
+    }
+    if (!sideOccupied[2]){
+        // grow from bottom side
+        int width = gtl::delta(overlapRec, gtl::orientation_2d_enum::HORIZONTAL);
+        int height = (int) floor((double) resolvableArea / (double) width);
+        int thisArea = width * height;
+        if (thisArea > closestArea){
+            closestArea = thisArea;
+            bestDirection = DIRECTION::DOWN;
+            int newYh = gtl::yl(overlapRec) + height;
+            gtl::assign(bestRectangle, overlapRec);
+            gtl::yh(bestRectangle, newYh);
+        }
+    }
+    if (!sideOccupied[3]){
+        // grow from left side
+        int height = gtl::delta(overlapRec, gtl::orientation_2d_enum::VERTICAL);
+        int width = (int) floor((double) resolvableArea / (double) height);
+        int thisArea = width * height;
+        if (thisArea > closestArea){
+            closestArea = thisArea;
+            bestDirection = DIRECTION::LEFT;
+            int newXh = gtl::xl(overlapRec) + width;
+            gtl::assign(bestRectangle, overlapRec);
+            gtl::xh(bestRectangle, newXh);
+        }
+    }
+    
+    if (closestArea == 0){
+        return true;
+    }
+    
+    // start splitting tiles
+
+    assert(bestDirection != DIRECTION::NONE);
+    assert(gtl::contains(overlapRec, bestRectangle));
+
+    for (Tile* overlapTile: fromNode.tileList){
+        Rectangle tileRect(overlapTile->getLowerLeft().x, overlapTile->getLowerLeft().y,
+                           overlapTile->getUpperRight().x, overlapTile->getUpperRight().y);
+        
+        bool intersects = gtl::intersect(tileRect, bestRectangle);
+        if (intersects){
+            int direction;
+            switch (bestDirection){
+            case DIRECTION::TOP:
+                direction = 0;
+                break;
+            case DIRECTION::RIGHT:
+                direction = 1;
+                break;
+            case DIRECTION::DOWN:
+                direction = 2;
+                break;
+            case DIRECTION::LEFT:
+                direction = 3;
+                break;
+            default:
+                direction = 0;
+                break;
+            }
+            Tile* newTile = mLF->simpleSplitTile(*(overlapTile), tileRect, direction);
+            if (newTile == NULL){
+                std::cout << "[DFSL] Error: Simple split tile failed\n";
+            }
+            else if (newTile == overlapTile){
+                // remove from original tessera, add to new Tessera
+                int indexToRemove = edge.toIndex;
+                removeIndexFromOverlap(indexToRemove, overlapTile);
+            }
+            else {
+                newTile->OverlapFixedTesseraeIdx = overlapTile->OverlapFixedTesseraeIdx;
+                newTile->OverlapSoftTesseraeIdx = overlapTile->OverlapSoftTesseraeIdx;
+                for (int fixedTessIndex: newTile->OverlapFixedTesseraeIdx){
+                    Tessera* fixedTess = mLF->fixedTesserae[fixedTessIndex];
+                    fixedTess->OverlapArr.push_back(newTile);
+                }
+                for (int softTessIndex: newTile->OverlapSoftTesseraeIdx){
+                    Tessera* softTess = mLF->softTesserae[softTessIndex];
+                    softTess->OverlapArr.push_back(newTile);
+                }
+
+                int indexToRemove = edge.toIndex;
+                removeIndexFromOverlap(indexToRemove, overlapTile);
+            }
+        }
+    }
+}
+
 bool DFSLegalizer::migrateOverlap(int overlapIndex){
     mBestPath.clear();
     mCurrentPath.clear();
@@ -530,55 +728,24 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
         if (fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT){
             if (resolvableArea < mMigratingArea){
                 // create transient overlap area
-                std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << " whitespace area: " << resolvableArea << ")\n";
-                std::cout << "Saving rest of overlap to resolve later\n";
-                OverlapArea tempArea;
-                tempArea.index1 = *(fromNode.overlaps.begin());
-                tempArea.index2 = *(fromNode.overlaps.rbegin());
-                tempArea.area = mMigratingArea - resolvableArea;
 
-                mTransientOverlapArea.push_back(tempArea);
+                bool result = splitOverlap(edge, resolvableArea);
+                if (!result){
+                    std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << " whitespace area: " << resolvableArea << ")\n";
+                    std::cout << "Saving rest of overlap to resolve later\n";
+                    OverlapArea tempArea;
+                    tempArea.index1 = *(fromNode.overlaps.begin());
+                    tempArea.index2 = *(fromNode.overlaps.rbegin());
+                    tempArea.area = mMigratingArea - resolvableArea;
+
+                    mTransientOverlapArea.push_back(tempArea);
+                }
             }
             else {
                 std::cout << "Removing " << toNode.nodeName << " attribute from " << fromNode.tileList.size() << " tiles\n";
                 int indexToRemove = edge.toIndex; // should be soft index
-                if (indexToRemove < mFixedTessNum){
-                    // should not happen
-                    std::cout << "[DFSL] ERROR: Migrating overlap to fixed block: " << mLF->fixedTesserae[indexToRemove]->getName() << '\n';
-                }
-                else {
-                    for (Tile* overlapTile: fromNode.tileList){
-                        int fixedOverlapNum = overlapTile->OverlapFixedTesseraeIdx.size();
-                        int softOverlapNum = overlapTile->OverlapSoftTesseraeIdx.size();
-                        if (fixedOverlapNum + softOverlapNum == 2){
-                            // remove from overlaparr of other tess, add to tilearr
-                            int otherIndex;
-                            for (int index: overlapTile->OverlapFixedTesseraeIdx){
-                                if (index != indexToRemove){
-                                    otherIndex = index;
-                                }
-                            }
-                            for (int index: overlapTile->OverlapSoftTesseraeIdx){
-                                if (index + mFixedTessNum != indexToRemove){
-                                    otherIndex = index + mFixedTessNum;
-                                }
-                            }
-
-                            overlapTile->OverlapFixedTesseraeIdx.clear();
-                            overlapTile->OverlapSoftTesseraeIdx.clear();
-                            overlapTile->setType(tileType::BLOCK);
-
-                            Tessera* otherTess = otherIndex < mFixedTessNum ? mLF->fixedTesserae[otherIndex] : mLF->softTesserae[otherIndex - mFixedTessNum];
-                            removeFromVector(overlapTile, otherTess->OverlapArr);
-                            otherTess->TileArr.push_back(overlapTile);
-
-                            removeFromVector(overlapTile, mLF->softTesserae[indexToRemove - mFixedTessNum]->OverlapArr);
-                        }
-                        else {
-                            removeFromVector(overlapTile, mLF->softTesserae[indexToRemove - mFixedTessNum]->OverlapArr);
-                            removeFromVector(indexToRemove - mFixedTessNum, overlapTile->OverlapSoftTesseraeIdx);                                
-                        }
-                    }
+                for (Tile* overlapTile: fromNode.tileList){
+                    removeIndexFromOverlap(indexToRemove, overlapTile);
                 }
             }
         }
@@ -610,6 +777,45 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     std::cout << "\n";
     mLF->visualiseArtpiece("debug_DFSL.txt", true);
     return true;
+}
+
+void DFSLegalizer::removeIndexFromOverlap(int indexToRemove, Tile* overlapTile){
+    if (indexToRemove < mFixedTessNum){
+        // should not happen
+        std::cout << "[DFSL] ERROR: Migrating overlap to fixed block: " << mLF->fixedTesserae[indexToRemove]->getName() << '\n';
+        return;
+    }
+
+    int fixedOverlapNum = overlapTile->OverlapFixedTesseraeIdx.size();
+    int softOverlapNum = overlapTile->OverlapSoftTesseraeIdx.size();
+    if (fixedOverlapNum + softOverlapNum == 2){
+        // remove from overlaparr of other tess, add to tilearr
+        int otherIndex;
+        for (int index: overlapTile->OverlapFixedTesseraeIdx){
+            if (index != indexToRemove){
+                otherIndex = index;
+            }
+        }
+        for (int index: overlapTile->OverlapSoftTesseraeIdx){
+            if (index + mFixedTessNum != indexToRemove){
+                otherIndex = index + mFixedTessNum;
+            }
+        }
+
+        overlapTile->OverlapFixedTesseraeIdx.clear();
+        overlapTile->OverlapSoftTesseraeIdx.clear();
+        overlapTile->setType(tileType::BLOCK);
+
+        Tessera* otherTess = otherIndex < mFixedTessNum ? mLF->fixedTesserae[otherIndex] : mLF->softTesserae[otherIndex - mFixedTessNum];
+        removeFromVector(overlapTile, otherTess->OverlapArr);
+        otherTess->TileArr.push_back(overlapTile);
+
+        removeFromVector(overlapTile, mLF->softTesserae[indexToRemove - mFixedTessNum]->OverlapArr);
+    }
+    else {
+        removeFromVector(overlapTile, mLF->softTesserae[indexToRemove - mFixedTessNum]->OverlapArr);
+        removeFromVector(indexToRemove - mFixedTessNum, overlapTile->OverlapSoftTesseraeIdx);                                
+    }
 }
 
 // todo: turn into template function
@@ -833,6 +1039,7 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
         break;
     }
 
+    // note: returnTile & bestSegment are not initialized if OB edge
     return MigrationEdge(edge.fromIndex, edge.toIndex, returnTile, bestSegment, edgeCost);
 }
 

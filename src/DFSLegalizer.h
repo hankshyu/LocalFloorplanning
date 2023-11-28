@@ -67,6 +67,8 @@ private:
     LegalInfo getLegalInfo(std::vector<Tile*>& tiles); 
     LegalInfo getLegalInfo(std::set<Tile*>& tiles); 
     void addBlockNode(Tessera* tess, bool isFixed);
+    bool splitOverlap(MigrationEdge& edge, int resolvableArea);
+    void removeIndexFromOverlap(int indexToRemove, Tile* overlapTile);
 public:
     DFSLegalizer();
     ~DFSLegalizer();
