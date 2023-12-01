@@ -488,12 +488,12 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
     if (!(fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT)){
-        return;
+        return false;
     }
 
     // Find union of overlap
     // chances are it is a rectangle
-    Polygon90Set overlapPolygonSet, blockPolygonSet;
+    Polygon90Set overlapPolygonSet;
     std::vector<Rectangle> rectangleContainer;
     overlapPolygonSet.clear();
     for (Tile* overlapTile: fromNode.tileList){
@@ -504,9 +504,11 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
             {overlapTile->getUpperRight().x, overlapTile->getUpperRight().y}, 
             {overlapTile->getUpperLeft().x, overlapTile->getUpperLeft().y}
         };
+        gtl::set_points(tileRectangle, newAreaVertices.begin(), newAreaVertices.end());
         overlapPolygonSet += tileRectangle;
     }
     overlapPolygonSet.get_rectangles(rectangleContainer);
+
     if (rectangleContainer.size() == 0){
         std::cout << "[DFSL] Error: Unable to find overlap area\n";
         return false;
@@ -666,10 +668,11 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
                 }
 
                 int indexToRemove = edge.toIndex;
-                removeIndexFromOverlap(indexToRemove, overlapTile);
+                removeIndexFromOverlap(indexToRemove, newTile);
             }
         }
     }
+    return true;
 }
 
 bool DFSLegalizer::migrateOverlap(int overlapIndex){
@@ -730,9 +733,13 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
                 // create transient overlap area
 
                 bool result = splitOverlap(edge, resolvableArea);
-                if (!result){
-                    std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << " whitespace area: " << resolvableArea << ")\n";
-                    std::cout << "Saving rest of overlap to resolve later\n";
+
+                std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << " whitespace area: " << resolvableArea << ")\n";
+                if (result){
+                    std::cout << "Splitting overlap tile(s).\n";
+                }
+                else {
+                    std::cout << "Split failed. Storing in value of remaining overlap area.\n";
                     OverlapArea tempArea;
                     tempArea.index1 = *(fromNode.overlaps.begin());
                     tempArea.index2 = *(fromNode.overlaps.rbegin());
@@ -899,7 +906,6 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
     {
     case EDGETYPE::OB:
     {
-        // TODO: predict overlap to block migration (may not be entire overlap that migrates)
         Tessera* toTess = mLF->softTesserae[edge.toIndex - mFixedTessNum];
         std::set<Tile*> overlap;
         std::set<Tile*> withoutOverlap;
@@ -926,18 +932,22 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
         // get area
         double overlapArea = overlapInfo.actualArea;
         double blockArea = withoutOverlapInfo.actualArea;
+        double areaWeight = (overlapArea / blockArea) * config.OBAreaWeight;
 
         // get util
         double withOverlapUtil = withOverlapInfo.util;
         double withoutOverlapUtil = withoutOverlapInfo.util;
+        // positive reinforcement if util is improved
+        double utilCost = (withOverlapUtil < withoutOverlapUtil) ? (withoutOverlapUtil - withOverlapUtil) * config.OBUtilPosRein :  
+                                                        (1.0 - withoutOverlapUtil) * config.OBUtilWeight;
 
-        // get aspect ratio without overlap
+
+        // get value of long/short side without overlap
         double aspectRatio = withoutOverlapInfo.aspectRatio;
+        aspectRatio = aspectRatio > 1.0 ? aspectRatio : 1.0/aspectRatio;
+        double aspectCost = pow(aspectRatio - 1.0, 4) * config.OBAspWeight;
 
-        edgeCost += (overlapArea / blockArea) * config.OBAreaWeight + 
-                    (withOverlapUtil - withoutOverlapUtil) * config.OBUtilWeight +
-                    // tan(pow(withOverlapUtil - withoutOverlapUtil, 2.0) * PI / 180.0) * config.OBUtilWeight +
-                    tan(pow(aspectRatio - 1.0, 2.0) * PI / 180.0) * config.OBAspWeight; 
+        edgeCost += areaWeight + utilCost + aspectCost;
 
         break;
     }
@@ -1009,13 +1019,19 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
             // get util
             double oldBlockUtil = oldBlockInfo.util;
             double newBlockUtil = newBlockInfo.util;
+            // positive reinforcement if util is improved
+            double utilCost;
+            utilCost = (oldBlockUtil < newBlockUtil) ? (newBlockUtil - oldBlockUtil) * config.BWUtilPosRein :  
+                                                        (1.0 - newBlockUtil) * config.BWUtilWeight;
 
             // get aspect ratio with new area
             double aspectRatio = newBlockInfo.aspectRatio;
+            aspectRatio = aspectRatio > 1.0 ? aspectRatio : 1.0/aspectRatio;
+            double arCost;
+            arCost = pow(aspectRatio - 1.0, 4.0) * config.BWAspWeight;
 
-            double cost = (oldBlockUtil - newBlockUtil) * config.OBUtilWeight +
-                            tan(pow(aspectRatio - 1.0, 4.0) * PI / 180.0) * config.OBAspWeight;
-
+            double cost = utilCost + arCost;
+                            
             if (cost < lowestCost){
                 lowestCost = cost;
                 bestSegmentIndex = s;
@@ -1047,8 +1063,10 @@ Config::Config(): maxCostCutoff(1000000.0),
                     OBAreaWeight(750.0),
                     OBUtilWeight(1000.0),
                     OBAspWeight(100.0),
+                    OBUtilPosRein(-500.0),
                     BWUtilWeight(1500.0),
-                    BWAspWeight(100.0),
+                    BWUtilPosRein(-500.0),
+                    BWAspWeight(500.0),
                     BBFlatCost(1000000.0),
                     WWFlatCost(1000000.0) { ; }
 

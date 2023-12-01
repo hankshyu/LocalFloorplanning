@@ -9,6 +9,7 @@
 namespace DFSL {
 
 #define PI 3.14159265358979323846
+#define EPSILON 0.0001
 #define UTIL_RULE 0.8
 #define ASPECT_RATIO_RULE 2.0 
 
@@ -32,7 +33,9 @@ struct Config {
     double OBAreaWeight;
     double OBUtilWeight;
     double OBAspWeight;
+    double OBUtilPosRein;
     double BWUtilWeight;
+    double BWUtilPosRein;
     double BWAspWeight;
     double BBFlatCost;
     double WWFlatCost;  
@@ -56,7 +59,6 @@ private:
     
     bool migrateOverlap(int overlapIndex);
     void dfs(DFSLEdge& edge, double currentCost);
-    // predicted cost, predicted tile
     MigrationEdge getEdgeCost(DFSLEdge& edge);
     void addOverlapInfo(Tile* tile);
     void addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2);
@@ -99,7 +101,7 @@ struct DFSLNode {
 struct Segment {
     Cord segStart;
     Cord segEnd;
-    DIRECTION direction;
+    DIRECTION direction; // direction of the normal vector of this segment
 };
 
 struct DFSLEdge {

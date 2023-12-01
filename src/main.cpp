@@ -222,8 +222,10 @@ int main(int argc, char const *argv[]) {
                     double storeOBAreaWeight;
                     double storeOBUtilWeight;
                     double storeOBAspWeight;
+                    double storeOBUtilPosRein;
                     double storeBWUtilWeight;
                     double storeBWAspWeight;
+                    double storeBWUtilPosRein;
                     
                     
                     if (legalIter == 0){
@@ -233,7 +235,7 @@ int main(int argc, char const *argv[]) {
                         storeOBUtilWeight = 1000.0;
                         storeOBAspWeight = 100.0;
                         storeBWUtilWeight = 1500.0;
-                        storeBWAspWeight = 100.0;
+                        storeBWAspWeight = 500.0;
                     }
                     else if (legalIter == 1){
                         // prioritize area 
@@ -242,7 +244,7 @@ int main(int argc, char const *argv[]) {
                         dfsl.config.OBUtilWeight = storeOBUtilWeight = 750.0;
                         dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
                         dfsl.config.BWUtilWeight = storeBWUtilWeight = 750.0;
-                        dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 500.0;
                     }
                     else if (legalIter == 2){
                         // prioritize util
@@ -251,16 +253,17 @@ int main(int argc, char const *argv[]) {
                         dfsl.config.OBUtilWeight = storeOBUtilWeight  = 900.0;
                         dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
                         dfsl.config.BWUtilWeight = storeBWUtilWeight = 2000.0;
-                        dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 500.0;
+                        dfsl.config.BWUtilPosRein = storeBWUtilPosRein = -1000.0;
                     }
                     else if (legalIter == 3){
                         // prioritize aspect ratio
                         std::cout << "LegalIter = 3, prioritizing aspect ratio\n";
                         dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
                         dfsl.config.OBUtilWeight = storeOBUtilWeight  = 1100.0;
-                        dfsl.config.OBAspWeight = storeOBAspWeight = 1000.0;
+                        dfsl.config.OBAspWeight = storeOBAspWeight = 500.0;
                         dfsl.config.BWUtilWeight = storeBWUtilWeight = 1000.0;
-                        dfsl.config.BWAspWeight = storeBWAspWeight = 1100.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 1200.0;
                     }
                     std::cout << "Legalization mode: " << legalizeMode << std::endl;
 
