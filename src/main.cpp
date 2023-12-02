@@ -27,47 +27,37 @@ int main(int argc, char const *argv[]) {
 
     rg::Parser parser(argv[1]);
 
+    // For your convenience, punishment value is set to one value only. Note that this parameter may not give a legal solution for all cases.
+    std::vector<double> punishmentValues{
+        1.0
+    };
     
+    // If you want to play with parameters, here are the original parameters:
     // std::vector<double> punishmentValues{
     //     0.000001, 0.00001, 0.0001 ,0.001, 0.01, 0.1, 1.0 ,10.0, 100.0 ,1000.0, 10000.0, 100000.0, 1000000
     // };
 
-    std::vector<double> punishmentValues{
-        10E-5,
-        10E-4, 2.5E-4,
-        10E-3, 8.75E-2, 7.5E-3, 6.25E-3, 5E-3, 3.75E-3, 2.5E-3, 1.25E-3,
-        10E-2, 8.75E-2, 7.5E-2, 6.25E-2, 5E-2, 3.75E-2, 2.5E-2, 1.25E-2,
-        10E-1, 8.75E-2, 7.5E-1, 6.25E-1, 5E-1, 3.75E-1, 2.5E-1, 1.25E-1,
-        1.0,
-        10E+1, 10E+2, 10E+4
+
+    // For your convenience, tolerance length is set to one value only
+    std::vector<double> toleranceLengthValues{
+        12.0
     };
 
-    std::vector<double> toleranceLengthValues;
-    for(int i = 0; i < punishmentValues.size(); ++i){
-        toleranceLengthValues.push_back(0);
-    }
-    double pushValue = 1;
-    while(pushValue < ((parser.getDieWidth() + parser.getDieHeight()) * 0.5 * 0.125)){
-        for(int i = 0; i < punishmentValues.size(); ++i){
-            toleranceLengthValues.push_back(pushValue);
-        }
-        pushValue = pushValue * 2;
+    // If you want to play with parameters, here are the original parameters:
+    // std::vector<double> toleranceLengthValues;
+    // for(int i = 0; i < punishmentValues.size(); ++i){
+    //     toleranceLengthValues.push_back(0);
+    // }
+    // double pushValue = 1;
+    // while(pushValue < ((parser.getDieWidth() + parser.getDieHeight()) * 0.5 * 0.125)){
+    //     for(int i = 0; i < punishmentValues.size(); ++i){
+    //         toleranceLengthValues.push_back(pushValue);
+    //     }
+    //     pushValue = pushValue * 2;
 
-    }
-    const int MAX_ITER = 1;
+    // }
+    const int MAX_ITER = toleranceLengthValues.size();
     std::cout << "MAX_ITER: " << MAX_ITER << std::endl;
-
-    // toleranceLengthValues.push_back()
-
-    // std::fill(toleranceLengthValues.begin(), toleranceLengthValues.begin()+4, 0);
-    // std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 12800);
-    // std::fill(toleranceLengthValues.begin()+4, toleranceLengthValues.begin()+7, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 1600);
-    // std::fill(toleranceLengthValues.begin()+7, toleranceLengthValues.begin()+10, (rgparser.getDieWidth() + rgparser.getDieHeight()) / 800);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 400);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 200);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 50);
-    // std::fill(toleranceLengthValues.begin()+10, toleranceLengthValues.end(), (rgparser.getDieWidth() + rgparser.getDieHeight()) / 200);
-
     
     mnt::Monitor monitor;
     LFLegaliser *legaliser = nullptr;
@@ -108,8 +98,54 @@ int main(int argc, char const *argv[]) {
             monitor.printPhase("Global Floorplanning Phase", iter);
             // auto clockCounterbegin = std::chrono::steady_clock::now();
 
+            int iteration = 20000;
+            double lr = 5. / iteration;
+            solver.setMaxMovement(0.001);
+
+        
+            // ! These parameters can be modified to meet your needs
+            solver.setPunishment(punishmentValue);
+
+            for ( int phase = 1; phase <= 50; phase++ ) {
+                solver.setSizeScalar(phase * 0.02);
+                solver.setOverlapTolaranceLen(toleranceValue * phase * 0.02);
+                for ( int i = 0; i < iteration; i++ ) {
+                    solver.calcGradient();
+                    solver.gradientDescent(lr);
+                }
+            }
+
+            solver.setPullWhileOverlap(false);
+            solver.setMaxMovement(1e-6);
+            solver.setPunishment(1e6);
+            solver.setOverlapTolaranceLen(0.);
+            solver.setSizeScalar(1.);
+            lr = 1e-8;
+            int count = 0;
+            while ( solver.hasOverlap() ) {
+                solver.squeezeToFit();
+                for ( int i = 0; i < 5000; i++ ) {
+                    solver.calcGradient();
+                    solver.gradientDescent(lr);
+                }
+
+                if ( ++count >= 5 ) {
+                    break;
+                }
+            }
+
+            if ( !solver.isAreaLegal() ) {
+                std::cout << "[GlobalSolver] ERROR: Area Constraint Violated.\n";
+            }
+            else {
+                std::cout << "[GlobalSolver] Note: Area Constraint Met.\n";
+            }
+
+            // solver.currentPosition2txt("outputs/global_test.txt");
+            std::cout << std::fixed;
+            std::cout << "[GlobalSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
+
             legaliser = new LFLegaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
-            
             legaliser->translateGlobalFloorplanning(solver);
             legaliser->detectfloorplanningOverlaps();
 
@@ -186,8 +222,10 @@ int main(int argc, char const *argv[]) {
                     double storeOBAreaWeight;
                     double storeOBUtilWeight;
                     double storeOBAspWeight;
+                    double storeOBUtilPosRein;
                     double storeBWUtilWeight;
                     double storeBWAspWeight;
+                    double storeBWUtilPosRein;
                     
                     
                     if (legalIter == 0){
@@ -197,7 +235,7 @@ int main(int argc, char const *argv[]) {
                         storeOBUtilWeight = 1000.0;
                         storeOBAspWeight = 100.0;
                         storeBWUtilWeight = 1500.0;
-                        storeBWAspWeight = 100.0;
+                        storeBWAspWeight = 500.0;
                     }
                     else if (legalIter == 1){
                         // prioritize area 
@@ -206,7 +244,7 @@ int main(int argc, char const *argv[]) {
                         dfsl.config.OBUtilWeight = storeOBUtilWeight = 750.0;
                         dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
                         dfsl.config.BWUtilWeight = storeBWUtilWeight = 750.0;
-                        dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 500.0;
                     }
                     else if (legalIter == 2){
                         // prioritize util
@@ -215,16 +253,17 @@ int main(int argc, char const *argv[]) {
                         dfsl.config.OBUtilWeight = storeOBUtilWeight  = 900.0;
                         dfsl.config.OBAspWeight = storeOBAspWeight = 100.0;
                         dfsl.config.BWUtilWeight = storeBWUtilWeight = 2000.0;
-                        dfsl.config.BWAspWeight = storeBWAspWeight = 100.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 500.0;
+                        dfsl.config.BWUtilPosRein = storeBWUtilPosRein = -1000.0;
                     }
                     else if (legalIter == 3){
                         // prioritize aspect ratio
                         std::cout << "LegalIter = 3, prioritizing aspect ratio\n";
                         dfsl.config.OBAreaWeight = storeOBAreaWeight  = 750.0;
                         dfsl.config.OBUtilWeight = storeOBUtilWeight  = 1100.0;
-                        dfsl.config.OBAspWeight = storeOBAspWeight = 1000.0;
+                        dfsl.config.OBAspWeight = storeOBAspWeight = 500.0;
                         dfsl.config.BWUtilWeight = storeBWUtilWeight = 1000.0;
-                        dfsl.config.BWAspWeight = storeBWAspWeight = 1100.0;
+                        dfsl.config.BWAspWeight = storeBWAspWeight = 1200.0;
                     }
                     std::cout << "Legalization mode: " << legalizeMode << std::endl;
 
@@ -258,9 +297,10 @@ int main(int argc, char const *argv[]) {
                                 bestHpwl = finalScore;
                                 std::cout << "Best Hpwl found\n";
                                 outputFinalAnswer(&(legalizedFloorplan), parser, argv[2]);
-                                solver.currentPosition2txt(parser, "outputs/global_test.txt");
+                                solver.currentPosition2txt("outputs/global_test.txt");
+                                legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
                             }
-                            legalizedFloorplan.visualiseArtpiece("outputs/legal" + std::to_string(legalIter*3+legalizeMode) + ".txt", true);
+                            // legalizedFloorplan.visualiseArtpiece("outputs/legal" + std::to_string(legalIter*3+legalizeMode) + ".txt", true);
                             monitor.recordInteration(iter, legalIter * 3 + legalizeMode, punishmentValue, toleranceValue,
                                 storeOBAreaWeight, storeOBUtilWeight, storeOBAspWeight, storeBWUtilWeight, storeBWAspWeight,
                                 itm, its, true, true, false, finalScore);
