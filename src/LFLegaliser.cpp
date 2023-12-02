@@ -1874,7 +1874,7 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
     int newTileYh = newTile->getUpperRight().y;
 
     switch (direction){
-    case 0: // extend from top side, new tile is on top of old tile
+    case 0:{ // extend from top side, new tile is on top of old tile
         // find new tr, bl ptrs;
         Tile* newTrPtr = NULL, *newBlPtr = NULL;
         Cord newTrNeighborPoint(newTile->getLowerRight());
@@ -1932,7 +1932,8 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         tilePtr->setHeight(newHeight);
 
         break;
-    case 1: // extend from right side, new tile is right of old tile
+    }
+    case 1:{ // extend from right side, new tile is right of old tile
         // find new rt, lb ptrs;
         Tile* newRtPtr = NULL, *newLbPtr = NULL;
         Cord newRtNeighborPoint(newTile->getUpperLeft());
@@ -1990,7 +1991,8 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         tilePtr->setWidth(newWidth);
 
         break;
-    case 2: // extend from bottom side, new tile is bottom of old tile
+    }
+    case 2:{ // extend from bottom side, new tile is bottom of old tile
         // find new tr, bl ptrs;
         Tile* newTrPtr = NULL, *newBlPtr = NULL;
         Cord newTrNeighborPoint(newTile->getUpperRight());
@@ -2050,7 +2052,8 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         tilePtr->setHeight(newHeight);
 
         break;
-    case 3: // extend from left side, new tile is left of old tile
+    }
+    case 3:{ // extend from left side, new tile is left of old tile
         // find new rt, lb ptrs;
         Tile* newRtPtr = NULL, *newLbPtr = NULL;
         Cord newRtNeighborPoint(newTile->getUpperRight());
@@ -2110,6 +2113,7 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         tilePtr->setLowerLeft(newLL);
 
         break;
+    }
     default:
         break;
     }
