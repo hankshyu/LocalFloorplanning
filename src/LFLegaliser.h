@@ -89,7 +89,8 @@ public:
 
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
-
+    
+    Tile* simpleSplitTile(Tile& tile, Rectangle rect, int direction);
 
     void visualiseArtpiece(const std::string outputFileName, bool checkBlankTile);
     void visualiseDebug(const std::string outputFileName);

@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "maxflow.h"
 #include "LFLegaliser.h"
 
 namespace DFSL {
 
 #define PI 3.14159265358979323846
+#define EPSILON 0.0001
 #define UTIL_RULE 0.8
 #define ASPECT_RATIO_RULE 2.0 
 
@@ -18,6 +18,7 @@ struct DFSLEdge;
 struct Segment;
 struct LegalInfo;
 struct OverlapArea;
+struct MigrationEdge;
 struct Config;
 
 enum class DFSLTessType : unsigned char { OVERLAP, FIXED, SOFT, BLANK };
@@ -32,7 +33,9 @@ struct Config {
     double OBAreaWeight;
     double OBUtilWeight;
     double OBAspWeight;
+    double OBUtilPosRein;
     double BWUtilWeight;
+    double BWUtilPosRein;
     double BWAspWeight;
     double BBFlatCost;
     double WWFlatCost;  
@@ -44,8 +47,8 @@ private:
     std::vector<DFSLNode> mAllNodes;
     double mBestCost;
     int mMigratingArea;
-    std::vector<DFSLEdge> mBestPath;
-    std::vector<DFSLEdge> mCurrentPath;
+    std::vector<MigrationEdge> mBestPath;
+    std::vector<MigrationEdge> mCurrentPath;
     std::multimap<Tile*, int> mTilePtr2NodeIndex;
     std::vector<OverlapArea> mTransientOverlapArea;
     LFLegaliser* mLF;
@@ -55,8 +58,8 @@ private:
     int mBlankNum;
     
     bool migrateOverlap(int overlapIndex);
-    void dfs(DFSLEdge edge, double currentCost);
-    double getEdgeCost(DFSLEdge edge);
+    void dfs(DFSLEdge& edge, double currentCost);
+    MigrationEdge getEdgeCost(DFSLEdge& edge);
     void addOverlapInfo(Tile* tile);
     void addSingleOverlapInfo(Tile* tile, int overlapIdx1, int overlapIdx2);
     std::string toOverlapName(int tessIndex1, int tessIndex2);
@@ -66,6 +69,8 @@ private:
     LegalInfo getLegalInfo(std::vector<Tile*>& tiles); 
     LegalInfo getLegalInfo(std::set<Tile*>& tiles); 
     void addBlockNode(Tessera* tess, bool isFixed);
+    bool splitOverlap(MigrationEdge& edge, int resolvableArea);
+    void removeIndexFromOverlap(int indexToRemove, Tile* overlapTile);
 public:
     DFSLegalizer();
     ~DFSLegalizer();
@@ -75,13 +80,12 @@ public:
     Config config;
 };
 
-inline bool inVector(int a, std::vector<DFSLEdge>& vec);
-
 bool removeFromVector(int a, std::vector<int>& vec);
 
 bool removeFromVector(Tile* a, std::vector<Tile*>& vec);
 
-static bool compareSegment(Segment a, Segment b);
+static bool compareXSegment(Segment a, Segment b);
+static bool compareYSegment(Segment a, Segment b);
 
 struct DFSLNode {
     DFSLNode();
@@ -97,15 +101,23 @@ struct DFSLNode {
 struct Segment {
     Cord segStart;
     Cord segEnd;
-    // Segment(Cord start, Cord end);
+    DIRECTION direction; // direction of the normal vector of this segment
 };
 
 struct DFSLEdge {
     int fromIndex;
     int toIndex; 
-    Segment commonEdge;  
-    
-    DIRECTION direction;
+    std::vector<Segment> tangentSegments;
+};
+
+struct MigrationEdge {
+    int fromIndex;
+    int toIndex;
+    Segment segment;
+    Tile migratedArea; // replace this with boost rectangle
+    double edgeCost;
+    MigrationEdge();
+    MigrationEdge(int from, int to, Tile& area, Segment& seg, double cost);
 };
 
 struct LegalInfo {

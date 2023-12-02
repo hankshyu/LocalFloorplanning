@@ -1832,6 +1832,295 @@ void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std
     }
 }
 
+// added by ryan
+Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int direction){
+    Tile* tilePtr = &originalTile;
+    if (originalTile.getLowerLeft().x == gtl::xl(newRect) && originalTile.getLowerLeft().y == gtl::yl(newRect) &&
+        originalTile.getUpperRight().x == gtl::xh(newRect) && originalTile.getUpperRight().y == gtl::yh(newRect)){
+            return tilePtr;
+        }
+    
+    std::vector<Tile*> topNeighbors, bottomNeighbors, leftNeighbors, rightNeighbors;
+    findTopNeighbors(tilePtr, topNeighbors);
+    findRightNeighbors(tilePtr, rightNeighbors);        
+    findDownNeighbors(tilePtr, bottomNeighbors);
+    findLeftNeighbors(tilePtr, leftNeighbors);
+    
+    Rectangle originalRect(originalTile.getLowerLeft().x, originalTile.getLowerLeft().y, 
+                           originalTile.getUpperRight().x, originalTile.getUpperRight().y);
+    if (!gtl::contains(originalRect, newRect)){
+        std::cout << "new Tile not contained in original Tile\n";
+        return NULL;
+    }
+
+    if (direction < 0 || direction > 3){
+        std::cout << "direction not in range\n";
+        return NULL;
+    }
+
+    if (gtl::horizontal(originalRect) != gtl::horizontal(newRect) 
+        && gtl::vertical(originalRect) != gtl::vertical(newRect)){
+
+        std::cout << "Both intervals do not match\n";
+        return NULL;
+    }
+
+    Tile* newTile = new Tile(originalTile.getType(), Cord(gtl::xl(newRect), gtl::yl(newRect)), 
+                              gtl::delta(newRect, gtl::orientation_2d_enum::HORIZONTAL), gtl::delta(newRect, gtl::orientation_2d_enum::VERTICAL));
+
+    int newTileXl = newTile->getLowerLeft().x;
+    int newTileYl = newTile->getLowerLeft().y;
+    int newTileXh = newTile->getUpperRight().x;
+    int newTileYh = newTile->getUpperRight().y;
+
+    switch (direction){
+    case 0:{ // extend from top side, new tile is on top of old tile
+        // find new tr, bl ptrs;
+        Tile* newTrPtr = NULL, *newBlPtr = NULL;
+        Cord newTrNeighborPoint(newTile->getLowerRight());
+        newTrNeighborPoint.y = newTrNeighborPoint.y - 1;
+        for (Tile* rightNeighbor: rightNeighbors){
+            if (rightNeighbor->checkCordInTile(newTrNeighborPoint)){
+                newTrPtr = rightNeighbor;
+                break;
+            }
+        }
+        Cord newBlNeighborPoint(newTile->getLowerLeft());
+        newBlNeighborPoint.x = newBlNeighborPoint.x - 1; 
+        for (Tile* leftNeighbor: leftNeighbors){
+            if (leftNeighbor->checkCordInTile(newBlNeighborPoint)){
+                newBlPtr = leftNeighbor;
+                break;
+            }
+        }
+
+        // modify pointers of old and new tile
+        // new
+        newTile->tr = tilePtr->tr;
+        newTile->rt = tilePtr->rt;
+        newTile->bl = newBlPtr;
+        newTile->lb = tilePtr;
+        // old
+        tilePtr->rt = newTile;
+        tilePtr->tr = newTrPtr;
+
+        // adjust the ptrs of left, top, right neighbors
+        // left
+        for (Tile* leftNeighbor: leftNeighbors){
+            int neighborYh = leftNeighbor->getUpperRight().y;
+            if (newTileYl < neighborYh && neighborYh <= newTileYh){
+                leftNeighbor->tr = newTile;
+            }
+        }
+        // top
+        for (Tile* topNeighbor: topNeighbors){
+            int neighborXl = topNeighbor->getLowerLeft().x;
+            if (newTileXl <= neighborXl && neighborXl < newTileXh){
+                topNeighbor->lb = newTile;
+            }
+        }
+        // right
+        for (Tile* rightNeighbor: rightNeighbors){
+            int neighborYl = rightNeighbor->getLowerLeft().y;
+            if (newTileYl <= neighborYl && neighborYl < newTileYh){
+                rightNeighbor->bl = newTile;
+            }
+        }
+
+        // adjust x,y,width,height of old tile;
+        int newHeight = tilePtr->getHeight() - newTile->getHeight();
+        tilePtr->setHeight(newHeight);
+
+        break;
+    }
+    case 1:{ // extend from right side, new tile is right of old tile
+        // find new rt, lb ptrs;
+        Tile* newRtPtr = NULL, *newLbPtr = NULL;
+        Cord newRtNeighborPoint(newTile->getUpperLeft());
+        newRtNeighborPoint.x = newRtNeighborPoint.x - 1;
+        for (Tile* topNeighbor: topNeighbors){
+            if (topNeighbor->checkCordInTile(newRtNeighborPoint)){
+                newRtPtr = topNeighbor;
+                break;
+            }
+        }
+        Cord newLbNeighborPoint(newTile->getLowerLeft());
+        newLbNeighborPoint.y = newLbNeighborPoint.y - 1; 
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            if (bottomNeighbor->checkCordInTile(newLbNeighborPoint)){
+                newLbPtr = bottomNeighbor;
+                break;
+            }
+        }
+
+        // modify pointers of old and new tile
+        // new
+        newTile->tr = tilePtr->tr;
+        newTile->rt = tilePtr->rt;
+        newTile->bl = tilePtr;
+        newTile->lb = newLbPtr;
+        // old
+        tilePtr->rt = newRtPtr;
+        tilePtr->tr = newTile;
+
+        // adjust the ptrs of top, right, bottom neighbors
+        // top
+        for (Tile* topNeighbor: topNeighbors){
+            int neighborXl = topNeighbor->getLowerLeft().x;
+            if (newTileXl <= neighborXl && neighborXl < newTileXh){
+                topNeighbor->lb = newTile;
+            }
+        }
+        // right
+        for (Tile* rightNeighbor: rightNeighbors){
+            int neighborYl = rightNeighbor->getLowerLeft().y;
+            if (newTileYl <= neighborYl && neighborYl < newTileYh){
+                rightNeighbor->bl = newTile;
+            }
+        }
+        // bottom
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            int neighborXh = bottomNeighbor->getUpperRight().x;
+            if (newTileXl < neighborXh && neighborXh <= newTileXh){
+                bottomNeighbor->rt = newTile;
+            }
+        }
+
+        // adjust x,y,width,height of old tile;
+        int newWidth = tilePtr->getWidth() - newTile->getWidth();
+        tilePtr->setWidth(newWidth);
+
+        break;
+    }
+    case 2:{ // extend from bottom side, new tile is bottom of old tile
+        // find new tr, bl ptrs;
+        Tile* newTrPtr = NULL, *newBlPtr = NULL;
+        Cord newTrNeighborPoint(newTile->getUpperRight());
+        newTrNeighborPoint.y = newTrNeighborPoint.y - 1;
+        for (Tile* rightNeighbor: rightNeighbors){
+            if (rightNeighbor->checkCordInTile(newTrNeighborPoint)){
+                newTrPtr = rightNeighbor;
+                break;
+            }
+        }
+        Cord newBlNeighborPoint(newTile->getLowerLeft());
+        newBlNeighborPoint.x = newBlNeighborPoint.x - 1; 
+        for (Tile* leftNeighbor: leftNeighbors){
+            if (leftNeighbor->checkCordInTile(newBlNeighborPoint)){
+                newBlPtr = leftNeighbor;
+                break;
+            }
+        }
+
+        // modify pointers of old and new tile
+        // new
+        newTile->tr = newTrPtr;
+        newTile->rt = tilePtr;
+        newTile->bl = tilePtr->bl;
+        newTile->lb = tilePtr->lb;
+        // old
+        tilePtr->bl = newBlPtr;
+        tilePtr->lb = newTile;
+
+        // adjust the ptrs of right, bottom, left neighbors
+        // right
+        for (Tile* rightNeighbor: rightNeighbors){
+            int neighborYl = rightNeighbor->getLowerLeft().y;
+            if (newTileYl <= neighborYl && neighborYl < newTileYh){
+                rightNeighbor->bl = newTile;
+            }
+        }
+        // bottom
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            int neighborXh = bottomNeighbor->getUpperRight().x;
+            if (newTileXl < neighborXh && neighborXh <= newTileXh){
+                bottomNeighbor->rt = newTile;
+            }
+        }
+        // left
+        for (Tile* leftNeighbor: leftNeighbors){
+            int neighborYh = leftNeighbor->getUpperRight().y;
+            if (newTileYl < neighborYh && neighborYh <= newTileYh){
+                leftNeighbor->tr = newTile;
+            }
+        }
+
+        // adjust x,y,width,height of old tile;
+        int newHeight = tilePtr->getHeight() - newTile->getHeight();
+        Cord newLL = newTile->getUpperLeft();
+        tilePtr->setLowerLeft(newLL);
+        tilePtr->setHeight(newHeight);
+
+        break;
+    }
+    case 3:{ // extend from left side, new tile is left of old tile
+        // find new rt, lb ptrs;
+        Tile* newRtPtr = NULL, *newLbPtr = NULL;
+        Cord newRtNeighborPoint(newTile->getUpperRight());
+        newRtNeighborPoint.x = newRtNeighborPoint.x - 1;
+        for (Tile* topNeighbor: topNeighbors){
+            if (topNeighbor->checkCordInTile(newRtNeighborPoint)){
+                newRtPtr = topNeighbor;
+                break;
+            }
+        }
+        Cord newLbNeighborPoint(newTile->getLowerRight());
+        newLbNeighborPoint.y = newLbNeighborPoint.y - 1; 
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            if (bottomNeighbor->checkCordInTile(newLbNeighborPoint)){
+                newLbPtr = bottomNeighbor;
+                break;
+            }
+        }
+
+        // modify pointers of old and new tile
+        // new
+        newTile->tr = tilePtr;
+        newTile->rt = newRtPtr;
+        newTile->bl = tilePtr->bl;
+        newTile->lb = tilePtr->lb;
+        // old
+        tilePtr->bl = newTile;
+        tilePtr->lb = newLbPtr;
+
+        // adjust the ptrs of bottom, left, top neighbors
+        // bottom
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            int neighborXh = bottomNeighbor->getUpperRight().x;
+            if (newTileXl < neighborXh && neighborXh <= newTileXh){
+                bottomNeighbor->rt = newTile;
+            }
+        }
+        // left
+        for (Tile* leftNeighbor: leftNeighbors){
+            int neighborYh = leftNeighbor->getUpperRight().y;
+            if (newTileYl < neighborYh && neighborYh <= newTileYh){
+                leftNeighbor->tr = newTile;
+            }
+        }
+        // top
+        for (Tile* topNeighbor: topNeighbors){
+            int neighborXl = topNeighbor->getLowerLeft().x;
+            if (newTileXl <= neighborXl && neighborXl < newTileXh){
+                topNeighbor->lb = newTile;
+            }
+        }
+
+        // adjust x,y,width,height of old tile;
+        int newWidth = tilePtr->getWidth() - newTile->getWidth();
+        Cord newLL = newTile->getLowerRight();
+        tilePtr->setWidth(newWidth);
+        tilePtr->setLowerLeft(newLL);
+
+        break;
+    }
+    default:
+        break;
+    }
+    
+    return newTile;
+}
+
 double calculateHPWL(LFLegaliser *legaliser, const std::vector<RectGrad::ConnStruct> &connections, bool printReport){
     double HPWL = 0;
     for(RectGrad::ConnStruct cs : connections){
