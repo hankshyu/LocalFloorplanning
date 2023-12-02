@@ -61,6 +61,7 @@ private:
     void getTessNeighbors(int nodeId, std::set<int>& allNeighbors);
     void addBlockNode(Tessera* tess, bool isFixed);
     bool splitOverlap(MigrationEdge& edge, int resolvableArea);
+    bool splitSoftBlock(MigrationEdge& edge, int resolvableArea);
     void removeIndexFromOverlap(int indexToRemove, Tile* overlapTile);
 public:
     DFSLegalizer();

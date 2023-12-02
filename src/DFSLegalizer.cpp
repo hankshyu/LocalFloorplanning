@@ -481,6 +481,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
     if (!(fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT)){
+        std::cout << "[DFSL] Error: splitOverlap can only be used on overlap->soft edge.\n";
         return false;
     }
 
@@ -503,8 +504,6 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     
     Rectangle overlapRec = rectangleContainer[0];
     
-    // find segment directions
-    // if overlap flows x area to A, then x amount of area should be assigned to B in overlap
     DFSLEdge* fullEdge = NULL;
     for (DFSLEdge& fromEdge: fromNode.edgeList){
         if (fromEdge.fromIndex == edge.fromIndex && fromEdge.toIndex == edge.toIndex){
@@ -516,6 +515,8 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
         return false;
     }
 
+    // find segment directions
+    // if overlap flows x area to A, then x amount of area should be assigned to B in overlap
     std::vector<bool> sideOccupied(4, false);
     for (Segment& segment: fullEdge->tangentSegments){
         switch (segment.direction){
@@ -658,6 +659,42 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     return true;
 }
 
+bool DFSLegalizer::splitSoftBlock(MigrationEdge& edge, int resolvableArea){
+    DFSLNode& fromNode = mAllNodes[edge.fromIndex];
+    DFSLNode& toNode = mAllNodes[edge.toIndex];
+
+    if (!(fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::SOFT)){
+        std::cout << "[DFSL] Error: splitSoftBlock can only be used on soft->soft edge.\n";
+        return false;
+    }
+
+    for (Tile* tile: toNode.tileList){
+        Rectangle tileRect(tile->getLowerLeft().x, tile->getLowerLeft().y,
+                           tile->getUpperRight().x, tile->getUpperRight().y);
+        
+        bool intersects = gtl::intersect(tileRect, edge.migratedArea);
+        if (intersects){
+            Tile* newTile = mLF->splitTile(*(tile), tileRect);
+
+            if (newTile == NULL){
+                std::cout << "[DFSL] Error: BB Split tile failed\n";
+            }
+            else {
+                Tessera* fromTess = mLF->softTesserae[edge.fromIndex - mFixedTessNum];
+                Tessera* toTess = mLF->softTesserae[edge.toIndex - mFixedTessNum];
+                
+                bool removed = removeFromVector(newTile, toTess->TileArr);
+                if (!removed){
+                    std::cout << "[DFSL] Error: tile not found in toTess\n";
+                    return false;
+                }
+                fromTess->TileArr.push_back(newTile);
+            }
+        }
+    }
+    return true;
+}
+
 bool DFSLegalizer::migrateOverlap(int overlapIndex){
     mBestPath.clear();
     mCurrentPath.clear();
@@ -704,12 +741,26 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     }
     std::cout << '\n';
 
-    // todo: go through path, find maximum resolvable area
+    // go through path, find maximum resolvable area
+    int resolvableArea = mMigratingArea;
+    for (MigrationEdge& edge: mBestPath){
+        DFSLNode& fromNode = mAllNodes[edge.fromIndex];
+        DFSLNode& toNode = mAllNodes[edge.toIndex];
+
+        if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::SOFT){
+            if (gtl::area(edge.migratedArea) < resolvableArea){
+                resolvableArea = gtl::area(edge.migratedArea);
+            }
+        }
+        else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::BLANK){
+            if (gtl::area(edge.migratedArea) < resolvableArea){
+                resolvableArea = gtl::area(edge.migratedArea);
+            }
+        }
+    }
 
     // start changing physical layout
-    int resolvableArea = 0;
-    for (int i = mBestPath.size() - 1; i >= 0; i--){
-        MigrationEdge& edge = mBestPath[i];
+    for (MigrationEdge& edge: mBestPath){
         DFSLNode& fromNode = mAllNodes[edge.fromIndex];
         DFSLNode& toNode = mAllNodes[edge.toIndex];
 
@@ -747,6 +798,8 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
                 return false;
             }
 
+            bool result = splitSoftBlock(edge, resolvableArea);
+
 
         }
         else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::BLANK){
@@ -755,7 +808,6 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
                 return false;
             }
 
-            resolvableArea =  gtl::area(edge.migratedArea);
             Tile* newTile = new Tile(tileType::BLOCK, Cord(gtl::xl(edge.migratedArea), gtl::yl(edge.migratedArea)),
                                      gtl::delta(edge.migratedArea, gtl::orientation_2d_enum::HORIZONTAL), 
                                      gtl::delta(edge.migratedArea, gtl::orientation_2d_enum::VERTICAL));
@@ -1026,7 +1078,7 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
             fromUtilCost = (oldFromBlockUtil < newFromBlockUtil) ? (newFromBlockUtil - oldFromBlockUtil) * config.BBFromUtilPosRein :  
                                                         (1.0 - newFromBlockUtil) * config.BBFromUtilWeight;
             toUtilCost = (oldToBlockUtil < newToBlockUtil) ? (newToBlockUtil - oldToBlockUtil) * config.BBToUtilPosRein :  
-                                                        (1.0 - newToBlockUtil) * config.BBToUtilWeight;
+                                                        pow(1.0 - newToBlockUtil, 2) * config.BBToUtilWeight;
             
             // get aspect ratio with new area
             double aspectRatio = newFromBlockInfo.aspectRatio;
@@ -1360,8 +1412,18 @@ LegalInfo getLegalInfo(std::vector<Tile*>& tiles){
 
     legal.bbArea = legal.width * legal.height; 
     legal.BL = Cord(min_x, min_y);  
-    legal.aspectRatio = ((double) legal.width) / ((double) legal.height);
-    legal.util = ((double) legal.actualArea) / ((double) legal.bbArea);
+    if (legal.width == 0 || legal.height == 0){
+        legal.aspectRatio = INT_MAX;
+    }
+    else {
+        legal.aspectRatio = ((double) legal.width) / ((double) legal.height);
+    }
+    if (legal.actualArea == 0 || legal.bbArea == 0){
+        legal.util = 0;
+    }
+    else {
+        legal.util = ((double) legal.actualArea) / ((double) legal.bbArea);
+    }
 
     return legal;
 } 
@@ -1392,8 +1454,18 @@ LegalInfo getLegalInfo(std::set<Tile*>& tiles){
 
     legal.bbArea = legal.width * legal.height; 
     legal.BL = Cord(min_x, min_y);  
-    legal.aspectRatio = ((double) legal.width) / ((double) legal.height);
-    legal.util = ((double) legal.actualArea) / ((double) legal.bbArea);
+    if (legal.width == 0 || legal.height == 0){
+        legal.aspectRatio = INT_MAX;
+    }
+    else {
+        legal.aspectRatio = ((double) legal.width) / ((double) legal.height);
+    }
+    if (legal.actualArea == 0 || legal.bbArea == 0){
+        legal.util = 0;
+    }
+    else {
+        legal.util = ((double) legal.actualArea) / ((double) legal.bbArea);
+    }
 
     return legal;
 } 
@@ -1408,8 +1480,18 @@ LegalInfo getLegalInfo(Polygon90Set& tiles){
     legal.height = gtl::delta(bbox, gtl::orientation_2d_enum::VERTICAL);
     legal.bbArea = legal.width * legal.height;
     legal.BL = Cord(gtl::xl(bbox), gtl::yl(bbox));
-    legal.aspectRatio = ((double) legal.width) / ((double) legal.height);
-    legal.util = ((double) legal.actualArea) / ((double) legal.bbArea);
+    if (legal.width == 0 || legal.height == 0){
+        legal.aspectRatio = INT_MAX;
+    }
+    else {
+        legal.aspectRatio = ((double) legal.width) / ((double) legal.height);
+    }
+    if (legal.actualArea == 0 || legal.bbArea == 0){
+        legal.util = 0;
+    }
+    else {
+        legal.util = ((double) legal.actualArea) / ((double) legal.bbArea);
+    }
 
     return legal;
 } 

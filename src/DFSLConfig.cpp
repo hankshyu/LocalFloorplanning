@@ -15,10 +15,10 @@ Config::Config():
     BBAreaWeight(150.0),
     BBFromUtilWeight(700.0),
     BBFromUtilPosRein(-500.0),    
-    BBToUtilWeight(1000.0),
+    BBToUtilWeight(1750.0),
     BBToUtilPosRein(-100.0),
     BBAspWeight(50.0),
-    BBFlatCost(90.0),
+    BBFlatCost(150.0),
 
     WWFlatCost(1000000.0) 
     { ; }
