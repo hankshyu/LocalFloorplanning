@@ -1,20 +1,13 @@
 #include "DFSLegalizer.h"
 #include "Tile.h"
 #include "LFLegaliser.h"
+#include "DFSLConfig.h"
 #include <vector>
 #include <utility>
 #include <cstdint>
 #include <numeric>
-#include "boost/polygon/polygon.hpp"
 
 namespace DFSL {
-
-namespace gtl = boost::polygon;
-typedef gtl::rectangle_data<len_t> Rectangle;
-typedef gtl::polygon_90_set_data<len_t> Polygon90Set;
-typedef gtl::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
-typedef gtl::point_data<len_t> Point;
-using namespace boost::polygon::operators;
 
 DFSLNode::DFSLNode(): area(0), index(0) {}
 
@@ -496,17 +489,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     Polygon90Set overlapPolygonSet;
     std::vector<Rectangle> rectangleContainer;
     overlapPolygonSet.clear();
-    for (Tile* overlapTile: fromNode.tileList){
-        Polygon90WithHoles tileRectangle;
-        std::vector<Point> newAreaVertices = {
-            {overlapTile->getLowerLeft().x, overlapTile->getLowerLeft().y}, 
-            {overlapTile->getLowerRight().x, overlapTile->getLowerRight().y }, 
-            {overlapTile->getUpperRight().x, overlapTile->getUpperRight().y}, 
-            {overlapTile->getUpperLeft().x, overlapTile->getUpperLeft().y}
-        };
-        gtl::set_points(tileRectangle, newAreaVertices.begin(), newAreaVertices.end());
-        overlapPolygonSet += tileRectangle;
-    }
+    TileVec2PolySet(fromNode.tileList, overlapPolygonSet);
     overlapPolygonSet.get_rectangles(rectangleContainer);
 
     if (rectangleContainer.size() == 0){
@@ -721,6 +704,8 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     }
     std::cout << '\n';
 
+    // todo: go through path, find maximum resolvable area
+
     // start changing physical layout
     int resolvableArea = 0;
     for (int i = mBestPath.size() - 1; i >= 0; i--){
@@ -756,15 +741,24 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
                 }
             }
         }
-            // todo: deal with block -> block
+        else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::SOFT){
+            if (edge.segment.direction == DIRECTION::NONE) {
+                std::cout << "[DFSL] ERROR: BB edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
+                return false;
+            }
+
+
+        }
         else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::BLANK){
             if (edge.segment.direction == DIRECTION::NONE) {
                 std::cout << "[DFSL] ERROR: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
                 return false;
             }
 
-            resolvableArea = edge.migratedArea.getArea();   
-            Tile* newTile = new Tile(edge.migratedArea);
+            resolvableArea =  gtl::area(edge.migratedArea);
+            Tile* newTile = new Tile(tileType::BLOCK, Cord(gtl::xl(edge.migratedArea), gtl::yl(edge.migratedArea)),
+                                     gtl::delta(edge.migratedArea, gtl::orientation_2d_enum::HORIZONTAL), 
+                                     gtl::delta(edge.migratedArea, gtl::orientation_2d_enum::VERTICAL));
             std::cout << "Placing new Tile: ";
             newTile->show(std::cout, true);
 
@@ -899,7 +893,7 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
     double edgeCost = 0.0;
-    Tile returnTile;
+    Rectangle returnRectangle(0,0,1,1);
     Segment bestSegment;
     
     switch (edgeType)
@@ -953,24 +947,118 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
     }
 
     case EDGETYPE::BB:
-        // DO THIS DO THAT JERMA
-        edgeCost += config.BBFlatCost;
-        break;
+    {
+        Polygon90Set fromBlock, toBlock;
+        fromBlock.clear();
+        toBlock.clear();
+        TileVec2PolySet(fromNode.tileList, fromBlock);
+        TileVec2PolySet(toNode.tileList, toBlock);
+        LegalInfo oldFromBlockInfo = getLegalInfo(fromBlock);
+        LegalInfo oldToBlockInfo = getLegalInfo(toBlock);
 
+        // predict new rectangle
+        double lowestCost = (double) LONG_MAX;
+        Rectangle bestRectangle;
+        int bestSegmentIndex = -1;
+        for (int s = 0; s < edge.tangentSegments.size(); s++){
+            Segment seg = edge.tangentSegments[s];
+            Segment wall = FindNearestOverlappingInterval(seg, toBlock);
+            Cord BL;
+            int width;
+            int height;
+            if (seg.direction == DIRECTION::TOP){
+                width = abs(seg.segEnd.x - seg.segStart.x); 
+                int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                int availableHeight = wall.segStart.y - seg.segStart.y;
+                assert(availableHeight > 0);
+                height = availableHeight > requiredHeight ? requiredHeight : availableHeight;
+                BL.x = seg.segStart.x < seg.segEnd.x ? seg.segStart.x : seg.segEnd.x ;
+                BL.y = seg.segStart.y;
+            }
+            else if (seg.direction == DIRECTION::RIGHT){
+                height = abs(seg.segEnd.y - seg.segStart.y); 
+                int requiredWidth = ceil((double) mMigratingArea / (double) height);
+                int availableWidth = wall.segStart.x - seg.segStart.x;
+                assert(availableWidth > 0);
+                width = availableWidth > requiredWidth ? requiredWidth : availableWidth;
+                BL.x = seg.segStart.x;
+                BL.y = seg.segStart.y < seg.segEnd.y ? seg.segStart.y : seg.segEnd.y ;
+            }
+            else if (seg.direction == DIRECTION::DOWN){
+                width = abs(seg.segEnd.x - seg.segStart.x); 
+                int requiredHeight = ceil((double) mMigratingArea / (double) width);
+                int availableHeight = seg.segStart.y - wall.segStart.y;
+                assert(availableHeight > 0);
+                height = availableHeight > requiredHeight ? requiredHeight : availableHeight;
+                BL.x = seg.segStart.x < seg.segEnd.x ? seg.segStart.x : seg.segEnd.x ;
+                BL.y = seg.segStart.y - height;
+            }
+            else if (seg.direction == DIRECTION::LEFT) {
+                height = abs(seg.segEnd.y - seg.segStart.y); 
+                int requiredWidth = ceil((double) mMigratingArea / (double) height);
+                int availableWidth = seg.segStart.x - wall.segStart.x;
+                assert(availableWidth > 0);
+                width = availableWidth > requiredWidth ? requiredWidth : availableWidth;
+                BL.x = seg.segStart.x - width;
+                BL.y = seg.segStart.y < seg.segEnd.y ? seg.segStart.y : seg.segEnd.y ;
+            }
+            else {
+                std::cout << "[DFSL] WARNING: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) has no DIRECTION\n";
+            }
+
+            Rectangle newArea(BL.x, BL.y, BL.x+width, BL.y+height);
+            Polygon90Set newFromBlock = fromBlock - newArea;
+            Polygon90Set newToBlock = toBlock + newArea;
+
+            LegalInfo newFromBlockInfo = getLegalInfo(newFromBlock);
+            LegalInfo newToBlockInfo = getLegalInfo(newToBlock);
+
+            // area cost
+            double areaCost = ((double) oldFromBlockInfo.actualArea / (double) oldToBlockInfo.actualArea) * config.BBAreaWeight;
+
+            // get util
+            double oldFromBlockUtil = oldFromBlockInfo.util;
+            double newFromBlockUtil = newFromBlockInfo.util;
+            double oldToBlockUtil = oldToBlockInfo.util;
+            double newToBlockUtil = newToBlockInfo.util;
+            // positive reinforcement if util is improved
+            double utilCost, fromUtilCost, toUtilCost;
+            fromUtilCost = (oldFromBlockUtil < newFromBlockUtil) ? (newFromBlockUtil - oldFromBlockUtil) * config.BBFromUtilPosRein :  
+                                                        (1.0 - newFromBlockUtil) * config.BBFromUtilWeight;
+            toUtilCost = (oldToBlockUtil < newToBlockUtil) ? (newToBlockUtil - oldToBlockUtil) * config.BBToUtilPosRein :  
+                                                        (1.0 - newToBlockUtil) * config.BBToUtilWeight;
+            
+            // get aspect ratio with new area
+            double aspectRatio = newFromBlockInfo.aspectRatio;
+            aspectRatio = aspectRatio > 1.0 ? aspectRatio : 1.0/aspectRatio;
+            double arCost;
+            arCost = (aspectRatio - 1.0) * config.BBAspWeight;
+
+            double cost = areaCost + fromUtilCost + toUtilCost + arCost;
+                            
+            if (cost < lowestCost){
+                lowestCost = cost;
+                bestSegmentIndex = s;
+                bestRectangle = newArea;
+            }
+        }
+
+        bestSegment = edge.tangentSegments[bestSegmentIndex];
+        returnRectangle = bestRectangle;
+        edgeCost += lowestCost + config.BBFlatCost;
+
+        break;
+    }
     case EDGETYPE::BW:
     {
-        std::vector<Tile*> oldBlock;
-        std::vector<Tile*> newBlock;
+        Polygon90Set oldBlock;
+        TileVec2PolySet(fromNode.tileList, oldBlock);
 
-        for (Tile* tile: fromNode.tileList){
-            oldBlock.push_back(tile);
-            newBlock.push_back(tile);
-        }
         LegalInfo oldBlockInfo = getLegalInfo(oldBlock);
 
         // predict new tile
         double lowestCost = (double) LONG_MAX;
-        Tile bestTile;
+        Rectangle bestRectangle;
         int bestSegmentIndex = -1;
         for (int s = 0; s < edge.tangentSegments.size(); s++){
             Segment seg = edge.tangentSegments[s];
@@ -1009,12 +1097,10 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
                 std::cout << "[DFSL] WARNING: BW edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) has no DIRECTION\n";
             }
 
-            Tile newTile(tileType::BLOCK, BL, width, height);
-            newBlock.push_back(&newTile);
+            Rectangle newArea(BL.x, BL.y, BL.x+width, BL.y+height);
+            Polygon90Set newBlock = oldBlock + newArea;
 
             LegalInfo newBlockInfo = getLegalInfo(newBlock);
-
-            newBlock.pop_back();
 
             // get util
             double oldBlockUtil = oldBlockInfo.util;
@@ -1035,12 +1121,12 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
             if (cost < lowestCost){
                 lowestCost = cost;
                 bestSegmentIndex = s;
-                bestTile = newTile;
+                bestRectangle = newArea;
             }
         }
 
         bestSegment = edge.tangentSegments[bestSegmentIndex];
-        returnTile = bestTile;
+        returnRectangle = bestRectangle;
         edgeCost += lowestCost; 
 
         break;
@@ -1056,21 +1142,199 @@ MigrationEdge DFSLegalizer::getEdgeCost(DFSLEdge& edge){
     }
 
     // note: returnTile & bestSegment are not initialized if OB edge
-    return MigrationEdge(edge.fromIndex, edge.toIndex, returnTile, bestSegment, edgeCost);
+    return MigrationEdge(edge.fromIndex, edge.toIndex, returnRectangle, bestSegment, edgeCost);
 }
 
-Config::Config(): maxCostCutoff(1000000.0),
-                    OBAreaWeight(750.0),
-                    OBUtilWeight(1000.0),
-                    OBAspWeight(100.0),
-                    OBUtilPosRein(-500.0),
-                    BWUtilWeight(1500.0),
-                    BWUtilPosRein(-500.0),
-                    BWAspWeight(500.0),
-                    BBFlatCost(1000000.0),
-                    WWFlatCost(1000000.0) { ; }
+void TileVec2PolySet(std::vector<Tile*>& tileVec, Polygon90Set& polySet){
+    for (Tile* tile: tileVec){
+        Polygon90WithHoles tileRectangle;
+        std::vector<Point> newAreaVertices = {
+            {tile->getLowerLeft().x, tile->getLowerLeft().y}, 
+            {tile->getLowerRight().x, tile->getLowerRight().y }, 
+            {tile->getUpperRight().x, tile->getUpperRight().y}, 
+            {tile->getUpperLeft().x, tile->getUpperLeft().y}
+        };
+        gtl::set_points(tileRectangle, newAreaVertices.begin(), newAreaVertices.end());
+        polySet += tileRectangle;
+    }
+}
 
-LegalInfo DFSLegalizer::getLegalInfo(std::vector<Tile*>& tiles){
+Segment FindNearestOverlappingInterval(Segment& seg, Polygon90Set& poly){
+    int segmentOrientation; // 0 = segments are X direction, 1 = Y direction
+    Segment closestSegment = seg;
+    int closestDistance = INT_MAX;
+    if (seg.direction == DIRECTION::DOWN || seg.direction == DIRECTION::TOP){
+        segmentOrientation = 0;
+    }
+    else if (seg.direction == DIRECTION::RIGHT || seg.direction == DIRECTION::LEFT){
+        segmentOrientation = 1;
+    }
+    else {
+        return seg;
+    }
+
+    std::vector<Polygon90WithHoles> polyContainer;
+    // int currentDepth, currentStart, currentEnd;
+    poly.get_polygons(polyContainer);
+    for (Polygon90WithHoles poly: polyContainer) {
+        Point firstPoint, prevPoint, currentPoint(0,0);
+        int counter = 0;
+        for (auto it = poly.begin(); it != poly.end(); it++){
+            prevPoint = currentPoint;
+            currentPoint = *it;
+
+            if (counter++ == 0){
+                firstPoint = currentPoint;
+                continue; 
+            }
+            Segment currentSegment;
+            currentSegment.segStart = prevPoint < currentPoint ? Cord(prevPoint.x(), prevPoint.y()) : Cord(currentPoint.x(), currentPoint.y());
+            currentSegment.segEnd = prevPoint < currentPoint ? Cord(prevPoint.x(), prevPoint.y()) : Cord(currentPoint.x(), currentPoint.y());
+            int currentOrientation = prevPoint.y() == currentPoint.y() ? 0 : 1;
+
+            if (segmentOrientation == currentOrientation){
+                switch (seg.direction)
+                {
+                case DIRECTION::TOP:
+                {
+                    // test if y coord is larger
+                    bool overlaps = ((currentSegment.segStart.x < seg.segEnd.x) && (seg.segStart.x < currentSegment.segEnd.x));
+                    bool isAbove = currentSegment.segStart.y > seg.segStart.y;
+                    if (overlaps && isAbove){
+                        int distance = currentSegment.segStart.y - seg.segStart.y;
+                        if (distance < closestDistance){
+                            closestDistance = distance;
+                            closestSegment = currentSegment;
+                        }
+                    }
+                    break;
+                }
+                case DIRECTION::RIGHT:
+                {
+                    // test if x coord is larger
+                    bool overlaps = ((currentSegment.segStart.y < seg.segEnd.y) && (seg.segStart.y < currentSegment.segEnd.y));
+                    bool isRight = currentSegment.segStart.x > seg.segStart.x;
+                    if (overlaps && isRight){
+                        int distance = currentSegment.segStart.x - seg.segStart.x;
+                        if (distance < closestDistance){
+                            closestDistance = distance;
+                            closestSegment = currentSegment;
+                        }
+                    }
+                    break;
+                }
+                case DIRECTION::DOWN:
+                {
+                    // test if y coord is smaller
+                    bool overlaps = ((currentSegment.segStart.x < seg.segEnd.x) && (seg.segStart.x < currentSegment.segEnd.x));
+                    bool isBelow = currentSegment.segStart.y < seg.segStart.y;
+                    if (overlaps && isBelow){
+                        int distance = seg.segStart.y -currentSegment.segStart.y;
+                        if (distance < closestDistance){
+                            closestDistance = distance;
+                            closestSegment = currentSegment;
+                        }
+                    }
+                    break;
+                }
+                case DIRECTION::LEFT:
+                {
+                    // test if x coord is smaller
+                    bool overlaps = ((currentSegment.segStart.y < seg.segEnd.y) && (seg.segStart.y < currentSegment.segEnd.y));
+                    bool isLeft = currentSegment.segStart.x < seg.segStart.x;
+                    if (overlaps && isLeft){
+                        int distance = seg.segStart.x - currentSegment.segStart.x;
+                        if (distance < closestDistance){
+                            closestDistance = distance;
+                            closestSegment = currentSegment;
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+            else {
+                continue;
+            }
+            
+        }
+        //compare to first point again
+        Segment lastSegment;
+        lastSegment.segStart = currentPoint < firstPoint ? Cord(currentPoint.x(), currentPoint.y()) : Cord(firstPoint.x(), firstPoint.y());
+        lastSegment.segEnd = currentPoint < firstPoint ? Cord(currentPoint.x(), currentPoint.y()) : Cord(firstPoint.x(), firstPoint.y());
+        int lastOrientation = currentPoint.y() == firstPoint.y() ? 0 : 1;  
+                 
+        if (segmentOrientation == lastOrientation){
+            switch (seg.direction)
+            {
+            case DIRECTION::TOP:
+            {
+                // test if y coord is larger
+                bool overlaps = ((lastSegment.segStart.x < seg.segEnd.x) && (seg.segStart.x < lastSegment.segEnd.x));
+                bool isAbove = lastSegment.segStart.y > seg.segStart.y;
+                if (overlaps && isAbove){
+                    int distance = lastSegment.segStart.y - seg.segStart.y;
+                    if (distance < closestDistance){
+                        closestDistance = distance;
+                        closestSegment = lastSegment;
+                    }
+                }
+                break;
+            }
+            case DIRECTION::RIGHT:
+            {
+                // test if x coord is larger
+                bool overlaps = ((lastSegment.segStart.y < seg.segEnd.y) && (seg.segStart.y < lastSegment.segEnd.y));
+                bool isRight = lastSegment.segStart.x > seg.segStart.x;
+                if (overlaps && isRight){
+                    int distance = lastSegment.segStart.x - seg.segStart.x;
+                    if (distance < closestDistance){
+                        closestDistance = distance;
+                        closestSegment = lastSegment;
+                    }
+                }
+                break;
+            }
+            case DIRECTION::DOWN:
+            {
+                // test if y coord is smaller
+                bool overlaps = ((lastSegment.segStart.x < seg.segEnd.x) && (seg.segStart.x < lastSegment.segEnd.x));
+                bool isBelow = lastSegment.segStart.y < seg.segStart.y;
+                if (overlaps && isBelow){
+                    int distance = seg.segStart.y -lastSegment.segStart.y;
+                    if (distance < closestDistance){
+                        closestDistance = distance;
+                        closestSegment = lastSegment;
+                    }
+                }
+                break;
+            }
+            case DIRECTION::LEFT:
+            {
+                // test if x coord is smaller
+                bool overlaps = ((lastSegment.segStart.y < seg.segEnd.y) && (seg.segStart.y < lastSegment.segEnd.y));
+                bool isLeft = lastSegment.segStart.x < seg.segStart.x;
+                if (overlaps && isLeft){
+                    int distance = seg.segStart.x - lastSegment.segStart.x;
+                    if (distance < closestDistance){
+                        closestDistance = distance;
+                        closestSegment = lastSegment;
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    }   
+
+    return closestSegment;
+}
+
+LegalInfo getLegalInfo(std::vector<Tile*>& tiles){
     LegalInfo legal;
     int min_x, max_x, min_y, max_y;
     min_x = min_y = INT_MAX;
@@ -1102,7 +1366,7 @@ LegalInfo DFSLegalizer::getLegalInfo(std::vector<Tile*>& tiles){
     return legal;
 } 
 
-LegalInfo DFSLegalizer::getLegalInfo(std::set<Tile*>& tiles){
+LegalInfo getLegalInfo(std::set<Tile*>& tiles){
     LegalInfo legal;
     int min_x, max_x, min_y, max_y;
     min_x = min_y = INT_MAX;
@@ -1134,12 +1398,28 @@ LegalInfo DFSLegalizer::getLegalInfo(std::set<Tile*>& tiles){
     return legal;
 } 
 
+LegalInfo getLegalInfo(Polygon90Set& tiles){
+    LegalInfo legal;
+    Rectangle bbox;
+    tiles.extents(bbox);
 
-MigrationEdge::MigrationEdge(int from, int to, Tile& area, Segment& seg, double cost):
+    legal.actualArea = gtl::area(tiles);
+    legal.width = gtl::delta(bbox, gtl::orientation_2d_enum::HORIZONTAL);
+    legal.height = gtl::delta(bbox, gtl::orientation_2d_enum::VERTICAL);
+    legal.bbArea = legal.width * legal.height;
+    legal.BL = Cord(gtl::xl(bbox), gtl::yl(bbox));
+    legal.aspectRatio = ((double) legal.width) / ((double) legal.height);
+    legal.util = ((double) legal.actualArea) / ((double) legal.bbArea);
+
+    return legal;
+} 
+
+
+MigrationEdge::MigrationEdge(int from, int to, Rectangle& area, Segment& seg, double cost):
     fromIndex(from), toIndex(to), segment(seg), migratedArea(area), edgeCost(cost){ ; }
 
 MigrationEdge::MigrationEdge():
-    fromIndex(-1), toIndex(-1), segment(Segment()), migratedArea(Tile()), edgeCost(0.0) { ; }
+    fromIndex(-1), toIndex(-1), segment(Segment()), migratedArea(0,0,1,1), edgeCost(0.0) { ; }
 
 
 static bool compareXSegment(Segment a, Segment b){

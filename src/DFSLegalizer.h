@@ -5,8 +5,16 @@
 #include <vector>
 #include <map>
 #include "LFLegaliser.h"
+#include "DFSLConfig.h"
 
 namespace DFSL {
+
+namespace gtl = boost::polygon;
+typedef gtl::rectangle_data<len_t> Rectangle;
+typedef gtl::polygon_90_set_data<len_t> Polygon90Set;
+typedef gtl::polygon_90_with_holes_data<len_t> Polygon90WithHoles;
+typedef gtl::point_data<len_t> Point;
+using namespace boost::polygon::operators;
 
 #define PI 3.14159265358979323846
 #define EPSILON 0.0001
@@ -19,7 +27,6 @@ struct Segment;
 struct LegalInfo;
 struct OverlapArea;
 struct MigrationEdge;
-struct Config;
 
 enum class DFSLTessType : unsigned char { OVERLAP, FIXED, SOFT, BLANK };
 
@@ -27,26 +34,12 @@ enum class DIRECTION : unsigned char { TOP, RIGHT, DOWN, LEFT, NONE };
 
 enum class RESULT : unsigned char { SUCCESS, OVERLAP_NOT_RESOLVED, CONSTRAINT_FAIL };
 
-struct Config {
-    Config();
-    double maxCostCutoff;
-    double OBAreaWeight;
-    double OBUtilWeight;
-    double OBAspWeight;
-    double OBUtilPosRein;
-    double BWUtilWeight;
-    double BWUtilPosRein;
-    double BWAspWeight;
-    double BBFlatCost;
-    double WWFlatCost;  
-};
-
-
 class DFSLegalizer{
 private:
     std::vector<DFSLNode> mAllNodes;
     double mBestCost;
     int mMigratingArea;
+    int mResolvableArea;
     std::vector<MigrationEdge> mBestPath;
     std::vector<MigrationEdge> mCurrentPath;
     std::multimap<Tile*, int> mTilePtr2NodeIndex;
@@ -66,8 +59,6 @@ private:
     void DFSLTraverseBlank(Tile* tile, std::vector <Cord> &record);
     void findEdge(int fromIndex, int toIndex);
     void getTessNeighbors(int nodeId, std::set<int>& allNeighbors);
-    LegalInfo getLegalInfo(std::vector<Tile*>& tiles); 
-    LegalInfo getLegalInfo(std::set<Tile*>& tiles); 
     void addBlockNode(Tessera* tess, bool isFixed);
     bool splitOverlap(MigrationEdge& edge, int resolvableArea);
     void removeIndexFromOverlap(int indexToRemove, Tile* overlapTile);
@@ -87,6 +78,15 @@ bool removeFromVector(Tile* a, std::vector<Tile*>& vec);
 static bool compareXSegment(Segment a, Segment b);
 static bool compareYSegment(Segment a, Segment b);
 
+LegalInfo getLegalInfo(std::vector<Tile*>& tiles); 
+LegalInfo getLegalInfo(std::set<Tile*>& tiles); 
+LegalInfo getLegalInfo(Polygon90Set& tiles); 
+
+void TileVec2PolySet(std::vector<Tile*>& tileVec, Polygon90Set& polySet);
+// in the direction of seg.direction,
+// find the segment in poly of the same orientation that has the shortest distance
+Segment FindNearestOverlappingInterval(Segment& seg, Polygon90Set& poly);
+
 struct DFSLNode {
     DFSLNode();
     std::vector<Tile*> tileList; 
@@ -98,6 +98,7 @@ struct DFSLNode {
     int index;
 };
 
+// note: use ONLY on vertical and horizontal segments 
 struct Segment {
     Cord segStart;
     Cord segEnd;
@@ -114,10 +115,10 @@ struct MigrationEdge {
     int fromIndex;
     int toIndex;
     Segment segment;
-    Tile migratedArea; // replace this with boost rectangle
+    Rectangle migratedArea; // replace this with boost rectangle
     double edgeCost;
     MigrationEdge();
-    MigrationEdge(int from, int to, Tile& area, Segment& seg, double cost);
+    MigrationEdge(int from, int to, Rectangle& area, Segment& seg, double cost);
 };
 
 struct LegalInfo {
