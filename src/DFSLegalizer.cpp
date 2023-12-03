@@ -477,7 +477,7 @@ RESULT DFSLegalizer::legalize(int mode){
     return result;
 }
 
-bool DFSLegalizer::splitOverlap(MigrationEdge& edge){
+bool DFSLegalizer::splitOverlap(MigrationEdge& edge, std::vector<Tile*>& newTiles){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
     if (!(fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT)){
@@ -633,6 +633,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge){
             Tile* newTile = mLF->simpleSplitTile(overlapTile, tileRect, direction);
             if (newTile == NULL){
                 std::cout << "[DFSL] Error: Simple split tile failed\n";
+                return false;
             }
             else if (newTile == overlapTile){
                 // remove from original tessera, add to new Tessera
@@ -654,12 +655,13 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge){
                 int indexToRemove = edge.toIndex;
                 removeIndexFromOverlap(indexToRemove, newTile);
             }
+            newTiles.push_back(newTile);
         }
     }
     return true;
 }
 
-bool DFSLegalizer::splitSoftBlock(MigrationEdge& edge){
+bool DFSLegalizer::splitSoftBlock(MigrationEdge& edge, std::vector<Tile*>& newTiles){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
 
@@ -726,11 +728,12 @@ bool DFSLegalizer::splitSoftBlock(MigrationEdge& edge){
                 
                 bool removed = removeFromVector(newTile, toTess->TileArr);
                 if (!removed){
-                    std::cout << "[DFSL] Error: tile not found in toTess\n";
+                    std::cout << "[DFSL] Error: In splitSoftBlock, tile not found in toTess\n";
                     return false;
                 }
                 fromTess->TileArr.push_back(newTile);
             }
+            newTiles.push_back(newTile);
         }
     }
     return true;
@@ -805,16 +808,20 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     for (MigrationEdge& edge: mBestPath){
         DFSLNode& fromNode = mAllNodes[edge.fromIndex];
         DFSLNode& toNode = mAllNodes[edge.toIndex];
+        std::cout << "> " << fromNode.nodeName << " -> " << toNode.nodeName << ": \n";
 
         if (fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT){
             if (mResolvableArea < mMigratingArea){
                 // create transient overlap area
-
-                bool result = splitOverlap(edge);
+                std::vector<Tile*> newTiles;
+                bool result = splitOverlap(edge, newTiles);
 
                 std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << ", resolvable area: " << mResolvableArea << ")\n";
                 if (result){
-                    std::cout << "Splitting overlap tile(s).\n";
+                    std::cout << "Splitting overlap tile. New tile:\n";
+                    for (Tile* tile: newTiles){
+                        std::cout << "\t" << *tile << '\n';
+                    }
                 }
                 else {
                     std::cout << "Split failed. Storing in value of remaining overlap area.\n";
@@ -836,17 +843,21 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
         }
         else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::SOFT){
             if (edge.segment.direction == DIRECTION::NONE) {
-                std::cout << "[DFSL] ERROR: BB edge ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
+                std::cout << "[DFSL] ERROR: BB edge ( " << fromNode.nodeName << " -> " << toNode.nodeName << " ) must have DIRECTION\n";
                 return false;
             }
 
-            bool result = splitSoftBlock(edge);
+            std::vector<Tile*> newTiles;
+            bool result = splitSoftBlock(edge, newTiles);
             if (!result){
-                std::cout << "[DFSL] ERROR: BB flow ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) FAILED.\n";
+                std::cout << "[DFSL] ERROR: BB flow ( " << fromNode.nodeName << " -> " << toNode.nodeName << " ) FAILED.\n";
                 return false;
             }
             else {
-                std::cout << " ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
+                std::cout << "Splitting tiles. New " << fromNode.nodeName << " tiles: \n";
+                for (Tile* tile: newTiles){
+                    std::cout << "\t" << *tile << '\n';
+                }
             }
 
         }
@@ -957,12 +968,19 @@ void DFSLegalizer::dfs(DFSLEdge& edge, double currentCost){
 
     if (currentCost < config.maxCostCutoff){
         for (DFSLEdge& nextEdge: mAllNodes[toIndex].edgeList){
+            bool skip = false;
             for (MigrationEdge& edge: mCurrentPath){
                 if (edge.fromIndex == nextEdge.toIndex || edge.toIndex == nextEdge.toIndex) {
-                    continue;
+                    skip = true;
+                    break;
                 }
             }
-            dfs(nextEdge, currentCost);
+            if (skip){
+                continue;
+            }
+            else {
+                dfs(nextEdge, currentCost);
+            }
         }
     }
 
@@ -1289,7 +1307,7 @@ Segment FindNearestOverlappingInterval(Segment& seg, Polygon90Set& poly){
             }
             Segment currentSegment;
             currentSegment.segStart = prevPoint < currentPoint ? Cord(prevPoint.x(), prevPoint.y()) : Cord(currentPoint.x(), currentPoint.y());
-            currentSegment.segEnd = prevPoint < currentPoint ? Cord(prevPoint.x(), prevPoint.y()) : Cord(currentPoint.x(), currentPoint.y());
+            currentSegment.segEnd = prevPoint < currentPoint ? Cord(currentPoint.x(), currentPoint.y()) : Cord(prevPoint.x(), prevPoint.y());
             int currentOrientation = prevPoint.y() == currentPoint.y() ? 0 : 1;
 
             if (segmentOrientation == currentOrientation){
@@ -1363,7 +1381,7 @@ Segment FindNearestOverlappingInterval(Segment& seg, Polygon90Set& poly){
         //compare to first point again
         Segment lastSegment;
         lastSegment.segStart = currentPoint < firstPoint ? Cord(currentPoint.x(), currentPoint.y()) : Cord(firstPoint.x(), firstPoint.y());
-        lastSegment.segEnd = currentPoint < firstPoint ? Cord(currentPoint.x(), currentPoint.y()) : Cord(firstPoint.x(), firstPoint.y());
+        lastSegment.segEnd = currentPoint < firstPoint ? Cord(firstPoint.x(), firstPoint.y()) : Cord(currentPoint.x(), currentPoint.y());
         int lastOrientation = currentPoint.y() == firstPoint.y() ? 0 : 1;  
                  
         if (segmentOrientation == lastOrientation){
