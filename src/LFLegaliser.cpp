@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include "LFLegaliser.h"
 
@@ -224,6 +225,29 @@ void LFLegaliser::translateGlobalFloorplanning(const pp::GlobalSolver &solver) {
         }
     }
 
+}
+
+// added by ryan
+void LFLegaliser::initFromFile(std::string path){
+    // format:
+    // <# of blocks>
+    // <HARD/SOFT> <module name> <required area> \n
+    // lowerleft.x lowerleft.y width height \n
+    std::ifstream fin(path, std::ifstream::in);
+    std::string type, name;
+    int blockNum, area, llx, lly, w, h;
+    fin >> blockNum;
+    for (int i = 0; i < blockNum; i++){
+        fin >> type >> name >> area >> llx >> lly >> w >> h;
+        if (type == "HARD"){
+            Tessera* newTess = new Tessera(tesseraType::HARD, name, area, Cord(llx, lly), w, h);
+            softTesserae.push_back(newTess);
+        }
+        else {
+            Tessera* newTess = new Tessera(tesseraType::HARD, name, area, Cord(llx, lly), w, h);
+            softTesserae.push_back(newTess);   
+        }
+    }
 }
 
 void LFLegaliser::translateGlobalFloorplanning(const rg::GlobalSolver &solver) {
@@ -1833,21 +1857,386 @@ void LFLegaliser::collectAllTilesDFS(Tile &head, std::vector <Cord> &record, std
 }
 
 // added by ryan
-Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int direction){
-    Tile* tilePtr = &originalTile;
-    if (originalTile.getLowerLeft().x == gtl::xl(newRect) && originalTile.getLowerLeft().y == gtl::yl(newRect) &&
-        originalTile.getUpperRight().x == gtl::xh(newRect) && originalTile.getUpperRight().y == gtl::yh(newRect)){
-            return tilePtr;
+Tile* LFLegaliser::splitTile(Tile* originalTile, Rectangle newRect){
+    // find original Tessera(s) that tile belongs to 
+    // SHOULD BE IMPROVED
+    int fixedTessNum = fixedTesserae.size();
+    std::vector<int> belongTessIndexes;
+    if (originalTile->OverlapFixedTesseraeIdx.size() + originalTile->OverlapSoftTesseraeIdx.size() > 0){
+        for (int overlapIndex: originalTile->OverlapFixedTesseraeIdx){
+            belongTessIndexes.push_back(overlapIndex);
+        }        
+        for (int overlapIndex: originalTile->OverlapSoftTesseraeIdx){
+            belongTessIndexes.push_back(overlapIndex + fixedTessNum);
+        }
+    }
+    else {
+        bool found = false;
+        for (int i = 0; i < fixedTesserae.size(); i++){
+            Tessera* tess = fixedTesserae[i];
+            for (Tile* tessTile: tess->TileArr){
+                if (tessTile == originalTile){
+                    belongTessIndexes.push_back(i);
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found){
+            for (int i = 0; i < softTesserae.size(); i++){
+                Tessera* tess = softTesserae[i];
+                for (Tile* tessTile: tess->TileArr){
+                    if (tessTile == originalTile){
+                        belongTessIndexes.push_back(i + fixedTessNum);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    Rectangle originalRect(originalTile->getLowerLeft().x, originalTile->getLowerLeft().y, 
+                           originalTile->getUpperRight().x, originalTile->getUpperRight().y);
+    if (!gtl::contains(originalRect, newRect)){
+        std::cout << "new Tile not contained in original Tile\n";
+        return NULL;
+    }
+
+    // find neighbors
+    std::vector<Tile*> topNeighbors, bottomNeighbors, leftNeighbors, rightNeighbors;
+    findTopNeighbors(originalTile, topNeighbors);
+    findRightNeighbors(originalTile, rightNeighbors);        
+    findDownNeighbors(originalTile, bottomNeighbors);
+    findLeftNeighbors(originalTile, leftNeighbors);
+
+    // split top if necessary
+    if (gtl::yh(newRect) < gtl::yh(originalRect)){
+        // create new tile to represent the top
+        Tile* newTopTile = new Tile(*(originalTile));
+        newTopTile->setHeight(gtl::yh(originalRect) - gtl::yh(newRect));
+        newTopTile->setCord(Cord(gtl::xl(originalRect), gtl::yh(newRect)));
+
+        // find new tr, bl pointers
+        Tile* newTrPtr = NULL, *newBlPtr = NULL;
+        Cord newTrNeighborPoint(newTopTile->getLowerRight());
+        newTrNeighborPoint.y = newTrNeighborPoint.y - 1;
+        for (Tile* rightNeighbor: rightNeighbors){
+            if (rightNeighbor->checkCordInTile(newTrNeighborPoint)){
+                newTrPtr = rightNeighbor;
+                break;
+            }
+        }
+        Cord newBlNeighborPoint(newTopTile->getLowerLeft());
+        newBlNeighborPoint.x = newBlNeighborPoint.x - 1; 
+        for (Tile* leftNeighbor: leftNeighbors){
+            if (leftNeighbor->checkCordInTile(newBlNeighborPoint)){
+                newBlPtr = leftNeighbor;
+                break;
+            }
+        }
+
+        // update pointers of old and new tile
+        // new
+        newTopTile->tr = originalTile->tr;
+        newTopTile->rt = originalTile->rt;
+        newTopTile->bl = newBlPtr;
+        newTopTile->lb = originalTile;
+        // old
+        originalTile->rt = newTopTile;
+        originalTile->tr = newTrPtr;
+
+        // adjust the ptrs of left, top, right neighbors
+        // left
+        for (Tile* leftNeighbor: leftNeighbors){
+            int neighborYh = leftNeighbor->getUpperRight().y;
+            if (newTopTile->getLowerLeft().y < neighborYh && neighborYh <= newTopTile->getUpperRight().y){
+                leftNeighbor->tr = newTopTile;
+            }
+        }
+        // top
+        for (Tile* topNeighbor: topNeighbors){
+            int neighborXl = topNeighbor->getLowerLeft().x;
+            if (newTopTile->getLowerLeft().x <= neighborXl && neighborXl < newTopTile->getUpperRight().x){
+                topNeighbor->lb = newTopTile;
+            }
+        }
+        // right
+        for (Tile* rightNeighbor: rightNeighbors){
+            int neighborYl = rightNeighbor->getLowerLeft().y;
+            if (newTopTile->getLowerLeft().y <= neighborYl && neighborYl < newTopTile->getUpperRight().y){
+                rightNeighbor->bl = newTopTile;
+            }
+        }
+
+        // adjust x, y, width, height of old tile
+        int newHeight = originalTile->getHeight() - newTopTile->getHeight();
+        originalTile->setHeight(newHeight);
+
+        // add newTile to tessera(s)
+        for (int tessIndex: belongTessIndexes){
+            Tessera* tess = tessIndex < fixedTessNum ? fixedTesserae[tessIndex] : softTesserae[tessIndex - fixedTessNum];
+            if (belongTessIndexes.size() == 1){
+                tess->TileArr.push_back(newTopTile);
+            }
+            else {
+                tess->OverlapArr.push_back(newTopTile);
+            }
+        }
+
+        // top neighbor of originalTile is now newTopTile
+        topNeighbors.clear();
+        topNeighbors.push_back(newTopTile);
+    }
+
+    // split bottom if necessary
+    if (gtl::yl(newRect) > gtl::yl(originalRect)){
+        // create new tile to represent the bottom
+        Tile* newBottomTile = new Tile(*(originalTile));
+        newBottomTile->setHeight(gtl::yl(newRect) - gtl::yl(originalRect));
+
+        // find new tr, bl pointers
+        Tile* newTrPtr = NULL, *newBlPtr = NULL;
+        Cord newTrNeighborPoint(newBottomTile->getUpperRight());
+        newTrNeighborPoint.y = newTrNeighborPoint.y - 1;
+        for (Tile* rightNeighbor: rightNeighbors){
+            if (rightNeighbor->checkCordInTile(newTrNeighborPoint)){
+                newTrPtr = rightNeighbor;
+                break;
+            }
+        }
+        Cord newBlNeighborPoint(newBottomTile->getLowerRight());
+        newBlNeighborPoint.x = newBlNeighborPoint.x - 1; 
+        for (Tile* leftNeighbor: leftNeighbors){
+            if (leftNeighbor->checkCordInTile(newBlNeighborPoint)){
+                newBlPtr = leftNeighbor;
+                break;
+            }
+        }
+
+        // update pointers of old and new tile
+        // new
+        newBottomTile->tr = newTrPtr;
+        newBottomTile->rt = originalTile;
+        newBottomTile->bl = originalTile->bl;
+        newBottomTile->lb = originalTile->lb;
+        // old
+        originalTile->lb = newBottomTile;
+        originalTile->bl = newBlPtr;
+
+        // adjust the ptrs of left, bottom, right neighbors
+        // left
+        for (Tile* leftNeighbor: leftNeighbors){
+            int neighborYh = leftNeighbor->getUpperRight().y;
+            if (newBottomTile->getLowerLeft().y < neighborYh && neighborYh <= newBottomTile->getUpperRight().y){
+                leftNeighbor->tr = newBottomTile;
+            }
+        }
+        // bottom
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            int neighborXh = bottomNeighbor->getUpperRight().x;
+            if (newBottomTile->getLowerLeft().x < neighborXh && neighborXh <= newBottomTile->getUpperRight().x){
+                bottomNeighbor->rt = newBottomTile;
+            }
+        }
+        // right
+        for (Tile* rightNeighbor: rightNeighbors){
+            int neighborYl = rightNeighbor->getLowerLeft().y;
+            if (newBottomTile->getLowerLeft().y <= neighborYl && neighborYl < newBottomTile->getUpperRight().y){
+                rightNeighbor->bl = newBottomTile;
+            }
+        }
+
+        // adjust x, y, width, height of old tile
+        int newHeight = originalTile->getHeight() - newBottomTile->getHeight();
+        originalTile->setHeight(newHeight);
+        originalTile->setCord(Cord(gtl::xl(originalRect), gtl::yl(newRect)));
+
+        // add newTile to tessera(s)
+        for (int tessIndex: belongTessIndexes){
+            Tessera* tess = tessIndex < fixedTessNum ? fixedTesserae[tessIndex] : softTesserae[tessIndex - fixedTessNum];
+            if (belongTessIndexes.size() == 1){
+                tess->TileArr.push_back(newBottomTile);
+            }
+            else {
+                tess->OverlapArr.push_back(newBottomTile);
+            }
+        }
+
+        // bottom neighbor of originalTile is now newBottomTile
+        bottomNeighbors.clear();
+        bottomNeighbors.push_back(newBottomTile);
+    }
+
+    // split right if necessary
+    if (gtl::xh(newRect) < gtl::xh(originalRect)){
+        // create new tile to represent the right
+        Tile* newRightTile = new Tile(*(originalTile));
+        newRightTile->setWidth(gtl::xh(originalRect) - gtl::xh(newRect));
+        newRightTile->setCord(Cord(gtl::xh(newRect), gtl::yl(newRect)));
+
+        // find new rt, lb pointers
+        Tile* newRtPtr = NULL, *newLbPtr = NULL;
+        Cord newRtNeighborPoint(newRightTile->getUpperLeft());
+        newRtNeighborPoint.x = newRtNeighborPoint.x - 1;
+        for (Tile* topNeighbor: topNeighbors){
+            if (topNeighbor->checkCordInTile(newRtNeighborPoint)){
+                newRtPtr = topNeighbor;
+                break;
+            }
+        }
+        Cord newLbNeighborPoint(newRightTile->getLowerLeft());
+        newLbNeighborPoint.y = newLbNeighborPoint.y - 1; 
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            if (bottomNeighbor->checkCordInTile(newLbNeighborPoint)){
+                newLbPtr = bottomNeighbor;
+                break;
+            }
+        }
+
+        // modify pointers of old and new tile
+        // new
+        newRightTile->tr = originalTile->tr;
+        newRightTile->rt = originalTile->rt;
+        newRightTile->bl = originalTile;
+        newRightTile->lb = newLbPtr;
+        // old
+        originalTile->rt = newRtPtr;
+        originalTile->tr = newRightTile;
+
+        // adjust the ptrs of top, right, bottom neighbors
+        // top
+        for (Tile* topNeighbor: topNeighbors){
+            int neighborXl = topNeighbor->getLowerLeft().x;
+            if (newRightTile->getLowerLeft().x <= neighborXl && neighborXl < newRightTile->getUpperRight().x){
+                topNeighbor->lb = newRightTile;
+            }
+        }
+        // right
+        for (Tile* rightNeighbor: rightNeighbors){
+            int neighborYl = rightNeighbor->getLowerLeft().y;
+            if (newRightTile->getLowerLeft().y <= neighborYl && neighborYl < newRightTile->getUpperRight().y){
+                rightNeighbor->bl = newRightTile;
+            }
+        }
+        // bottom
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            int neighborXh = bottomNeighbor->getUpperRight().x;
+            if (newRightTile->getLowerLeft().x < neighborXh && neighborXh <= newRightTile->getUpperRight().x){
+                bottomNeighbor->rt = newRightTile;
+            }
+        }
+
+        // adjust x,y,width,height of old tile;
+        int newWidth = originalTile->getWidth() - newRightTile->getWidth();
+        originalTile->setWidth(newWidth);
+
+        // add newTile to tessera(s)
+        for (int tessIndex: belongTessIndexes){
+            Tessera* tess = tessIndex < fixedTessNum ? fixedTesserae[tessIndex] : softTesserae[tessIndex - fixedTessNum];
+            if (belongTessIndexes.size() == 1){
+                tess->TileArr.push_back(newRightTile);
+            }
+            else {
+                tess->OverlapArr.push_back(newRightTile);
+            }
+        }
+    }
+
+    // split left if necessary
+    if (gtl::xl(originalRect) < gtl::xl(newRect)){
+        // create new tile to represent the left
+        Tile* newLeftTile = new Tile(*(originalTile));
+        newLeftTile->setWidth(gtl::xl(newRect) - gtl::xl(originalRect));
+
+        // find new rt, lb pointers
+        Tile* newRtPtr = NULL, *newLbPtr = NULL;
+        Cord newRtNeighborPoint(newLeftTile->getUpperRight());
+        newRtNeighborPoint.x = newRtNeighborPoint.x - 1;
+        for (Tile* topNeighbor: topNeighbors){
+            if (topNeighbor->checkCordInTile(newRtNeighborPoint)){
+                newRtPtr = topNeighbor;
+                break;
+            }
+        }
+        Cord newLbNeighborPoint(newLeftTile->getLowerRight());
+        newLbNeighborPoint.y = newLbNeighborPoint.y - 1; 
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            if (bottomNeighbor->checkCordInTile(newLbNeighborPoint)){
+                newLbPtr = bottomNeighbor;
+                break;
+            }
+        }
+
+        // modify pointers of old and new tile
+        // new
+        newLeftTile->tr = originalTile;
+        newLeftTile->rt = newRtPtr;
+        newLeftTile->bl = originalTile->bl;
+        newLeftTile->lb = originalTile->lb;
+        // old
+        originalTile->bl = newLeftTile;
+        originalTile->lb = newLbPtr;
+
+        // adjust the ptrs of bottom, left, top neighbors
+        // bottom
+        for (Tile* bottomNeighbor: bottomNeighbors){
+            int neighborXh = bottomNeighbor->getUpperRight().x;
+            if (newLeftTile->getLowerLeft().x < neighborXh && neighborXh <= newLeftTile->getUpperRight().x){
+                bottomNeighbor->rt = newLeftTile;
+            }
+        }
+        // left
+        for (Tile* leftNeighbor: leftNeighbors){
+            int neighborYh = leftNeighbor->getUpperRight().y;
+            if (newLeftTile->getLowerLeft().y < neighborYh && neighborYh <= newLeftTile->getUpperRight().y){
+                leftNeighbor->tr = newLeftTile;
+            }
+        }
+        // top
+        for (Tile* topNeighbor: topNeighbors){
+            int neighborXl = topNeighbor->getLowerLeft().x;
+            if (newLeftTile->getLowerLeft().x <= neighborXl && neighborXl < newLeftTile->getUpperRight().x){
+                topNeighbor->lb = newLeftTile;
+            }
+        }
+
+        // adjust x,y,width,height of old tile;
+        int newWidth = originalTile->getWidth() - newLeftTile->getWidth();
+        Cord newLL = newLeftTile->getLowerRight();
+        originalTile->setWidth(newWidth);
+        originalTile->setLowerLeft(newLL);
+
+        // add newTile to tessera(s)
+        for (int tessIndex: belongTessIndexes){
+            Tessera* tess = tessIndex < fixedTessNum ? fixedTesserae[tessIndex] : softTesserae[tessIndex - fixedTessNum];
+            if (belongTessIndexes.size() == 1){
+                tess->TileArr.push_back(newLeftTile);
+            }
+            else {
+                tess->OverlapArr.push_back(newLeftTile);
+            }
+        }
+    }
+
+    return originalTile;
+}
+
+// added by ryan
+Tile* LFLegaliser::simpleSplitTile(Tile* originalTile, Rectangle newRect, int direction){
+    if (originalTile->getLowerLeft().x == gtl::xl(newRect) && originalTile->getLowerLeft().y == gtl::yl(newRect) &&
+        originalTile->getUpperRight().x == gtl::xh(newRect) && originalTile->getUpperRight().y == gtl::yh(newRect)){
+            return originalTile;
         }
     
     std::vector<Tile*> topNeighbors, bottomNeighbors, leftNeighbors, rightNeighbors;
-    findTopNeighbors(tilePtr, topNeighbors);
-    findRightNeighbors(tilePtr, rightNeighbors);        
-    findDownNeighbors(tilePtr, bottomNeighbors);
-    findLeftNeighbors(tilePtr, leftNeighbors);
+    findTopNeighbors(originalTile, topNeighbors);
+    findRightNeighbors(originalTile, rightNeighbors);        
+    findDownNeighbors(originalTile, bottomNeighbors);
+    findLeftNeighbors(originalTile, leftNeighbors);
     
-    Rectangle originalRect(originalTile.getLowerLeft().x, originalTile.getLowerLeft().y, 
-                           originalTile.getUpperRight().x, originalTile.getUpperRight().y);
+    Rectangle originalRect(originalTile->getLowerLeft().x, originalTile->getLowerLeft().y, 
+                           originalTile->getUpperRight().x, originalTile->getUpperRight().y);
     if (!gtl::contains(originalRect, newRect)){
         std::cout << "new Tile not contained in original Tile\n";
         return NULL;
@@ -1865,7 +2254,7 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         return NULL;
     }
 
-    Tile* newTile = new Tile(originalTile.getType(), Cord(gtl::xl(newRect), gtl::yl(newRect)), 
+    Tile* newTile = new Tile(originalTile->getType(), Cord(gtl::xl(newRect), gtl::yl(newRect)), 
                               gtl::delta(newRect, gtl::orientation_2d_enum::HORIZONTAL), gtl::delta(newRect, gtl::orientation_2d_enum::VERTICAL));
 
     int newTileXl = newTile->getLowerLeft().x;
@@ -1896,13 +2285,13 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
 
         // modify pointers of old and new tile
         // new
-        newTile->tr = tilePtr->tr;
-        newTile->rt = tilePtr->rt;
+        newTile->tr = originalTile->tr;
+        newTile->rt = originalTile->rt;
         newTile->bl = newBlPtr;
-        newTile->lb = tilePtr;
+        newTile->lb = originalTile;
         // old
-        tilePtr->rt = newTile;
-        tilePtr->tr = newTrPtr;
+        originalTile->rt = newTile;
+        originalTile->tr = newTrPtr;
 
         // adjust the ptrs of left, top, right neighbors
         // left
@@ -1928,8 +2317,8 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         }
 
         // adjust x,y,width,height of old tile;
-        int newHeight = tilePtr->getHeight() - newTile->getHeight();
-        tilePtr->setHeight(newHeight);
+        int newHeight = originalTile->getHeight() - newTile->getHeight();
+        originalTile->setHeight(newHeight);
 
         break;
     }
@@ -1955,13 +2344,13 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
 
         // modify pointers of old and new tile
         // new
-        newTile->tr = tilePtr->tr;
-        newTile->rt = tilePtr->rt;
-        newTile->bl = tilePtr;
+        newTile->tr = originalTile->tr;
+        newTile->rt = originalTile->rt;
+        newTile->bl = originalTile;
         newTile->lb = newLbPtr;
         // old
-        tilePtr->rt = newRtPtr;
-        tilePtr->tr = newTile;
+        originalTile->rt = newRtPtr;
+        originalTile->tr = newTile;
 
         // adjust the ptrs of top, right, bottom neighbors
         // top
@@ -1987,8 +2376,8 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         }
 
         // adjust x,y,width,height of old tile;
-        int newWidth = tilePtr->getWidth() - newTile->getWidth();
-        tilePtr->setWidth(newWidth);
+        int newWidth = originalTile->getWidth() - newTile->getWidth();
+        originalTile->setWidth(newWidth);
 
         break;
     }
@@ -2015,12 +2404,12 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         // modify pointers of old and new tile
         // new
         newTile->tr = newTrPtr;
-        newTile->rt = tilePtr;
-        newTile->bl = tilePtr->bl;
-        newTile->lb = tilePtr->lb;
+        newTile->rt = originalTile;
+        newTile->bl = originalTile->bl;
+        newTile->lb = originalTile->lb;
         // old
-        tilePtr->bl = newBlPtr;
-        tilePtr->lb = newTile;
+        originalTile->bl = newBlPtr;
+        originalTile->lb = newTile;
 
         // adjust the ptrs of right, bottom, left neighbors
         // right
@@ -2046,10 +2435,10 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         }
 
         // adjust x,y,width,height of old tile;
-        int newHeight = tilePtr->getHeight() - newTile->getHeight();
+        int newHeight = originalTile->getHeight() - newTile->getHeight();
         Cord newLL = newTile->getUpperLeft();
-        tilePtr->setLowerLeft(newLL);
-        tilePtr->setHeight(newHeight);
+        originalTile->setLowerLeft(newLL);
+        originalTile->setHeight(newHeight);
 
         break;
     }
@@ -2075,13 +2464,13 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
 
         // modify pointers of old and new tile
         // new
-        newTile->tr = tilePtr;
+        newTile->tr = originalTile;
         newTile->rt = newRtPtr;
-        newTile->bl = tilePtr->bl;
-        newTile->lb = tilePtr->lb;
+        newTile->bl = originalTile->bl;
+        newTile->lb = originalTile->lb;
         // old
-        tilePtr->bl = newTile;
-        tilePtr->lb = newLbPtr;
+        originalTile->bl = newTile;
+        originalTile->lb = newLbPtr;
 
         // adjust the ptrs of bottom, left, top neighbors
         // bottom
@@ -2107,10 +2496,10 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
         }
 
         // adjust x,y,width,height of old tile;
-        int newWidth = tilePtr->getWidth() - newTile->getWidth();
+        int newWidth = originalTile->getWidth() - newTile->getWidth();
         Cord newLL = newTile->getLowerRight();
-        tilePtr->setWidth(newWidth);
-        tilePtr->setLowerLeft(newLL);
+        originalTile->setWidth(newWidth);
+        originalTile->setLowerLeft(newLL);
 
         break;
     }

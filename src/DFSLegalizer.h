@@ -60,8 +60,8 @@ private:
     void findEdge(int fromIndex, int toIndex);
     void getTessNeighbors(int nodeId, std::set<int>& allNeighbors);
     void addBlockNode(Tessera* tess, bool isFixed);
-    bool splitOverlap(MigrationEdge& edge, int resolvableArea);
-    bool splitSoftBlock(MigrationEdge& edge, int resolvableArea);
+    bool splitOverlap(MigrationEdge& edge);
+    bool splitSoftBlock(MigrationEdge& edge);
     void removeIndexFromOverlap(int indexToRemove, Tile* overlapTile);
 public:
     DFSLegalizer();

@@ -477,7 +477,7 @@ RESULT DFSLegalizer::legalize(int mode){
     return result;
 }
 
-bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
+bool DFSLegalizer::splitOverlap(MigrationEdge& edge){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
     if (!(fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT)){
@@ -547,7 +547,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     if (!sideOccupied[0]){
         // grow from top side
         int width = gtl::delta(overlapRec, gtl::orientation_2d_enum::HORIZONTAL);
-        int height = (int) floor((double) resolvableArea / (double) width);
+        int height = (int) floor((double) mResolvableArea / (double) width);
         int thisArea = width * height;
         if (thisArea > closestArea){
             closestArea = thisArea;
@@ -560,7 +560,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     if (!sideOccupied[1]){
         // grow from right side
         int height = gtl::delta(overlapRec, gtl::orientation_2d_enum::VERTICAL);
-        int width = (int) floor((double) resolvableArea / (double) height);
+        int width = (int) floor((double) mResolvableArea / (double) height);
         int thisArea = width * height;
         if (thisArea > closestArea){
             closestArea = thisArea;
@@ -573,7 +573,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     if (!sideOccupied[2]){
         // grow from bottom side
         int width = gtl::delta(overlapRec, gtl::orientation_2d_enum::HORIZONTAL);
-        int height = (int) floor((double) resolvableArea / (double) width);
+        int height = (int) floor((double) mResolvableArea / (double) width);
         int thisArea = width * height;
         if (thisArea > closestArea){
             closestArea = thisArea;
@@ -586,7 +586,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     if (!sideOccupied[3]){
         // grow from left side
         int height = gtl::delta(overlapRec, gtl::orientation_2d_enum::VERTICAL);
-        int width = (int) floor((double) resolvableArea / (double) height);
+        int width = (int) floor((double) mResolvableArea / (double) height);
         int thisArea = width * height;
         if (thisArea > closestArea){
             closestArea = thisArea;
@@ -630,7 +630,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
                 direction = 0;
                 break;
             }
-            Tile* newTile = mLF->simpleSplitTile(*(overlapTile), tileRect, direction);
+            Tile* newTile = mLF->simpleSplitTile(overlapTile, tileRect, direction);
             if (newTile == NULL){
                 std::cout << "[DFSL] Error: Simple split tile failed\n";
             }
@@ -659,7 +659,7 @@ bool DFSLegalizer::splitOverlap(MigrationEdge& edge, int resolvableArea){
     return true;
 }
 
-bool DFSLegalizer::splitSoftBlock(MigrationEdge& edge, int resolvableArea){
+bool DFSLegalizer::splitSoftBlock(MigrationEdge& edge){
     DFSLNode& fromNode = mAllNodes[edge.fromIndex];
     DFSLNode& toNode = mAllNodes[edge.toIndex];
 
@@ -668,16 +668,57 @@ bool DFSLegalizer::splitSoftBlock(MigrationEdge& edge, int resolvableArea){
         return false;
     }
 
+    // find actual rectangle, equal to resolvable area
+    int xl, xh, yl, yh;
+    if (edge.segment.direction == DIRECTION::TOP){
+        xl = edge.segment.segStart.x < edge.segment.segEnd.x ? edge.segment.segStart.x : edge.segment.segEnd.x;
+        xh = edge.segment.segStart.x < edge.segment.segEnd.x ? edge.segment.segEnd.x : edge.segment.segStart.x;
+        yl = edge.segment.segStart.y;
+        int width = xh - xl;
+        int requiredHeight = ceil((double) mResolvableArea / (double) width);
+        yh = yl + requiredHeight;
+    }
+    else if (edge.segment.direction == DIRECTION::RIGHT){
+        yl = edge.segment.segStart.y < edge.segment.segEnd.y ? edge.segment.segStart.y : edge.segment.segEnd.y;
+        yh = edge.segment.segStart.y < edge.segment.segEnd.y ? edge.segment.segEnd.y : edge.segment.segStart.y;
+        xl = edge.segment.segStart.x;
+        int height = yh - yl;
+        int requiredWidth = ceil((double) mResolvableArea / (double) height);
+        xh = xl + requiredWidth;
+    }
+    else if (edge.segment.direction == DIRECTION::DOWN){
+        xl = edge.segment.segStart.x < edge.segment.segEnd.x ? edge.segment.segStart.x : edge.segment.segEnd.x;
+        xh = edge.segment.segStart.x < edge.segment.segEnd.x ? edge.segment.segEnd.x : edge.segment.segStart.x;
+        yh = edge.segment.segStart.y;
+        int width = xh - xl;
+        int requiredHeight = ceil((double) mResolvableArea / (double) width);
+        yl = yh - requiredHeight;
+    }
+    else if (edge.segment.direction == DIRECTION::LEFT) {
+        yl = edge.segment.segStart.y < edge.segment.segEnd.y ? edge.segment.segStart.y : edge.segment.segEnd.y;
+        yh = edge.segment.segStart.y < edge.segment.segEnd.y ? edge.segment.segEnd.y : edge.segment.segStart.y;
+        xh = edge.segment.segStart.x;
+        int height = yh - yl;
+        int requiredWidth = ceil((double) mResolvableArea / (double) height);
+        xl = xh - requiredWidth;
+    }
+    else {
+        std::cout << "[DFSL] WARNING: BB edge ( " << fromNode.nodeName << " -> " << toNode.nodeName << " ) has no DIRECTION\n";
+    }
+
+    Rectangle actualMigratedArea(xl,yl,xh,yh);
+
     for (Tile* tile: toNode.tileList){
         Rectangle tileRect(tile->getLowerLeft().x, tile->getLowerLeft().y,
                            tile->getUpperRight().x, tile->getUpperRight().y);
         
         bool intersects = gtl::intersect(tileRect, edge.migratedArea);
         if (intersects){
-            Tile* newTile = mLF->splitTile(*(tile), tileRect);
+            Tile* newTile = mLF->splitTile(tile, tileRect);
 
             if (newTile == NULL){
                 std::cout << "[DFSL] Error: BB Split tile failed\n";
+                return false;
             }
             else {
                 Tessera* fromTess = mLF->softTesserae[edge.fromIndex - mFixedTessNum];
@@ -742,22 +783,23 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
     std::cout << '\n';
 
     // go through path, find maximum resolvable area
-    int resolvableArea = mMigratingArea;
+    mResolvableArea = mMigratingArea;
     for (MigrationEdge& edge: mBestPath){
         DFSLNode& fromNode = mAllNodes[edge.fromIndex];
         DFSLNode& toNode = mAllNodes[edge.toIndex];
 
         if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::SOFT){
-            if (gtl::area(edge.migratedArea) < resolvableArea){
-                resolvableArea = gtl::area(edge.migratedArea);
+            if (gtl::area(edge.migratedArea) < mResolvableArea){
+                mResolvableArea = gtl::area(edge.migratedArea);
             }
         }
         else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::BLANK){
-            if (gtl::area(edge.migratedArea) < resolvableArea){
-                resolvableArea = gtl::area(edge.migratedArea);
+            if (gtl::area(edge.migratedArea) < mResolvableArea){
+                mResolvableArea = gtl::area(edge.migratedArea);
             }
         }
     }
+    std::cout << "Resolvable Area: " << mResolvableArea << "\n";
 
     // start changing physical layout
     for (MigrationEdge& edge: mBestPath){
@@ -765,12 +807,12 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
         DFSLNode& toNode = mAllNodes[edge.toIndex];
 
         if (fromNode.nodeType == DFSLTessType::OVERLAP && toNode.nodeType == DFSLTessType::SOFT){
-            if (resolvableArea < mMigratingArea){
+            if (mResolvableArea < mMigratingArea){
                 // create transient overlap area
 
-                bool result = splitOverlap(edge, resolvableArea);
+                bool result = splitOverlap(edge);
 
-                std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << " whitespace area: " << resolvableArea << ")\n";
+                std::cout << "Overlap not completely resolvable (overlap area: " << mMigratingArea << ", resolvable area: " << mResolvableArea << ")\n";
                 if (result){
                     std::cout << "Splitting overlap tile(s).\n";
                 }
@@ -779,7 +821,7 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
                     OverlapArea tempArea;
                     tempArea.index1 = *(fromNode.overlaps.begin());
                     tempArea.index2 = *(fromNode.overlaps.rbegin());
-                    tempArea.area = mMigratingArea - resolvableArea;
+                    tempArea.area = mMigratingArea - mResolvableArea;
 
                     mTransientOverlapArea.push_back(tempArea);
                 }
@@ -798,8 +840,14 @@ bool DFSLegalizer::migrateOverlap(int overlapIndex){
                 return false;
             }
 
-            bool result = splitSoftBlock(edge, resolvableArea);
-
+            bool result = splitSoftBlock(edge);
+            if (!result){
+                std::cout << "[DFSL] ERROR: BB flow ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) FAILED.\n";
+                return false;
+            }
+            else {
+                std::cout << " ( " << fromNode.nodeName << " -> " << toNode.tileList[0]->getLowerLeft() << " ) must have DIRECTION\n";
+            }
 
         }
         else if (fromNode.nodeType == DFSLTessType::SOFT && toNode.nodeType == DFSLTessType::BLANK){

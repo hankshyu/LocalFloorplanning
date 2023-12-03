@@ -29,7 +29,7 @@ int main(int argc, char const *argv[]) {
 
     // For your convenience, punishment value is set to one value only. Note that this parameter may not give a legal solution for all cases.
     std::vector<double> punishmentValues{
-        1.0
+        10.0
     };
     
     // If you want to play with parameters, here are the original parameters:
@@ -40,7 +40,7 @@ int main(int argc, char const *argv[]) {
 
     // For your convenience, tolerance length is set to one value only
     std::vector<double> toleranceLengthValues{
-        12.0
+        100.0
     };
 
     // If you want to play with parameters, here are the original parameters:

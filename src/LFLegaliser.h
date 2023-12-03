@@ -54,6 +54,7 @@ public:
     len_t getCanvasWidth() const;
     len_t getCanvasHeight() const;
 
+    void initFromFile(std::string path);    // for testing purposes (by ryan)
     void translateGlobalFloorplanning(const pp::GlobalSolver &solver);
     void translateGlobalFloorplanning(const rg::GlobalSolver &solver);
     void detectfloorplanningOverlaps();
@@ -90,7 +91,8 @@ public:
     void insertFirstTile(Tile &newtile);
     void insertTile(Tile &tile);
     
-    Tile* simpleSplitTile(Tile& tile, Rectangle rect, int direction);
+    Tile* splitTile(Tile* tile, Rectangle rect);
+    Tile* simpleSplitTile(Tile* tile, Rectangle rect, int direction);
 
     void visualiseArtpiece(const std::string outputFileName, bool checkBlankTile);
     void visualiseDebug(const std::string outputFileName);
