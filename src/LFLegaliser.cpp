@@ -196,61 +196,26 @@ len_t LFLegaliser::getCanvasHeight() const {
     return this->mCanvasHeight;
 }
 
-void LFLegaliser::translateGlobalFloorplanning(const pp::GlobalSolver &solver) {
-    // You could define the I/O of this function
-    // To create a soft Tessera:
-    // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
-    // softTesserae.push_back(newTess);
-    // The constructor would automatically create a default tile for you.
 
-    float aspect_ratio = (float) mCanvasHeight / mCanvasWidth;
-    for ( int i = 0; i < solver.moduleNum; i++ ) {
-        //std::cout << solver.modules[i]->name << ": ";
-        //std::cout << solver.modules[i]->x << ", " << solver.modules[i]->y << std::endl;
-        pp::GlobalModule *curModule = solver.modules[i];
-        if ( curModule->fixed ) {
-            Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
-                Cord(curModule->fx, curModule->fy), curModule->fw, curModule->fh);
-            fixedTesserae.push_back(newTess);
-        }
-        else {
-            // len_t width = (len_t) std::ceil(std::sqrt(curModule->area / aspect_ratio));
-            // len_t height = (len_t) std::ceil(std::sqrt(curModule->area * aspect_ratio));
-            len_t width = (len_t) std::ceil(std::sqrt(curModule->area));
-            len_t height = (len_t) std::ceil(std::sqrt(curModule->area));
-            Tessera *newTess = new Tessera(tesseraType::SOFT, curModule->name, curModule->area,
-                Cord(curModule->x - (len_t) width / 2, (len_t) curModule->y - height / 2), width, height);
-            softTesserae.push_back(newTess);
-        }
-    }
+void LFLegaliser::readGlobalFloorplanParser(Parser parser) {
 
-}
-
-void LFLegaliser::translateGlobalFloorplanning(const rg::GlobalSolver &solver) {
-    // You could define the I/O of this function
-    // To create a soft Tessera:
-    // Tessera *newTess = new Tessera(tesseraType::SOFT, "Name", 456, Cord(4,5), 3, 4);
-    // softTesserae.push_back(newTess);
-    // The constructor would automatically create a default tile for you.
-
-    for ( int i = 0; i < solver.moduleNum; i++ ) {
-        rg::GlobalModule *curModule = solver.modules[i];
-        if (curModule->area == 0) {
+    for (int i = 0; i < parser.getModuleNum(); ++i ) {
+        GlobalModule mod = parser.getModule(i);
+        if ( mod.area <= 0 ) {
             continue;
         }
-        if ( curModule->fixed ) {
-            Tessera *newTess = new Tessera(tesseraType::HARD, curModule->name, curModule->area,
-                Cord(curModule->x, curModule->y), curModule->width, curModule->height);
+        std::cout << mod.name << " " << mod.fixed<< " "  << mod.x<< " "  << mod.y<< " "  << mod.width<< " "  << mod.height<< " " << mod.area << std::endl;
+        if ( mod.fixed ) {
+            Tessera *newTess = new Tessera(tesseraType::HARD, mod.name, (area_t) mod.area,
+                Cord((len_t) mod.x, (len_t) mod.y), (len_t) mod.width, (len_t) mod.height);
             fixedTesserae.push_back(newTess);
         }
         else {
-            curModule->updateCord(mCanvasWidth, mCanvasHeight, 1.);
-            Tessera *newTess = new Tessera(tesseraType::SOFT, curModule->name, curModule->area,
-                Cord((len_t)curModule->x, (len_t) curModule->y), curModule->width, curModule->height);
+            Tessera *newTess = new Tessera(tesseraType::SOFT, mod.name, (area_t) mod.area,
+                Cord((len_t) mod.x, (len_t) mod.y), (len_t) mod.width, (len_t) mod.height);
             softTesserae.push_back(newTess);
         }
     }
-
 }
 
 void LFLegaliser::detectfloorplanningOverlaps() {
@@ -2124,67 +2089,73 @@ Tile* LFLegaliser::simpleSplitTile(Tile& originalTile, Rectangle newRect, int di
     return newTile;
 }
 
-double calculateHPWL(LFLegaliser *legaliser, const std::vector<RectGrad::ConnStruct> &connections, bool printReport){
+double calculateHPWL(LFLegaliser *legaliser, Parser parser, bool printReport){
     double HPWL = 0;
-    for(RectGrad::ConnStruct cs : connections){
-        
-        Tessera *tess0 = nullptr;
-        Tessera *tess1 = nullptr;
+    for ( int c = 0; c < parser.getConnectionNum(); ++c ) {
+        ConnStruct cs = parser.getConnection(c);
 
-        for(Tessera *t : legaliser->fixedTesserae){
-            std::string tName = t->getName();
-            if(tName == cs.m0){
-                tess0 = t;
+        double maxX = 0., maxY = 0.;
+        double minX = 1e10, minY = 1e10;
+
+        for ( auto &modName : cs.modules ) {
+            double centerX, centerY;
+
+            for ( int i = 0; i < parser.getModuleNum(); ++i ) {
+                GlobalModule gm = parser.getModule(i);
+                if ( gm.name == modName ) {
+                    centerX = gm.x + gm.width / 2.;
+                    centerY = gm.y + gm.height / 2.;
+                    break;
+                }
             }
-            if(tName == cs.m1){
-                tess1 = t;
+
+            Tessera *tess = nullptr;
+
+            for ( Tessera *t : legaliser->fixedTesserae ) {
+                std::string tName = t->getName();
+                if ( tName == modName ) {
+                    tess = t;
+                    break;
+                }
             }
-            if((tess0 != nullptr) && (tess1 != nullptr)) break;
+            for ( Tessera *t : legaliser->softTesserae ) {
+                std::string tName = t->getName();
+                if ( tName == modName ) {
+                    tess = t;
+                    break;
+                }
+            }
+
+            if ( tess != nullptr ) {
+                tess->calBBCentre(centerX, centerY);
+            }
+
+            maxX = ( centerX > maxX ) ? centerX : maxX;
+            minX = ( centerX < minX ) ? centerX : minX;
+            maxY = ( centerY > maxY ) ? centerY : maxY;
+            minY = ( centerY < minY ) ? centerY : minY;
         }
-        for(Tessera *t : legaliser->softTesserae){
-            std::string tName = t->getName();
-            if(tName == cs.m0){
-                tess0 = t;
-            }
-            if(tName == cs.m1){
-                tess1 = t;
-            }
-            if((tess0 != nullptr) && (tess1 != nullptr)) break;
-        }
+        std::cout << std::endl;
 
-        assert((tess0 != nullptr) && (tess1 != nullptr));
-
-        double tess0CentreX, tess0CentreY;
-        tess0->calBBCentre(tess0CentreX, tess0CentreY);
-        double tess1CentreX, tess1CentreY;
-        tess1->calBBCentre(tess1CentreX, tess1CentreY);
-
-        double tessXDiff = std::abs(tess0CentreX - tess1CentreX);
-        double tessYDiff = std::abs(tess0CentreY - tess1CentreY);
-
-
-        double distance = tessXDiff + tessYDiff;
-        double connectionScore = distance * ((double)cs.value);
+        HPWL += ( maxX - minX + maxY - minY ) * cs.value;
 
         if(printReport){
             // std::cout << <<cs.m0 <<" ";
-            printf("%-8s (%7.1f, %7.1f), ", cs.m0.c_str(), tess0CentreX, tess0CentreY);
-            printf("%-8s (%7.1f, %7.1f), ", cs.m1.c_str(), tess1CentreX, tess1CentreY);
-            printf("Distance = %10.2f x %5d = %12.2f\n", distance, cs.value, connectionScore);
+            // printf("%-8s (%7.1f, %7.1f), ", cs.m0.c_str(), tess0CentreX, tess0CentreY);
+            // printf("%-8s (%7.1f, %7.1f), ", cs.m1.c_str(), tess1CentreX, tess1CentreY);
+            // printf("Distance = %10.2f x %5d = %12.2f\n", distance, cs.value, connectionScore);
         }
-
-        HPWL += connectionScore;
     }
 
     return HPWL;
 }
 
 
-void outputFinalAnswer(LFLegaliser *legaliser, const RectGrad::Parser &rgparser, const std::string outputFileName){
-    std::cout << "output Final Answer..." <<outputFileName << std::endl;
+void outputFinalAnswer(LFLegaliser *legaliser, Parser parser, const std::string outputFileName){
+    std::cout << "output Final Answer..." << outputFileName << std::endl;
 
     std::ofstream ofs(outputFileName);
-    ofs << "HPWL " << std::fixed << std::setprecision(1) << calculateHPWL(legaliser, rgparser.getConnectionList(), false) << std::endl;
+    ofs << "HPWL " << std::fixed << std::setprecision(1) << calculateHPWL(legaliser, parser, false) << std::endl;
     ofs << "SOFTMODULE " << legaliser->softTesserae.size() << std::endl;
     for(Tessera *softTess : legaliser->softTesserae){
         assert(!softTess->TileArr.empty());

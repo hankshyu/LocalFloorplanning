@@ -8,24 +8,19 @@
 #include "Tessera.h"
 #include "LFLegaliser.h"
 #include "parser.h"
-#include "ppsolver.h"
-#include "rgsolver.h"
 #include "DFSLegalizer.h"
 #include "monitor.h"
-#include "paletteKnife.h"
 
 // #define MAX_ITER 12
 #define LEGAL_MAX_ITER 4
 
 #define MAX_MINUTE_RUNTIME 26
 
-namespace rg = RectGrad;
-
 int main(int argc, char const *argv[]) {
 
     bool legalSolutionFound = false;
 
-    rg::Parser parser(argv[1]);
+    Parser parser(argv[1]);
 
     // For your convenience, punishment value is set to one value only. Note that this parameter may not give a legal solution for all cases.
     std::vector<double> punishmentValues{
@@ -90,63 +85,64 @@ int main(int argc, char const *argv[]) {
             if (legaliser != nullptr){
                 delete legaliser;
             }
-            rg::GlobalSolver solver;
-            solver.readFromParser(parser);
+            // rg::GlobalSolver solver;
+            // solver.readFromParser(parser);
 
-            /* Phase 1: Global Floorplanning */
-            std::cout << std::endl << std::endl;
-            monitor.printPhase("Global Floorplanning Phase", iter);
-            // auto clockCounterbegin = std::chrono::steady_clock::now();
+            // /* Phase 1: Global Floorplanning */
+            // std::cout << std::endl << std::endl;
+            // monitor.printPhase("Global Floorplanning Phase", iter);
+            // // auto clockCounterbegin = std::chrono::steady_clock::now();
 
-            int iteration = 20000;
-            double lr = 5. / iteration;
-            solver.setMaxMovement(0.001);
+            // int iteration = 20000;
+            // double lr = 5. / iteration;
+            // solver.setMaxMovement(0.001);
 
         
-            // ! These parameters can be modified to meet your needs
-            solver.setPunishment(punishmentValue);
+            // // ! These parameters can be modified to meet your needs
+            // solver.setPunishment(punishmentValue);
 
-            for ( int phase = 1; phase <= 50; phase++ ) {
-                solver.setSizeScalar(phase * 0.02);
-                solver.setOverlapTolaranceLen(toleranceValue * phase * 0.02);
-                for ( int i = 0; i < iteration; i++ ) {
-                    solver.calcGradient();
-                    solver.gradientDescent(lr);
-                }
-            }
+            // for ( int phase = 1; phase <= 50; phase++ ) {
+            //     solver.setSizeScalar(phase * 0.02);
+            //     solver.setOverlapTolaranceLen(toleranceValue * phase * 0.02);
+            //     for ( int i = 0; i < iteration; i++ ) {
+            //         solver.calcGradient();
+            //         solver.gradientDescent(lr);
+            //     }
+            // }
 
-            solver.setPullWhileOverlap(false);
-            solver.setMaxMovement(1e-6);
-            solver.setPunishment(1e6);
-            solver.setOverlapTolaranceLen(0.);
-            solver.setSizeScalar(1.);
-            lr = 1e-8;
-            int count = 0;
-            while ( solver.hasOverlap() ) {
-                solver.squeezeToFit();
-                for ( int i = 0; i < 5000; i++ ) {
-                    solver.calcGradient();
-                    solver.gradientDescent(lr);
-                }
+            // solver.setPullWhileOverlap(false);
+            // solver.setMaxMovement(1e-6);
+            // solver.setPunishment(1e6);
+            // solver.setOverlapTolaranceLen(0.);
+            // solver.setSizeScalar(1.);
+            // lr = 1e-8;
+            // int count = 0;
+            // while ( solver.hasOverlap() ) {
+            //     solver.squeezeToFit();
+            //     for ( int i = 0; i < 5000; i++ ) {
+            //         solver.calcGradient();
+            //         solver.gradientDescent(lr);
+            //     }
 
-                if ( ++count >= 5 ) {
-                    break;
-                }
-            }
+            //     if ( ++count >= 5 ) {
+            //         break;
+            //     }
+            // }
 
-            if ( !solver.isAreaLegal() ) {
-                std::cout << "[GlobalSolver] ERROR: Area Constraint Violated.\n";
-            }
-            else {
-                std::cout << "[GlobalSolver] Note: Area Constraint Met.\n";
-            }
+            // if ( !solver.isAreaLegal() ) {
+            //     std::cout << "[GlobalSolver] ERROR: Area Constraint Violated.\n";
+            // }
+            // else {
+            //     std::cout << "[GlobalSolver] Note: Area Constraint Met.\n";
+            // }
 
-            // solver.currentPosition2txt("outputs/global_test.txt");
-            std::cout << std::fixed;
-            std::cout << "[GlobalSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
+            // // solver.currentPosition2txt("outputs/global_test.txt");
+            // std::cout << std::fixed;
+            // std::cout << "[GlobalSolver] Estimated HPWL: " << std::setprecision(2) << solver.calcEstimatedHPWL() << std::endl;
 
             legaliser = new LFLegaliser((len_t) parser.getDieWidth(), (len_t) parser.getDieHeight());
-            legaliser->translateGlobalFloorplanning(solver);
+            // legaliser->translateGlobalFloorplanning(solver);
+            legaliser->readGlobalFloorplanParser(parser);
             legaliser->detectfloorplanningOverlaps();
 
             // Phase 1 Reports
@@ -291,13 +287,12 @@ int main(int argc, char const *argv[]) {
                                 itm, its, true, false, false, -1);
 
                         }else {
-                            double finalScore = calculateHPWL(&(legalizedFloorplan), parser.getConnectionList(), false);
+                            double finalScore = calculateHPWL(&(legalizedFloorplan), parser, false);
                             printf("Final Score = %12.6f\n", finalScore);
                             if (finalScore < bestHpwl){
                                 bestHpwl = finalScore;
                                 std::cout << "Best Hpwl found\n";
                                 outputFinalAnswer(&(legalizedFloorplan), parser, argv[2]);
-                                solver.currentPosition2txt("outputs/global_test.txt");
                                 legalizedFloorplan.visualiseArtpiece("outputs/legal.txt", true);
                             }
                             // legalizedFloorplan.visualiseArtpiece("outputs/legal" + std::to_string(legalIter*3+legalizeMode) + ".txt", true);

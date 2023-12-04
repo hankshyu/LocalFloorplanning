@@ -10,11 +10,7 @@
 #include "LFUnits.h"
 #include "Tile.h"
 #include "Tessera.h"
-#include "ppsolver.h"
-#include "rgsolver.h"
-
-namespace pp = PushPull;
-namespace rg = RectGrad;
+#include "parser.h"
 
 class LFLegaliser {
 private:
@@ -43,6 +39,7 @@ private:
 public:
     std::vector <Tessera *> fixedTesserae;
     std::vector <Tessera *> softTesserae;
+    std::vector <ConnStruct> connectionList;
 
     LFLegaliser() = delete;
     LFLegaliser(len_t chipWidth, len_t chipHeight);
@@ -54,8 +51,7 @@ public:
     len_t getCanvasWidth() const;
     len_t getCanvasHeight() const;
 
-    void translateGlobalFloorplanning(const pp::GlobalSolver &solver);
-    void translateGlobalFloorplanning(const rg::GlobalSolver &solver);
+    void readGlobalFloorplanParser(Parser parser);
     void detectfloorplanningOverlaps();
     bool has3overlap();
     void splitTesseraeOverlaps();
@@ -113,8 +109,8 @@ int findVectorInclude(std::vector<Tile *>&vec, Tile *t);
 // return -1 if not found, otherwise index
 int findVectorIncludebyName(std::vector<Tessera *>&vec, Tessera *tess);
 
-double calculateHPWL(LFLegaliser *legaliser, const std::vector<rg::ConnStruct> &connections, bool printReport);
-void outputFinalAnswer(LFLegaliser *legaliser, const rg::Parser &rgparser, const std::string outputFileName);
+double calculateHPWL(LFLegaliser *legaliser, Parser parser, bool printReport);
+void outputFinalAnswer(LFLegaliser *legaliser, Parser parser, const std::string outputFileName);
 
 struct CPTilePair{
     Tile *father;
